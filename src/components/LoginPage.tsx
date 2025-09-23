@@ -6,13 +6,13 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-[750px] lg:min-h-[850px] bg-white flex items-center justify-center">
+    <div className="h-screen bg-white flex items-center justify-center overflow-hidden">
       {/* Logo góc trên bên phải */}
   <button
     type="button"
     className="fixed top-6 left-8 z-20 bg-white bg-opacity-80 rounded-md p-0 cursor-pointer focus:outline-none"
     onClick={() => navigate('/')}
-    tabIndex={0}
+    tabIndex={0}  
     aria-label="Về trang chủ"
     onKeyDown={e => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -76,7 +76,7 @@ const LoginPage: React.FC = () => {
             </button>
 
             {/* Facebook Login */}
-            <button className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
+            {/* <button className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
               <div className="w-[23px] h-[19px] mr-[8px] relative">
                 <img 
                   src="https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-09-09/Gs1KbKB7Th.svg" 
@@ -92,7 +92,7 @@ const LoginPage: React.FC = () => {
               <span className="text-[20px] font-bold leading-[18.4px] text-black font-['League_Spartan']">
                 Đăng nhập bằng Facebook
               </span>
-            </button>
+            </button> */}
 
             {/* Phone Login */}
             <button className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
@@ -142,9 +142,9 @@ const LoginPage: React.FC = () => {
       {/* Right side - Image, ẩn trên mobile */}
       <div className="hidden lg:flex flex-1 h-full">
         <img
-          src="public/images/login.png"
+          src="public/images/login.jpg"
           alt="Login background"
-          className="w-full h-full object-cover min-h-[750px] lg:min-h-[850px]"
+          className="w-full h-full object-cover"
         />
       </div>
     </div>

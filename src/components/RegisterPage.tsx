@@ -6,8 +6,7 @@ const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-[750px] lg:min-h-[850px] bg-white flex items-center justify-center">
-      {/* Logo góc trên bên phải */}
+           <div className="h-screen bg-white flex items-center justify-center overflow-hidden">      {/* Logo góc trên bên phải */}
   <button
     type="button"
     className="fixed top-6 left-8 z-20 bg-white bg-opacity-80 rounded-md p-0 cursor-pointer focus:outline-none"
@@ -71,7 +70,7 @@ const RegisterPage: React.FC = () => {
                 className="w-[22.54px] h-[19px] mr-[11px]"
               />
               <span className="text-[20px] font-bold leading-[18.4px] text-black font-['League_Spartan']">
-                Đăng nhập bằng Google
+                Đăng ký bằng Google
               </span>
             </button>
 
@@ -102,7 +101,7 @@ const RegisterPage: React.FC = () => {
                 className="w-[22.89px] h-[19px] mr-[10px]"
               />
               <span className="text-[20px] font-bold leading-[18.4px] text-black font-['League_Spartan']">
-                Đăng nhập bằng số điện thoại
+                Đăng ký bằng số điện thoại
               </span>
             </button>
           </div>
@@ -142,9 +141,9 @@ const RegisterPage: React.FC = () => {
       {/* Right side - Image, ẩn trên mobile */}
       <div className="hidden lg:flex flex-1 h-full">
         <img 
-          src="public/images/register.png"
+          src="public/images/register.jpg"
           alt="Login background"
-          className="w-full h-full object-cover min-h-[750px] lg:min-h-[850px]"
+          className="w-full h-full object-cover"
         />
       </div>
     </div>
