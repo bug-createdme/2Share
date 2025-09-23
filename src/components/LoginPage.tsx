@@ -71,7 +71,7 @@ const LoginPage: React.FC = () => {
       } else {
         // Lưu token, chuyển hướng hoặc xử lý tiếp
         localStorage.setItem('token', data.token);
-        window.location.href = '/';
+        navigate('/my-links');
       }
     } catch (err) {
       setFormError('Lỗi kết nối máy chủ');
