@@ -94,7 +94,7 @@ const RegisterPage: React.FC = () => {
             </button> */}
 
             {/* Phone Login */}
-            <button className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
+            {/* <button className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
               <img 
                 src="https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-09-09/cAXi8U5rXE.svg" 
                 alt="WhatsApp" 
@@ -103,7 +103,7 @@ const RegisterPage: React.FC = () => {
               <span className="text-[20px] font-bold leading-[18.4px] text-black font-['League_Spartan']">
                 Đăng ký bằng số điện thoại
               </span>
-            </button>
+            </button> */}
           </div>
 
           {/* Forgot Password Links

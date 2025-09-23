@@ -3,6 +3,20 @@ import { useNavigate } from 'react-router-dom';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  // SVG icon cho mắt
+  const EyeIcon = (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M11 4C6 4 2.73 8.11 2.73 11C2.73 13.89 6 18 11 18C16 18 19.27 13.89 19.27 11C19.27 8.11 16 4 11 4ZM11 16C7.13 16 4.27 12.36 4.27 11C4.27 9.64 7.13 6 11 6C14.87 6 17.73 9.64 17.73 11C17.73 12.36 14.87 16 11 16ZM11 8C9.34 8 8 9.34 8 11C8 12.66 9.34 14 11 14C12.66 14 14 12.66 14 11C14 9.34 12.66 8 11 8ZM11 12C10.45 12 10 11.55 10 11C10 10.45 10.45 10 11 10C11.55 10 12 10.45 12 11C12 11.55 11.55 12 11 12Z" fill="#CAC1C1"/>
+    </svg>
+  );
+  const EyeOffIcon = (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1 1L21 21" stroke="#CAC1C1" strokeWidth="2"/>
+      <path d="M11 4C6 4 2.73 8.11 2.73 11C2.73 13.89 6 18 11 18C16 18 19.27 13.89 19.27 11C19.27 8.11 16 4 11 4ZM11 16C7.13 16 4.27 12.36 4.27 11C4.27 9.64 7.13 6 11 6C14.87 6 17.73 9.64 17.73 11C17.73 12.36 14.87 16 11 16ZM11 8C9.34 8 8 9.34 8 11C8 12.66 9.34 14 11 14C12.66 14 14 12.66 14 11C14 9.34 12.66 8 11 8ZM11 12C10.45 12 10 11.55 10 11C10 10.45 10.45 10 11 10C11.55 10 12 10.45 12 11C12 11.55 11.55 12 11 12Z" fill="#CAC1C1"/>
+    </svg>
+  );
   const navigate = useNavigate();
 
   return (
@@ -38,21 +52,39 @@ const LoginPage: React.FC = () => {
             Đăng nhập vào 2share của bạn
           </p>
           {/* Username Input */}
-          <div className="mb-[18px] w-full flex justify-center">
+          <div className="mb-[18px] w-full flex flex-col items-center space-y-3">
             <div className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex items-center">
               <input
                 type="text"
-                placeholder="Tên đăng nhập hoặc email"
+                placeholder="Email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-transparent text-[14px] font-bold leading-[12.88px] text-[#CAC1C1] placeholder-[#CAC1C1] outline-none font-['League_Spartan']"
               />
             </div>
+            <div className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex items-center">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Mật khẩu"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-transparent text-[14px] font-bold leading-[12.88px] text-[#CAC1C1] placeholder-[#CAC1C1] outline-none font-['League_Spartan']"
+              />
+              <button
+                type="button"
+                className="ml-2 focus:outline-none"
+                onClick={() => setShowPassword((prev) => !prev)}
+                tabIndex={0}
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              >
+                {showPassword ? EyeOffIcon : EyeIcon}
+              </button>
+            </div>
           </div>
           {/* Continue Button */}
           <button className="w-[475px] h-[59px] bg-[#1B1111] rounded-[10px] flex items-center justify-center mb-[19px] hover:bg-[#2a1a1a] transition-colors">
             <span className="text-[24px] font-bold leading-[22.08px] text-white font-['League_Spartan']">
-              Tiếp tục
+              Đăng nhập
             </span>
           </button>
           {/* Or divider */}
@@ -95,7 +127,7 @@ const LoginPage: React.FC = () => {
             </button> */}
 
             {/* Phone Login */}
-            <button className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
+            {/* <button className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
               <img 
                 src="https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-09-09/cAXi8U5rXE.svg" 
                 alt="WhatsApp" 
@@ -104,7 +136,7 @@ const LoginPage: React.FC = () => {
               <span className="text-[20px] font-bold leading-[18.4px] text-black font-['League_Spartan']">
                 Đăng nhập bằng số điện thoại
               </span>
-            </button>
+            </button> */}
           </div>
 
           {/* Forgot Password Links */}
@@ -120,7 +152,7 @@ const LoginPage: React.FC = () => {
                   className="w-[23.01px] h-[24px] mr-[11px]"
                 />
                 <button className="text-[20px] font-bold leading-[18.4px] text-[#DB8F91] font-['League_Spartan'] hover:underline">
-                  Quên tên đăng nhập?
+                  Quên email?
                 </button>
               </div>
             </div>
