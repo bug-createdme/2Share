@@ -10,7 +10,7 @@ import {
   LogOutIcon,
   SendIcon,
 } from "lucide-react";
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "../../../../components/ui/button";
 import {
   Collapsible,

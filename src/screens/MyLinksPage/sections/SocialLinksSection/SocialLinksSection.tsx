@@ -3,7 +3,7 @@ import {
   EditIcon,
   Trash2Icon,
 } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card } from "../../../../components/ui/card";
 import { Switch } from "../../../../components/ui/switch";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
