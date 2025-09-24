@@ -152,7 +152,7 @@ const RegisterPage: React.FC = () => {
     }}
   >
     <img 
-      src="public/images/logo.png"
+      src="/images/logo.png"
       alt="2share Logo"
       className="w-[125px] h-[29px]"
     />
@@ -352,7 +352,7 @@ const RegisterPage: React.FC = () => {
       {/* Right side - Image, ẩn trên mobile */}
       <div className="hidden lg:flex flex-1 h-full">
         <img 
-          src="public/images/register.jpg"
+          src="/images/register.jpg"
           alt="Login background"
           className="w-full h-full object-cover"
         />
