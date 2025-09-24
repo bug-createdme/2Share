@@ -1,5 +1,5 @@
 import { EditIcon } from "lucide-react";
-import React from "react";
+// ...existing code...
 import { Card, CardContent } from "../../../../components/ui/card";
 
 export const BioSection = (): JSX.Element => {
