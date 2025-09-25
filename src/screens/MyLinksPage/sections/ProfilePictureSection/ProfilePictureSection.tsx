@@ -2,7 +2,7 @@
 import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
 
-export const ProfilePictureSection = (): JSX.Element => {
+export const ProfilePictureSection = ({ user }: { user: any }): JSX.Element => {
   const socialIcons = [
     {
       src: "https://c.animaapp.com/mfwch0g78qp4H9/img/social-icons-2.svg",
@@ -50,10 +50,10 @@ export const ProfilePictureSection = (): JSX.Element => {
               <img
                 className="absolute top-[-45px] left-[-7px] w-[207px] h-[198px]"
                 alt="Profile picture"
-                src="https://c.animaapp.com/mfwch0g78qp4H9/img/profile-picture-2.png"
+                src={user.avatar_url || "https://c.animaapp.com/mfwch0g78qp4H9/img/profile-picture-2.png"}
               />
               <div className="absolute top-[106px] left-[calc(50.00%_-_74px)] [font-family:'Itim',Helvetica] text-white text-xl tracking-[2.00px] whitespace-nowrap font-normal leading-[normal]">
-                username_123
+                {user.username}
               </div>
             </div>
           </div>

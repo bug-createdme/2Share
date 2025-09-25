@@ -1,5 +1,5 @@
 import { ArrowUpIcon, EditIcon, PlusIcon, SettingsIcon } from "lucide-react";
-// ...existing code...
+import { useEffect, useState } from "react";
 import {
   Avatar,
   AvatarFallback,
@@ -10,40 +10,44 @@ import { BioSection } from "./sections/BioSection/BioSection";
 import { NavigationMenuSection } from "./sections/NavigationMenuSection/NavigationMenuSection";
 import { ProfilePictureSection } from "./sections/ProfilePictureSection/ProfilePictureSection";
 import { SocialLinksSection } from "./sections/SocialLinksSection/SocialLinksSection";
+import { getMyProfile } from "../../lib/api";
+
 export const MyLinksPage = (): JSX.Element => {
-  const socialIcons = [
-    {
-      src: "https://c.animaapp.com/mfwch0g78qp4H9/img/social-icons-8.svg",
-      alt: "Social icons",
-    },
-    {
-      src: "https://c.animaapp.com/mfwch0g78qp4H9/img/social-icons-3.svg",
-      alt: "Social icons",
-    },
-    {
-      src: "https://c.animaapp.com/mfwch0g78qp4H9/img/social-icons-1.svg",
-      alt: "Social icons",
-    },
-    {
-      src: "https://c.animaapp.com/mfwch0g78qp4H9/img/social-icons-4.svg",
-      alt: "Social icons",
-    },
-    {
-      src: "https://c.animaapp.com/mfwch0g78qp4H9/img/behance-2.svg",
-      alt: "Behance",
-    },
-  ];
+  const [user, setUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const profile = await getMyProfile();
+        setUser(profile);
+      } catch (err: any) {
+        setError(err.message || "Lỗi lấy thông tin người dùng");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Đang tải thông tin...</div>;
+  }
+  if (error || !user) {
+    return <div className="flex items-center justify-center h-screen text-red-500">{error || "Không có thông tin người dùng"}</div>;
+  }
 
   return (
     <div className="bg-[#f7f7f7] w-full min-h-screen">
       {/* Left Sidebar */}
       <div className="fixed top-0 left-0 h-screen w-[265px] bg-white z-20 border-r border-[#d9d9d9]">
-        <NavigationMenuSection />
+  <NavigationMenuSection user={user} />
       </div>
 
       {/* Right Sidebar */}
       <div className="fixed top-0 right-0 h-screen w-[395px] bg-white z-20 border-l border-[#d9d9d9] flex items-center justify-center">
-        <ProfilePictureSection />
+  <ProfilePictureSection user={user} />
       </div>
 
       {/* Main Content Area */}
@@ -82,29 +86,20 @@ export const MyLinksPage = (): JSX.Element => {
             <div className="flex flex-col items-center gap-4">
               <Avatar className="w-[77px] h-[77px]">
                 <AvatarImage
-                  src="https://c.animaapp.com/mfwch0g78qp4H9/img/profile-picture.png"
+                  src={user.avatar_url || undefined}
                   alt="Profile picture"
                 />
-                <AvatarFallback>U</AvatarFallback>
+                <AvatarFallback>{user.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
               </Avatar>
               <div className="flex items-center gap-4">
                 <h2 className="[font-family:'Carlito',Helvetica] font-normal text-black text-2xl tracking-[2.40px] leading-[normal]">
-                  @username_123
+                  @{user.username}
                 </h2>
                 <Button variant="ghost" size="sm" className="h-auto p-0">
                   <EditIcon className="w-6 h-6" />
                 </Button>
               </div>
-              <div className="flex gap-5">
-                {socialIcons.map((icon, index) => (
-                  <img
-                    key={index}
-                    className={`${index === 4 ? "w-[30px] h-[30px]" : "w-[25px] h-[25px] mt-[3px]"}`}
-                    alt={icon.alt}
-                    src={icon.src}
-                  />
-                ))}
-              </div>
+              {/* Social icons giữ nguyên */}
             </div>
           </div>
           {/* Add Button */}

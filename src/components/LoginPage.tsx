@@ -66,11 +66,15 @@ const LoginPage: React.FC = () => {
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
+      console.log('Login response:', data); // Debug response
       if (!res.ok) {
         setFormError(data.message || 'Đăng nhập thất bại');
       } else {
         // Lưu token, chuyển hướng hoặc xử lý tiếp
-        localStorage.setItem('token', data.token);
+        localStorage.setItem('token', data.result.access_token);
+        if (data.result.refresh_token) {
+          localStorage.setItem('refresh_token', data.result.refresh_token);
+        }
         navigate('/my-links');
       }
     } catch (err) {

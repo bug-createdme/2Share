@@ -10,7 +10,6 @@ export const BioSection = (): JSX.Element => {
           <button className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors">
             <EditIcon className="w-5 h-5 text-gray-600" />
           </button>
-
           <div className="pr-12 mb-6">
             <p className="[font-family:'Carlito',Helvetica] font-normal text-black text-base tracking-[1.60px] leading-normal">
               Mình là username_123, sinh viên thiết kế đồ họa với niềm yêu thích
@@ -23,7 +22,6 @@ export const BioSection = (): JSX.Element => {
               bản thân mỗi ngày nhé!
             </p>
           </div>
-
           <div className="absolute bottom-6 right-6">
             <span className="[font-family:'Carlito',Helvetica] font-normal text-[#6e6e6e] text-[15px] tracking-[1.50px] leading-normal">
               310/350
