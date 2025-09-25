@@ -1,4 +1,4 @@
-import { ArrowUpIcon, EditIcon, PlusIcon, SettingsIcon } from "lucide-react";
+import { ArrowUpIcon, PlusIcon, SettingsIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Avatar,
