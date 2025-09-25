@@ -43,17 +43,19 @@ export const ProfilePictureSection = ({ user }: { user: any }): JSX.Element => {
 
   return (
     <div className="w-[300px] h-[650px] translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:0ms]">
-      <Card className="w-full h-full bg-[#e7a5a5] rounded-[25px] border-[3px] border-solid border-[#6e6e6e] overflow-hidden">
+      <Card className="w-full h-full bg-[#e7a5a5] rounded-[25px] border-none shadow-xl overflow-hidden">
         <CardContent className="flex flex-col p-0 h-full">
-          <div className="flex flex-col items-center mt-[45px] translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:200ms]">
-            <div className="relative w-[149px] h-[130px]">
-              <img
-                className="absolute top-[-45px] left-[-7px] w-[207px] h-[198px]"
-                alt="Profile picture"
-                src={user.avatar_url || "https://c.animaapp.com/mfwch0g78qp4H9/img/profile-picture-2.png"}
-              />
-              <div className="absolute top-[106px] left-[calc(50.00%_-_74px)] [font-family:'Itim',Helvetica] text-white text-xl tracking-[2.00px] whitespace-nowrap font-normal leading-[normal]">
-                {user.username}
+          <div className="flex flex-col items-center mt-[40px]">
+            <div className="flex flex-col items-center">
+              <div className="w-[90px] h-[90px] rounded-full overflow-hidden bg-white shadow-lg flex items-center justify-center border border-[#e0e0e0]">
+                <img
+                  className="w-full h-full object-cover"
+                  alt="Avatar"
+                  src={user.avatar_url || "https://c.animaapp.com/mfwch0g78qp4H9/img/profile-picture-2.png"}
+                />
+              </div>
+              <div className="mt-4 font-bold text-lg text-[#222] tracking-wide text-center">
+                @{user.username}
               </div>
             </div>
           </div>
