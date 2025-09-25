@@ -17,18 +17,13 @@ const EmailVerifyActionPage: React.FC = () => {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMsg, setResendMsg] = useState('');
   const hasToken = Boolean(email_verify_token);
-  const [manualToken, setManualToken] = useState('');
 
   const handleVerify = async () => {
     setLoading(true);
     setSuccess('');
     setError('');
     try {
-      const tokenToUse = hasToken ? email_verify_token : manualToken.trim();
-      if (!tokenToUse) {
-        throw new Error('Vui lòng dán mã xác thực từ email.');
-      }
-      const result = await verifyEmail(tokenToUse);
+      const result = await verifyEmail(email_verify_token);
       setSuccess(result.message || 'Xác thực email thành công!');
       // Sau khi xác thực: refresh access_token để API nhận trạng thái verify mới
       try {
@@ -113,30 +108,6 @@ const EmailVerifyActionPage: React.FC = () => {
         </button>
         {success && <div className="text-green-600 font-semibold text-center">{success}</div>}
         {error && <div className="text-red-500 font-semibold text-center">{error}</div>}
-        {/* Manual token input if the email sends a code instead of a link */}
-        {!hasToken && (
-          <div className="w-full flex flex-col items-center gap-3 mt-2">
-            <input
-              type="text"
-              placeholder="Dán mã xác thực từ email"
-              value={manualToken}
-              onChange={(e) => setManualToken(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  void handleVerify();
-                }
-              }}
-              className="w-full max-w-xs bg-white border border-[#ececec] rounded-[10px] px-4 py-2 text-[#222]"
-            />
-            <button
-              className="px-6 py-3 rounded-[16px] bg-[#222] text-white font-semibold text-lg disabled:opacity-60"
-              onClick={handleVerify}
-              disabled={loading || !manualToken.trim()}
-            >
-              {loading ? 'Đang xác thực...' : 'Xác thực bằng mã' }
-            </button>
-          </div>
-        )}
         <button
           className="mt-2 px-6 py-3 rounded-[16px] bg-[#ececec] text-[#222] font-semibold text-lg disabled:opacity-60"
           onClick={handleResend}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { verifyEmail } from '../lib/api';
+import { verifyEmail, refreshAccessToken } from '../lib/api';
 
 const VerifyEmailPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -9,16 +9,33 @@ const VerifyEmailPage: React.FC = () => {
   const [message, setMessage] = useState('Đang xác thực email...');
 
   useEffect(() => {
-    const token = searchParams.get('token');
+    const token = searchParams.get('token') || searchParams.get('code');
     if (!token) {
       setStatus('error');
       setMessage('Thiếu mã xác thực email.');
       return;
     }
     verifyEmail(token)
-      .then(() => {
+      .then(async () => {
+        // Refresh access token after verify so the session reflects new state
+        try {
+          const refreshToken = localStorage.getItem('refresh_token') || '';
+          if (refreshToken) {
+            const refreshed = await refreshAccessToken(refreshToken);
+            if (refreshed?.result?.access_token) {
+              localStorage.setItem('token', refreshed.result.access_token);
+            }
+          }
+        } catch (e) {
+          // non-blocking
+          console.warn('Refresh token after verify failed:', e);
+        }
         setStatus('success');
         setMessage('Xác thực email thành công!');
+        setTimeout(() => {
+          const hasToken = Boolean(localStorage.getItem('token'));
+          if (hasToken) navigate('/account'); else navigate('/login');
+        }, 800);
       })
       .catch((err) => {
         setStatus('error');

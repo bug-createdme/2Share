@@ -42,10 +42,13 @@ export async function resendVerifyEmail(refresh_token: string) {
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
+  // Gợi ý URL xác thực để backend render link click-được trong email
+  // Nếu backend bỏ qua trường này thì không ảnh hưởng
+  const verify_url = `${window.location.origin}/verify-email`;
   const res = await fetch('https://2share.icu/users/resend-verify-email', {
     method: 'POST',
     headers,
-    body: JSON.stringify({ refresh_token }),
+    body: JSON.stringify({ refresh_token, verify_url }),
   });
   const result = await res.json();
   if (!res.ok) throw new Error(result.message || 'Lỗi gửi email xác thực');

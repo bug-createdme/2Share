@@ -20,7 +20,7 @@ import { useLocation } from "react-router-dom";
 export const NavigationMenuSection = ({ user }: { user: any }): JSX.Element => {
   const location = useLocation();
   const [isMyShareOpen, setIsMyShareOpen] = useState(true);
-  // Removed unused state: activeMenu, setActiveMenu, activeSubMenu, setActiveSubMenu
+
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -35,7 +35,6 @@ export const NavigationMenuSection = ({ user }: { user: any }): JSX.Element => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [profileMenuOpen]);
 
-  // Removed unused menuItems array
 
   const subMenuItems = [
     {
