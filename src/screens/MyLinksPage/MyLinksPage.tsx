@@ -1,4 +1,4 @@
-import { ArrowUpIcon, EditIcon, PlusIcon, SettingsIcon } from "lucide-react";
+import { ArrowUpIcon, PlusIcon, SettingsIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Avatar,
@@ -95,9 +95,9 @@ export const MyLinksPage = (): JSX.Element => {
                 <h2 className="[font-family:'Carlito',Helvetica] font-normal text-black text-2xl tracking-[2.40px] leading-[normal]">
                   @{user.username}
                 </h2>
-                <Button variant="ghost" size="sm" className="h-auto p-0">
+                {/* <Button variant="ghost" size="sm" className="h-auto p-0">
                   <EditIcon className="w-6 h-6" />
-                </Button>
+                </Button> */}
               </div>
               {/* Social icons giữ nguyên */}
             </div>
