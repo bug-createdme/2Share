@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Card } from "../../../../components/ui/card";
+
 import { Switch } from "../../../../components/ui/switch";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
@@ -42,7 +43,6 @@ export const SocialLinksSection = (): JSX.Element => {
     },
   ];
   const [socialLinks, setSocialLinks] = useState(initialLinks);
-
   function handleOnDragEnd(result: any) {
     if (!result.destination) return;
     const items = Array.from(socialLinks);

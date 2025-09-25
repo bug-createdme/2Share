@@ -1,4 +1,3 @@
-
 import {
   BarChart3Icon,
   ChevronDownIcon,
@@ -17,8 +16,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../../../../components/ui/collapsible";
+import { useLocation } from "react-router-dom";
 
-export const NavigationMenuSection = (): JSX.Element => {
+export const NavigationMenuSection = ({ user }: { user: any }): JSX.Element => {
+  const location = useLocation();
   const [isMyShareOpen, setIsMyShareOpen] = useState(true);
   const [activeMenu, setActiveMenu] = useState<string>('my-nfc');
   const [activeSubMenu, setActiveSubMenu] = useState<string>('');
@@ -64,6 +65,9 @@ export const NavigationMenuSection = (): JSX.Element => {
     },
   ];
 
+  // Determine active menu by current pathname
+  const currentPath = location.pathname;
+
   return (
     <div className="w-full max-w-[213px] h-full flex flex-col translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:0ms]">
       {/* User Profile Section */}
@@ -84,11 +88,11 @@ export const NavigationMenuSection = (): JSX.Element => {
           <img
             className="w-[26px] h-[26px] ml-[9px] mr-3"
             alt="User avatar"
-            src="https://c.animaapp.com/mfwch0g78qp4H9/img/profile-picture-1.png"
+            src={user.avatar_url || "https://c.animaapp.com/mfwch0g78qp4H9/img/profile-picture-1.png"}
           />
           <div className="flex-1 flex items-center justify-between min-w-0">
             <span className="[font-family:'Carlito',Helvetica] text-[#6e6e6e] text-base tracking-[1.60px] font-normal truncate">
-              @username_123
+              @{user.username}
             </span>
             <ChevronDownIcon className={`w-[18px] h-[18px] ml-2 mr-[18px] text-[#6e6e6e] flex-shrink-0 transition-transform ${profileMenuOpen ? 'rotate-180' : ''}`} />
           </div>
@@ -96,7 +100,13 @@ export const NavigationMenuSection = (): JSX.Element => {
         {/* Dropdown menu */}
         {profileMenuOpen && (
           <div className="absolute left-0 top-[110%] w-full bg-white rounded-[10px] shadow-lg border border-[#ececec] z-50 animate-fade-in">
-            <button className="w-full flex items-center px-4 py-2 text-[#222] hover:bg-gray-100 rounded-t-[10px] focus:outline-none">
+            <button
+              className="w-full flex items-center px-4 py-2 text-[#222] hover:bg-gray-100 rounded-t-[10px] focus:outline-none"
+              onClick={() => {
+                window.location.href = '/account';
+                setProfileMenuOpen(false);
+              }}
+            >
               <UserIcon className="w-5 h-5 mr-3 text-[#222]" />
               <span className="text-[15px] text-left flex-1">Tài khoản</span>
             </button>
@@ -109,7 +119,12 @@ export const NavigationMenuSection = (): JSX.Element => {
               <SendIcon className="w-5 h-5 mr-3 text-[#222]" />
               <span className="text-[15px] text-left flex-1">Để phản hồi</span>
             </button>
-            <button className="w-full flex items-center px-4 py-2 text-[#222] hover:bg-gray-100 rounded-b-[10px] border-t border-[#ececec] focus:outline-none">
+            <button className="w-full flex items-center px-4 py-2 text-[#222] hover:bg-gray-100 rounded-b-[10px] border-t border-[#ececec] focus:outline-none"
+              onClick={() => {
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+              }}
+            >
               <LogOutIcon className="w-5 h-5 mr-3 text-[#222]" />
               <span className="text-[15px] text-left flex-1">Đăng xuất</span>
             </button>
@@ -118,86 +133,51 @@ export const NavigationMenuSection = (): JSX.Element => {
       </div>
 
       {/* All Sidebar Buttons & Menu */}
-      <div className="flex-1 flex flex-col justify-between">
-        <div>
-          {/* My 2Share Collapsible Section */}
-          <div className="ml-2.5 w-full max-w-[203px] mt-0 translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms]">
-            <Collapsible open={isMyShareOpen} onOpenChange={setIsMyShareOpen}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={`w-full max-w-[205px] h-10 justify-start px-0 py-0 rounded-[10px] transition-colors
-                    ${activeMenu === '2share' ? 'bg-[#d9d9d9] text-black' : 'bg-white text-[#222] hover:bg-gray-100'}`}
-                  aria-current={activeMenu === '2share' ? 'page' : undefined}
-                  onClick={() => {
-                    setActiveMenu('2share');
-                    setActiveSubMenu('links');
-                  }}
-                >
-                  <FigmaIcon className="w-[18px] h-[18px] ml-[3px] mr-2" />
-                  <span className="[font-family:'Carlito',Helvetica] font-normal text-base tracking-[1.60px] flex-1 text-left">
-                    2Share của tôi
-                  </span>
-                  <ChevronDownIcon
-                    className={`w-[18px] h-[18px] mr-4 transition-transform ${isMyShareOpen ? "rotate-180" : ""}`}
-                  />
-                </Button>
-              </CollapsibleTrigger>
-
-              <CollapsibleContent className="relative">
-                <div className="ml-3 border-l border-[#d9d9d9] pl-[18px] pt-2 pb-2 space-y-0.5">
-                  {subMenuItems.map((item) => {
-                    const isActive = activeMenu === '2share' && activeSubMenu === item.id;
-                    return (
-                      <Button
-                        key={item.id}
-                        variant="ghost"
-                        className={`w-full max-w-[155px] h-8 justify-start px-2 py-0 rounded-[10px] transition-colors
-                          ${isActive ? 'bg-[#d9d9d9] text-black' : 'bg-white text-[#6e6e6e] hover:bg-gray-100'}`}
-                        onClick={() => {
-                          setActiveMenu('2share');
-                          setActiveSubMenu(item.id);
-                        }}
-                        aria-current={isActive ? 'page' : undefined}
-                      >
-                        <span className="[font-family:'Carlito',Helvetica] font-normal text-base tracking-[1.60px]">
-                          {item.label}
-                        </span>
-                      </Button>
-                    );
-                  })}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-
-          {/* Other Menu Items */}
-          <div className="ml-2.5 space-y-0.5 mt-2 translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:600ms]">
-            {menuItems.map((item) => {
-              const IconComponent = item.icon;
-              const isActive = activeMenu === item.id;
-              return (
+      <div className="flex flex-col gap-2">
+        {/* 2Share của tôi */}
+        <Collapsible open={isMyShareOpen} onOpenChange={setIsMyShareOpen}>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-[10px] font-bold text-[#6e6e6e] text-base ${currentPath === '/my-links' ? 'bg-[#ececec]' : ''}`}
+            >
+              2Share của tôi
+              <ChevronDownIcon className={`w-4 h-4 ml-2 transition-transform ${isMyShareOpen ? 'rotate-180' : ''}`} />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="flex flex-col gap-2 mt-2">
+              {subMenuItems.map((item) => (
                 <Button
                   key={item.id}
                   variant="ghost"
-                  className={`w-full max-w-[205px] h-10 justify-start px-0 py-0 rounded-[10px] transition-colors
-                    ${isActive ? 'bg-[#d9d9d9] text-black' : 'bg-white text-[#6e6e6e] hover:bg-gray-100'}`}
+                  className={`w-full px-3 py-2 rounded-[10px] text-[#6e6e6e] text-base font-normal ${item.id === 'links' && currentPath === '/my-links' ? 'bg-[#ececec]' : ''}`}
                   onClick={() => {
-                    setActiveMenu(item.id);
-                    setActiveSubMenu('');
+                    if (item.id === 'links') window.location.href = '/my-links';
                   }}
-                  aria-current={isActive ? 'page' : undefined}
                 >
-                  <IconComponent className="w-[18px] h-[18px] ml-[3px] mr-2" />
-                  <span className="[font-family:'Carlito',Helvetica] font-normal text-base tracking-[1.60px] flex-1 text-left">
-                    {item.label}
-                  </span>
+                  {item.label}
                 </Button>
-              );
-            })}
-          </div>
-        </div>
-
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+        {/* Thẻ NFC của tôi */}
+        <Button
+          variant="ghost"
+          className={`w-full flex items-center px-3 py-2 rounded-[10px] text-[#6e6e6e] text-base font-normal ${currentPath === '/nfc' ? 'bg-[#ececec]' : ''}`}
+        >
+          <CreditCardIcon className="w-5 h-5 mr-2" />
+          Thẻ NFC của tôi
+        </Button>
+        {/* Thống kê */}
+        <Button
+          variant="ghost"
+          className={`w-full flex items-center px-3 py-2 rounded-[10px] text-[#6e6e6e] text-base font-normal ${currentPath === '/statistics' ? 'bg-[#ececec]' : ''}`}
+        >
+          <BarChart3Icon className="w-5 h-5 mr-2" />
+          Thống kê
+        </Button>
         {/* Help Icon at the bottom */}
         <div className="ml-2.5 mb-2 translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:800ms]">
           <Button
