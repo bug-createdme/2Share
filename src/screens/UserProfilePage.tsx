@@ -53,6 +53,16 @@ const UserProfilePage: React.FC<UserProfileProps> = ({ user }) => {
 
   // Nút "Xác thực ngay" sẽ điều hướng sang trang hành động xác thực
 
+  // Overlay username from localStorage if present (keeps UI in sync after change)
+  const displayUsername = (() => {
+    try {
+      const cached = localStorage.getItem(`mylinks_${user._id}_username`);
+      return cached || user.username;
+    } catch {
+      return user.username;
+    }
+  })();
+
   return (
     <div className="w-full min-h-screen flex bg-[#F5F5F5]">
       {/* Sidebar */}
@@ -83,7 +93,7 @@ const UserProfilePage: React.FC<UserProfileProps> = ({ user }) => {
               </div>
               <div>
                 <span className="block text-sm text-[#888] mb-1">Username</span>
-                <div className="text-lg text-[#222]">{user.username}</div>
+                <div className="text-lg text-[#222]">{displayUsername}</div>
               </div>
               <div>
                 <span className="block text-sm text-[#888] mb-1">Số điện thoại</span>

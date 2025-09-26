@@ -33,8 +33,7 @@ const VerifyEmailPage: React.FC = () => {
         setStatus('success');
         setMessage('Xác thực email thành công!');
         setTimeout(() => {
-          const hasToken = Boolean(localStorage.getItem('token'));
-          if (hasToken) navigate('/account'); else navigate('/login');
+          navigate('/login');
         }, 800);
       })
       .catch((err) => {

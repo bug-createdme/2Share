@@ -1,3 +1,51 @@
+// Tạo portfolio mới
+export async function createPortfolio(data: {
+  title: string;
+  blocks: Array<{ type: string; content: string; order: number }>;
+  social_links?: Record<string, string>;
+  avatar_url?: string;
+  banner_url?: string;
+}) {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('No token');
+  const res = await fetch('https://2share.icu/portfolios/create-portfolio', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || 'Lỗi tạo portfolio');
+  return result;
+}
+// Cập nhật portfolio hiện tại
+export async function updatePortfolio(data: {
+  title?: string;
+  blocks?: Array<{ type: string; content: string; order: number }>;
+  social_links?: Record<string, string>;
+  avatar_url?: string;
+  banner_url?: string;
+}) {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('No token');
+  const res = await fetch('https://2share.icu/portfolios/update-portfolio', {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  const result = await res.json();
+  if (!res.ok) {
+    const message = result?.message || 'Lỗi cập nhật portfolio';
+    const error = new Error(`HTTP_${res.status}:${message}`);
+    throw error;
+  }
+  return result;
+}
 // src/lib/api.ts
 export async function getMyProfile() {
   const token = localStorage.getItem('token');
@@ -18,6 +66,9 @@ export async function updateMyProfile(data: {
   phone?: string;
   avatar_url?: string;
   date_of_birth?: string;
+  bio?: string;
+  social_links?: Record<string, string>;
+  username?: string;
 }) {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('No token');
@@ -79,5 +130,47 @@ export async function refreshAccessToken(refresh_token: string) {
   });
   const result = await res.json();
   if (!res.ok) throw new Error(result.message || 'Lỗi làm mới phiên đăng nhập');
+  return result;
+}
+
+// Quên mật khẩu: gửi email chứa liên kết đặt lại mật khẩu
+export async function forgotPassword(email: string) {
+  const res = await fetch('https://2share.icu/users/forgot-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email }),
+  });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || 'Lỗi gửi email đặt lại mật khẩu');
+  return result;
+}
+
+// Xác minh forgot_password_token trước khi đặt lại mật khẩu
+export async function verifyForgotPassword(forgot_password_token: string) {
+  const res = await fetch('https://2share.icu/users/verify-forgot-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ forgot_password_token }),
+  });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || 'Token đặt lại mật khẩu không hợp lệ');
+  return result;
+}
+
+// Đặt lại mật khẩu với token đã được gửi qua email
+export async function resetPassword(data: { password: string; confirm_password: string; forgot_password_token: string; }) {
+  const res = await fetch('https://2share.icu/users/reset-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || 'Lỗi đặt lại mật khẩu');
   return result;
 }
