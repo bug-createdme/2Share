@@ -44,7 +44,8 @@ export async function resendVerifyEmail(refresh_token: string) {
   }
   // Gợi ý URL xác thực để backend render link click-được trong email
   // Nếu backend bỏ qua trường này thì không ảnh hưởng
-  const verify_url = `${window.location.origin}/verify-email`;
+  // Ưu tiên domain deploy theo yêu cầu
+  const verify_url = `https://2-share-nu.vercel.app/verify-email`;
   const res = await fetch('https://2share.icu/users/resend-verify-email', {
     method: 'POST',
     headers,
@@ -55,13 +56,15 @@ export async function resendVerifyEmail(refresh_token: string) {
   return result;
 }
 
-export async function verifyEmail(email_verify_token: string) {
+export async function verifyEmail(token: string) {
   const res = await fetch('https://2share.icu/users/verify-email', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email_verify_token }),
+    // Gửi theo schema mới: code
+    // Đồng thời giữ tương thích ngược với key email_verify_token nếu backend cũ
+    body: JSON.stringify({ code: token, email_verify_token: token }),
   });
   const result = await res.json();
   if (!res.ok) throw new Error(result.message || 'Lỗi xác thực email');
