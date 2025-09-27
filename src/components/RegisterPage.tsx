@@ -170,7 +170,7 @@ const RegisterPage: React.FC = () => {
           {/* Register Form */}
           <form className="mb-[18px] w-full flex flex-col items-center space-y-3" onSubmit={handleRegister}>
             {/* Họ và tên */}
-            <div className="w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
+            <div className="w-[475px] min-h-[59px] bg-[#F1F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
               <input
                 type="text"
                 placeholder="Họ và tên"
@@ -272,7 +272,7 @@ const RegisterPage: React.FC = () => {
             </span>
           </div>
           {/* Social Login Buttons */}
-          <div className="space-y-[18px] mb-[59px] w-full flex flex-col items-center">
+          <div className="space-y-[18px] mb-[20px] w-full flex flex-col items-center">
             {/* Google Login */}
             <button className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
               <img 
