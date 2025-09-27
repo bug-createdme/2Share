@@ -16,7 +16,7 @@ const ResetPasswordPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const token = searchParams.get('code') || '';
+  const token = searchParams.get('code') || searchParams.get('token') || searchParams.get('forgot_password_token') || '';
 
   useEffect(() => {
     async function verify() {
