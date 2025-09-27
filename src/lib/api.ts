@@ -138,12 +138,14 @@ export async function refreshAccessToken(refresh_token: string) {
 
 // Quên mật khẩu: gửi email chứa liên kết đặt lại mật khẩu
 export async function forgotPassword(email: string) {
+  // Gợi ý URL reset password để backend render link click-được trong email
+  const reset_url = `https://2-share-nu.vercel.app/reset-password`;
   const res = await fetch('https://2share.icu/users/forgot-password', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, reset_url }),
   });
   const result = await res.json();
   if (!res.ok) throw new Error(result.message || 'Lỗi gửi email đặt lại mật khẩu');
@@ -172,8 +174,9 @@ export async function resetPassword(data: { password: string; confirm_password: 
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      ...data,
-      code: data.forgot_password_token
+      password: data.password,
+      confirm_password: data.confirm_password,
+      forgot_password_token: data.forgot_password_token
     }),
   });
   const result = await res.json();
