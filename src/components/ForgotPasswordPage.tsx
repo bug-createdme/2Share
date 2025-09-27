@@ -1,13 +1,26 @@
 import React, { useState } from 'react';
 import { FiKey } from 'react-icons/fi';
+import { forgotPassword } from '../lib/api';
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError('');
+    setLoading(true);
+    try {
+      await forgotPassword(email);
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.message || 'Có lỗi xảy ra');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,11 +48,13 @@ const ForgotPasswordPage: React.FC = () => {
               onChange={e => setEmail(e.target.value)}
               required
             />
+            {error && <div className="text-red-600 text-sm mb-3 w-full text-left">{error}</div>}
             <button
               type="submit"
-              className="w-full bg-black text-white py-3 rounded-lg text-lg font-bold hover:bg-gray-900 transition mb-2"
+              className={`w-full text-white py-3 rounded-lg text-lg font-bold transition mb-2 ${loading ? 'bg-gray-500 cursor-not-allowed' : 'bg-black hover:bg-gray-900'}`}
+              disabled={loading}
             >
-              Send reset link
+              {loading ? 'Sending...' : 'Send reset link'}
             </button>
           </form>
         )}

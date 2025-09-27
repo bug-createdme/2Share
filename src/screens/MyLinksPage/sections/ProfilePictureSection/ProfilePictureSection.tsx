@@ -2,7 +2,8 @@
 import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
 
-export const ProfilePictureSection = ({ user }: { user: any }): JSX.Element => {
+
+export const ProfilePictureSection = ({ user, bio, socialLinks }: { user: any; bio: string; socialLinks: import("../SocialLinksSection/SocialLinksSection").SocialLink[] }): JSX.Element => {
   const socialIcons = [
     {
       src: "https://c.animaapp.com/mfwch0g78qp4H9/img/social-icons-2.svg",
@@ -26,25 +27,14 @@ export const ProfilePictureSection = ({ user }: { user: any }): JSX.Element => {
     },
   ];
 
-  const socialLinks = [
-    {
-      name: "LinkedIn",
-      icon: "https://c.animaapp.com/mfwch0g78qp4H9/img/social-icons-3.svg",
-    },
-    {
-      name: "Behance",
-      icon: "https://c.animaapp.com/mfwch0g78qp4H9/img/behance.svg",
-    },
-    {
-      name: "Instagram",
-      icon: "https://c.animaapp.com/mfwch0g78qp4H9/img/social-icons-1.svg",
-    },
-  ];
 
   return (
     <div className="w-[300px] h-[650px] translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:0ms]">
       <Card className="w-full h-full bg-[#e7a5a5] rounded-[25px] border-none shadow-xl overflow-hidden">
-        <CardContent className="flex flex-col p-0 h-full">
+        <CardContent
+          className="flex flex-col p-0 h-full custom-scrollbar"
+          style={{ maxHeight: 600, overflowY: 'auto' }}
+        >
           <div className="flex flex-col items-center mt-[40px]">
             <div className="flex flex-col items-center">
               <div className="w-[90px] h-[90px] rounded-full overflow-hidden bg-white shadow-lg flex items-center justify-center border border-[#e0e0e0]">
@@ -78,17 +68,13 @@ export const ProfilePictureSection = ({ user }: { user: any }): JSX.Element => {
           </div>
 
           <div className="flex justify-center mt-[20.6px] translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:600ms]">
-            <div className="relative w-[212px] h-[268px]">
-              <div className="absolute top-0 left-0 w-[210px] h-[268px] bg-white rounded-[10px] shadow-[0px_0px_58px_12px_#c76a6a40]" />
-              <div className="absolute top-[calc(50.00%_-_119px)] left-[calc(50.00%_-_91px)] w-[180px] [font-family:'Itim',Helvetica] font-normal text-[#e28e8e] text-sm tracking-[1.40px] leading-[normal]">
-                Mình là username_123, sinh viên thiết kế đồ họa với niềm yêu
-                thích sáng tạo và sự chỉn chu trong từng chi tiết.
-                <br />
-                Mình tập trung vào thiết kế thương hiệu, UI và minh họa số, với
-                mong muốn tạo ra những trải nghiệm có chiều sâu.
-                <br />
-                Theo dõi mình để cùng khám phá hành trình thiết kế và phát triển
-                bản thân mỗi ngày nhé!
+            <div className="relative w-[212px] min-h-[60px] flex items-center justify-center">
+              <div className="absolute top-0 left-0 w-[210px] min-h-[60px] bg-white rounded-[10px] shadow-[0px_0px_58px_12px_#c76a6a40]" />
+              <div
+                className="relative w-[180px] [font-family:'Itim',Helvetica] font-normal text-[#e28e8e] text-sm tracking-[1.40px] leading-[normal] transition-all duration-200 px-2 py-1"
+                style={{ minHeight: 20, maxHeight: 60, overflowY: 'auto', height: 'auto', wordBreak: 'break-word' }}
+              >
+                {bio}
               </div>
             </div>
           </div>

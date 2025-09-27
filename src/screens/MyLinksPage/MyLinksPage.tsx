@@ -6,22 +6,58 @@ import {
   AvatarImage,
 } from "../../components/ui/avatar";
 import { Button } from "../../components/ui/button";
-import { BioSection } from "./sections/BioSection/BioSection";
+// import { BioSection } from "./sections/BioSection/BioSection";
+import type { SocialLink } from "./sections/SocialLinksSection/SocialLinksSection";
 import { NavigationMenuSection } from "./sections/NavigationMenuSection/NavigationMenuSection";
 import { ProfilePictureSection } from "./sections/ProfilePictureSection/ProfilePictureSection";
 import { SocialLinksSection } from "./sections/SocialLinksSection/SocialLinksSection";
-import { getMyProfile } from "../../lib/api";
+import { getMyProfile, updateMyProfile, updatePortfolio } from "../../lib/api";
 
 export const MyLinksPage = (): JSX.Element => {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // Đã xóa addStatus vì không sử dụng
+  const [showModal, setShowModal] = useState(false);
+  const [showTitleBioModal, setShowTitleBioModal] = useState(false);
+  const [bio, setBio] = useState("");
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [tmpUsername, setTmpUsername] = useState("");
+  const [tmpBio, setTmpBio] = useState("");
+  const [savingTitleBio, setSavingTitleBio] = useState(false);
 
   useEffect(() => {
+    // Load from backend first (source of truth), then overlay per-user drafts from localStorage
     async function fetchProfile() {
       try {
         const profile = await getMyProfile();
         setUser(profile);
+        if (typeof profile.bio === 'string') setBio(profile.bio);
+        if (profile.social_links) {
+          const links: SocialLink[] = Object.entries(profile.social_links).map(([key, value]: any) => ({
+            name: key.charAt(0).toUpperCase() + key.slice(1),
+            url: String(value || ""),
+            clicks: 0,
+            isEnabled: Boolean(value),
+            color: "#6e6e6e",
+            icon: "🔗",
+          }));
+          if (links.length) setSocialLinks(links);
+        }
+        // After we know the user, overlay any local draft for THIS user
+        try {
+          const kBio = `mylinks_${profile._id}_bio`;
+          const kLinks = `mylinks_${profile._id}_socialLinks`;
+          const kUsername = `mylinks_${profile._id}_username`;
+          const localBio = localStorage.getItem(kBio);
+          const localLinks = localStorage.getItem(kLinks);
+          const localUsername = localStorage.getItem(kUsername);
+          if (localBio !== null) setBio(localBio);
+          if (localLinks) setSocialLinks(JSON.parse(localLinks));
+          if (localUsername) {
+            setUser((prev: any) => ({ ...prev, username: localUsername }));
+          }
+        } catch {}
       } catch (err: any) {
         setError(err.message || "Lỗi lấy thông tin người dùng");
       } finally {
@@ -30,6 +66,39 @@ export const MyLinksPage = (): JSX.Element => {
     }
     fetchProfile();
   }, []);
+
+  // 3) Auto-persist to localStorage on change (per-user keys)
+  useEffect(() => {
+    if (!user?._id) return;
+    try {
+      localStorage.setItem(`mylinks_${user._id}_bio`, bio || "");
+      localStorage.setItem(`mylinks_${user._id}_socialLinks`, JSON.stringify(socialLinks));
+    } catch {}
+  }, [bio, socialLinks, user?._id]);
+
+
+  async function handleSaveTitleBio() {
+    if (!user) return;
+    setSavingTitleBio(true);
+    try {
+      console.log('Saving username:', tmpUsername, 'bio:', tmpBio);
+      const result = await updateMyProfile({ username: tmpUsername, bio: tmpBio });
+      console.log('Update result:', result);
+      setUser({ ...user, username: tmpUsername });
+      setBio(tmpBio);
+      // Also persist to localStorage for this user
+      if (user._id) {
+        localStorage.setItem(`mylinks_${user._id}_username`, tmpUsername);
+      }
+      const blocks = [{ type: "text", content: tmpBio || "", order: 1 }];
+      try { await updatePortfolio({ blocks }); } catch {}
+      setShowTitleBioModal(false);
+    } catch (error) {
+      console.error('Error saving title/bio:', error);
+    } finally {
+      setSavingTitleBio(false);
+    }
+  }
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Đang tải thông tin...</div>;
@@ -47,7 +116,7 @@ export const MyLinksPage = (): JSX.Element => {
 
       {/* Right Sidebar */}
       <div className="fixed top-0 right-0 h-screen w-[395px] bg-white z-20 border-l border-[#d9d9d9] flex items-center justify-center">
-  <ProfilePictureSection user={user} />
+  <ProfilePictureSection user={user} bio={bio} socialLinks={socialLinks} />
       </div>
 
       {/* Main Content Area */}
@@ -59,6 +128,7 @@ export const MyLinksPage = (): JSX.Element => {
           </h1>
 
           <div className="flex items-center gap-4">
+            {/* Đã gỡ nút Lưu theo yêu cầu */}
             <Button
               variant="outline"
               size="sm"
@@ -92,34 +162,126 @@ export const MyLinksPage = (): JSX.Element => {
                 <AvatarFallback>{user.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
               </Avatar>
               <div className="flex items-center gap-4">
-                <h2 className="[font-family:'Carlito',Helvetica] font-normal text-black text-2xl tracking-[2.40px] leading-[normal]">
+                <button
+                  type="button"
+                  className="[font-family:'Carlito',Helvetica] font-normal text-black text-2xl tracking-[2.40px] leading-[normal] hover:underline"
+                  onClick={() => {
+                    setTmpUsername(user.username || "");
+                    setTmpBio(bio || "");
+                    setShowTitleBioModal(true);
+                  }}
+                  aria-label="Chỉnh sửa title và bio"
+                >
                   @{user.username}
-                </h2>
+                </button>
                 {/* <Button variant="ghost" size="sm" className="h-auto p-0">
                   <EditIcon className="w-6 h-6" />
                 </Button> */}
               </div>
+              {/* Bio inline clickable text */}
+              <button
+                type="button"
+                className="text-[#6e6e6e] text-sm hover:underline"
+                onClick={() => {
+                  setTmpUsername(user.username || "");
+                  setTmpBio(bio || "");
+                  setShowTitleBioModal(true);
+                }}
+              >
+                {bio ? bio : "bio"}
+              </button>
               {/* Social icons giữ nguyên */}
             </div>
           </div>
           {/* Add Button */}
-          <Button className="h-auto w-full max-w-[400px] bg-[#639fff] hover:bg-[#5a8fee] rounded-[35px] py-4 flex items-center justify-center gap-2">
+          <Button
+            className="h-auto w-full max-w-[400px] bg-[#639fff] hover:bg-[#5a8fee] rounded-[35px] py-4 flex items-center justify-center gap-2 shadow-lg"
+            onClick={() => setShowModal(true)}
+          >
             <PlusIcon className="w-6 h-6 text-white" />
             <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-xl tracking-[2.00px]">
               Thêm
             </span>
           </Button>
+
+          {/* Linktree-style Modal: chỉ hiển thị danh sách gợi ý */}
+          {showModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] p-8 relative animate-fade-in">
+                <button
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold"
+                  onClick={() => setShowModal(false)}
+                  aria-label="Đóng"
+                >
+                  &times;
+                </button>
+                <h2 className="text-2xl font-bold text-[#639fff] mb-6 text-center">Add Link</h2>
+                <div className="flex flex-col gap-2">
+                  {[
+                    { name: "Instagram", color: "#e4405f", icon: "�" },
+                    { name: "Facebook", color: "#1877f2", icon: "�" },
+                    { name: "LinkedIn", color: "#0a66c2", icon: "�" },
+                    { name: "TikTok", color: "#69c9d0", icon: "�" },
+                    { name: "YouTube", color: "#ff0000", icon: "📺" },
+                    { name: "Spotify", color: "#1db954", icon: "🎵" },
+                  ].map(s => (
+                    <button
+                      key={s.name}
+                      type="button"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#ececec] bg-[#f7f7f7] hover:bg-[#ececec] text-lg font-medium"
+                      onClick={() => {
+                        window.dispatchEvent(new CustomEvent("add-social-link", { detail: { name: s.name, color: s.color, icon: s.icon } }));
+                        setShowModal(false);
+                      }}
+                    >
+                      <span style={{ color: s.color, fontSize: 24 }}>{s.icon}</span>
+                      <span>{s.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Content Sections */}
-        <div className="w-full max-w-[700px] flex flex-col items-center px-9 pt-8 mb-8">
-          <BioSection />
-        </div>
 
         <div className="w-full max-w-[700px] flex flex-col items-center px-9">
-          <SocialLinksSection />
+          <SocialLinksSection socialLinks={socialLinks} setSocialLinks={setSocialLinks} />
         </div>
       </div>
+
+      {showTitleBioModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] p-6">
+            <h3 className="text-lg font-bold mb-4 text-center">Title and bio</h3>
+            <div className="mb-3">
+              <div className="text-sm text-gray-600 mb-1">Title</div>
+              <input
+                className="w-full border rounded-md px-3 py-2"
+                value={tmpUsername}
+                onChange={e => setTmpUsername(e.target.value)}
+                maxLength={30}
+              />
+              <div className="text-right text-xs text-gray-500 mt-1">{tmpUsername.length} / 30</div>
+            </div>
+            <div className="mb-4">
+              <div className="text-sm text-gray-600 mb-1">Bio</div>
+              <textarea
+                className="w-full border rounded-md px-3 py-2"
+                rows={4}
+                value={tmpBio}
+                onChange={e => setTmpBio(e.target.value.slice(0, 160))}
+                maxLength={160}
+              />
+              <div className="text-right text-xs text-gray-500 mt-1">{tmpBio.length} / 160</div>
+            </div>
+            <Button className="w-full" onClick={handleSaveTitleBio} disabled={savingTitleBio}>
+              {savingTitleBio ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
