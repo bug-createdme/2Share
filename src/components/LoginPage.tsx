@@ -60,6 +60,11 @@ const LoginPage: React.FC = () => {
     }
     setLoading(true);
     try {
+      // Clear any old tokens before login
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+      
+      console.log('Attempting login with:', { email, password: '***' }); // Debug
       const res = await fetch('https://2share.icu/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -68,7 +73,12 @@ const LoginPage: React.FC = () => {
       const data = await res.json();
       console.log('Login response:', data); // Debug response
       if (!res.ok) {
-        setFormError(data.message || 'Đăng nhập thất bại');
+        // Handle specific validation errors
+        if (data.errors && data.errors.email) {
+          setFormError(data.errors.email.msg || 'Email hoặc mật khẩu không đúng');
+        } else {
+          setFormError(data.message || 'Đăng nhập thất bại');
+        }
       } else {
         // Lưu token, chuyển hướng hoặc xử lý tiếp
         localStorage.setItem('token', data.result.access_token);
@@ -78,6 +88,7 @@ const LoginPage: React.FC = () => {
         navigate('/my-links');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setFormError('Lỗi kết nối máy chủ');
     } finally {
       setLoading(false);

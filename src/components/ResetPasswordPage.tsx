@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { resetPassword, verifyForgotPassword } from '../lib/api';
+import { resetPassword, verifyForgotPassword, testLogin } from '../lib/api';
 
 const ResetPasswordPage: React.FC = () => {
   const [password, setPassword] = useState('');
@@ -17,6 +17,7 @@ const ResetPasswordPage: React.FC = () => {
   const navigate = useNavigate();
 
   const token = searchParams.get('code') || searchParams.get('token') || searchParams.get('forgot_password_token') || '';
+  const email = searchParams.get('email') || '';
 
   useEffect(() => {
     async function verify() {
@@ -50,10 +51,38 @@ const ResetPasswordPage: React.FC = () => {
     }
     try {
       setSubmitting(true);
-      await resetPassword({ password, confirm_password: confirmPassword, forgot_password_token: token });
-      setSuccess('Đặt lại mật khẩu thành công, chuyển đến trang đăng nhập...');
-      setTimeout(() => navigate('/login'), 1500);
+      console.log('Resetting password with token:', token.substring(0, 10) + '...'); // Debug
+      const result = await resetPassword({ password, confirm_password: confirmPassword, forgot_password_token: token });
+      console.log('Reset password result:', result); // Debug
+      
+      // Test login ngay sau khi reset password để kiểm tra
+      if (email) {
+        console.log('Testing login with new password...');
+        setTimeout(async () => {
+          try {
+            const testResult = await testLogin(email, password);
+            if (testResult.success) {
+              console.log('✅ New password works! Login successful.');
+              setSuccess('Đặt lại mật khẩu thành công! Mật khẩu mới đã hoạt động.');
+            } else {
+              console.log('❌ New password still not working:', testResult.data);
+              setSuccess('Đặt lại mật khẩu thành công! Nhưng có thể cần đợi thêm vài phút để backend cập nhật.');
+            }
+          } catch (testErr) {
+            console.log('Test login error:', testErr);
+            setSuccess('Đặt lại mật khẩu thành công! Vui lòng thử đăng nhập sau vài phút.');
+          }
+        }, 2000);
+      } else {
+        setSuccess('Đặt lại mật khẩu thành công! Vui lòng đợi vài giây trước khi đăng nhập...');
+      }
+      
+      // Clear any old tokens
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+      setTimeout(() => navigate('/login'), 5000); // Tăng thời gian chờ
     } catch (err: any) {
+      console.error('Reset password error:', err);
       setError(err.message || 'Không thể đặt lại mật khẩu');
     } finally {
       setSubmitting(false);
