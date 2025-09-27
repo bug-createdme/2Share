@@ -62,7 +62,7 @@ const ForgotPasswordPage: React.FC = () => {
       </div>
       {/* Logo dự án dưới cùng */}
       <div className="mt-10 flex flex-col items-center">
-        <img src="/public/images/logo.png" alt="2Share Logo" className="w-[140px] h-auto" />
+        <img src="/images/logo.png" alt="2Share Logo" className="w-[140px] h-auto" />
       </div>
     </div>
   );
