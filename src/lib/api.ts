@@ -171,7 +171,10 @@ export async function resetPassword(data: { password: string; confirm_password: 
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      ...data,
+      code: data.forgot_password_token
+    }),
   });
   const result = await res.json();
   if (!res.ok) throw new Error(result.message || 'Lỗi đặt lại mật khẩu');
