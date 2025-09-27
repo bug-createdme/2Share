@@ -139,7 +139,8 @@ export async function refreshAccessToken(refresh_token: string) {
 // Quên mật khẩu: gửi email chứa liên kết đặt lại mật khẩu
 export async function forgotPassword(email: string) {
   // Gợi ý URL reset password để backend render link click-được trong email
-  const reset_url = `https://2-share-nu.vercel.app/reset-password`;
+  // Bao gồm email trong URL để có thể test login sau khi reset
+  const reset_url = `https://2-share-nu.vercel.app/reset-password?email=${encodeURIComponent(email)}`;
   const res = await fetch('https://2share.icu/users/forgot-password', {
     method: 'POST',
     headers: {
@@ -168,6 +169,12 @@ export async function verifyForgotPassword(forgot_password_token: string) {
 
 // Đặt lại mật khẩu với token đã được gửi qua email
 export async function resetPassword(data: { password: string; confirm_password: string; forgot_password_token: string; }) {
+  console.log('Sending reset password request:', {
+    password: data.password.substring(0, 3) + '***',
+    confirm_password: data.confirm_password.substring(0, 3) + '***',
+    forgot_password_token: data.forgot_password_token.substring(0, 10) + '...'
+  });
+  
   const res = await fetch('https://2share.icu/users/reset-password', {
     method: 'POST',
     headers: {
@@ -180,6 +187,20 @@ export async function resetPassword(data: { password: string; confirm_password: 
     }),
   });
   const result = await res.json();
+  console.log('Reset password response:', result);
   if (!res.ok) throw new Error(result.message || 'Lỗi đặt lại mật khẩu');
   return result;
+}
+
+// Test login function để kiểm tra mật khẩu mới
+export async function testLogin(email: string, password: string) {
+  console.log('Testing login with new password...');
+  const res = await fetch('https://2share.icu/users/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  console.log('Test login response:', data);
+  return { success: res.ok, data };
 }
