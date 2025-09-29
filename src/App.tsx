@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Header from './components/Header';
-import Hero from './components/Hero';
+import OAuthCallbackHandler from './components/OAuthCallbackHandler';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import ForgotPasswordPage from './components/ForgotPasswordPage';
@@ -11,7 +10,7 @@ import UserProfilePage from './screens/UserProfilePage';
 import VerifyEmailPage from './screens/VerifyEmailPage';
 import EmailVerifyActionPage from './screens/EmailVerifyActionPage';
 import { getMyProfile } from './lib/api';
-import OAuthCallbackHandler from './components/OAuthCallbackHandler';
+// ...existing code...
 
 // Wrapper để lấy user từ API và truyền vào UserProfilePage
 function UserProfilePageWrapper() {
@@ -45,12 +44,7 @@ function App() {
         <Routes>
           <Route
             path="/"
-            element={
-              <div className="bg-[#225C29]">
-                <Header />
-                <Hero />
-              </div>
-            }
+            element={<OAuthCallbackHandler />}
           />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import Header from './Header';
+import Hero from './Hero';
+
 const OAuthCallbackHandler = () => {
   const navigate = useNavigate();
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const accessToken = params.get('access_token');
@@ -11,11 +13,17 @@ const OAuthCallbackHandler = () => {
     if (accessToken && refreshToken) {
       localStorage.setItem('token', accessToken);
       localStorage.setItem('refresh_token', refreshToken);
-      navigate('/profile'); // hoặc đổi thành '/'
+      navigate('/profile');
     }
   }, [navigate]);
 
-  return null;
+  // Nếu không có token thì render trang chủ
+  return (
+    <div className="bg-[#225C29]">
+      <Header />
+      <Hero />
+    </div>
+  );
 };
 
 export default OAuthCallbackHandler;
