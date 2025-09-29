@@ -9,6 +9,7 @@ import { MyLinksPage } from './screens/MyLinksPage/MyLinksPage';
 import UserProfilePage from './screens/UserProfilePage';
 import VerifyEmailPage from './screens/VerifyEmailPage';
 import EmailVerifyActionPage from './screens/EmailVerifyActionPage';
+import PortfolioDesignPage from './screens/PortfolioDesignPage';
 import { getMyProfile } from './lib/api';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -25,7 +26,7 @@ function UserProfilePageWrapper() {
         const profile = await getMyProfile();
         setUser(profile);
       } catch (err: any) {
-        setError(err.message || "Lỗi lấy thông tin người dùng");
+        setError(err.message || "Lỗi l��y thông tin người dùng");
       } finally {
         setLoading(false);
       }
@@ -57,6 +58,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/my-links" element={<MyLinksPage />} />
+          <Route path="/portfolio/design" element={<PortfolioDesignPage />} />
           <Route path="/account" element={<UserProfilePageWrapper />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/email-verify-action" element={<EmailVerifyActionPage />} />
