@@ -11,6 +11,7 @@ import UserProfilePage from './screens/UserProfilePage';
 import VerifyEmailPage from './screens/VerifyEmailPage';
 import EmailVerifyActionPage from './screens/EmailVerifyActionPage';
 import { getMyProfile } from './lib/api';
+import OAuthCallbackHandler from './components/OAuthCallbackHandler';
 
 // Wrapper để lấy user từ API và truyền vào UserProfilePage
 function UserProfilePageWrapper() {
@@ -59,6 +60,8 @@ function App() {
           <Route path="/account" element={<UserProfilePageWrapper />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/email-verify-action" element={<EmailVerifyActionPage />} />
+          {/* Route xử lý callback OAuth Google */}
+          <Route path="/oauth/callback" element={<OAuthCallbackHandler />} />
         </Routes>
       </div>
     </Router>

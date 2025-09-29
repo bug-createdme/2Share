@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
+import { getOauthGoogleUrl } from '../lib/api';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -184,7 +185,11 @@ const LoginPage: React.FC = () => {
           {/* Social Login Buttons */}
           <div className="space-y-[18px] mb-[59px] w-full flex flex-col items-center">
             {/* Google Login */}
-            <button className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
+            <button
+              type="button"
+              className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors"
+              onClick={() => window.location.href = getOauthGoogleUrl()}
+            >
               <img 
                 src="https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-09-09/kAvOZ8CcqE.svg" 
                 alt="Google" 
@@ -195,36 +200,7 @@ const LoginPage: React.FC = () => {
               </span>
             </button>
 
-            {/* Facebook Login */}
-            {/* <button className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
-              <div className="w-[23px] h-[19px] mr-[8px] relative">
-                <img 
-                  src="https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-09-09/Gs1KbKB7Th.svg" 
-                  alt="Facebook background" 
-                  className="absolute inset-0 w-full h-full"
-                />
-                <img 
-                  src="https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-09-09/TOAh1d7AJE.svg" 
-                  alt="Facebook f" 
-                  className="absolute top-[3.52px] left-[6.35px] w-[10.49px] h-[15.48px]"
-                />
-              </div>
-              <span className="text-[20px] font-bold leading-[18.4px] text-black font-['League_Spartan']">
-                Đăng nhập bằng Facebook
-              </span>
-            </button> */}
-
-            {/* Phone Login */}
-            {/* <button className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
-              <img 
-                src="https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-09-09/cAXi8U5rXE.svg" 
-                alt="WhatsApp" 
-                className="w-[22.89px] h-[19px] mr-[10px]"
-              />
-              <span className="text-[20px] font-bold leading-[18.4px] text-black font-['League_Spartan']">
-                Đăng nhập bằng số điện thoại
-              </span>
-            </button> */}
+        
           </div>
 
           {/* Forgot Password Links */}
