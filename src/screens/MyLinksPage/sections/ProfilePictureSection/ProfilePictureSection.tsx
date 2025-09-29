@@ -4,28 +4,6 @@ import { Card, CardContent } from "../../../../components/ui/card";
 
 
 export const ProfilePictureSection = ({ user, bio, socialLinks }: { user: any; bio: string; socialLinks: import("../SocialLinksSection/SocialLinksSection").SocialLink[] }): JSX.Element => {
-  const socialIcons = [
-    {
-      src: "https://c.animaapp.com/mfwch0g78qp4H9/img/social-icons-2.svg",
-      alt: "Social icons",
-    },
-    {
-      src: "https://c.animaapp.com/mfwch0g78qp4H9/img/social-icons-9.svg",
-      alt: "Social icons",
-    },
-    {
-      src: "https://c.animaapp.com/mfwch0g78qp4H9/img/social-icons.svg",
-      alt: "Social icons",
-    },
-    {
-      src: "https://c.animaapp.com/mfwch0g78qp4H9/img/social-icons-7.svg",
-      alt: "Social icons",
-    },
-    {
-      src: "https://c.animaapp.com/mfwch0g78qp4H9/img/behance.svg",
-      alt: "Behance",
-    },
-  ];
 
 
   return (
@@ -50,22 +28,7 @@ export const ProfilePictureSection = ({ user, bio, socialLinks }: { user: any; b
             </div>
           </div>
 
-          <div className="flex justify-center mt-2 translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:400ms]">
-            <div className="flex gap-5">
-              {socialIcons.map((icon, index) => (
-                <img
-                  key={index}
-                  className={
-                    index === 4
-                      ? "w-[23.37px] h-[23.37px]"
-                      : "mt-[1.7px] w-[20.03px] h-[20.03px]"
-                  }
-                  alt={icon.alt}
-                  src={icon.src}
-                />
-              ))}
-            </div>
-          </div>
+          {/* Đã xoá các hình social phía trên avatar */}
 
           <div className="flex justify-center mt-[20.6px] translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:600ms]">
             <div className="relative w-[212px] min-h-[60px] flex items-center justify-center">
