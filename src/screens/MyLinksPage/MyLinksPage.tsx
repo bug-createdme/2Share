@@ -253,7 +253,13 @@ export const MyLinksPage = (): JSX.Element => {
 
       {showTitleBioModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] p-6">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] p-6 relative">
+            <button 
+              onClick={() => setShowTitleBioModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <span className="text-gray-500 text-xl leading-none">×</span>
+            </button>
             <h3 className="text-lg font-bold mb-4 text-center">Title and bio</h3>
             <div className="mb-3">
               <div className="text-sm text-gray-600 mb-1">Title</div>
