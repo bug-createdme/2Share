@@ -8,45 +8,20 @@ const OAuthCallbackHandler = () => {
 
   useEffect(() => {
     const code = searchParams.get('code');
+    const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
 
     if (code) {
-      // Gửi code đến backend để đổi lấy token
-      fetch('https://2share.icu/users/oauth/callback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ code })
-      })
-        .then((res) => {
-          if (!res.ok) {
-            // Ném lỗi để bắt ở khối catch
-            return res.json().then(err => Promise.reject(err));
-          }
-          return res.json();
-        })
-        .then((data) => {
-          const { access_token, refresh_token } = data.result;
-          if (access_token && refresh_token) {
-            localStorage.setItem('token', access_token);
-            localStorage.setItem('refresh_token', refresh_token);
-            // Chuyển hướng đến trang my-links hoặc trang profile
-            navigate('/my-links');
-          } else {
-            // Xử lý trường hợp không có token trả về
-            throw new Error('Không nhận được token từ server.');
-          }
-        })
-        .catch((err) => {
-          console.error('Lỗi xác thực OAuth:', err);
-          setError(err.message || 'Đã xảy ra lỗi trong quá trình đăng nhập. Vui lòng thử lại.');
-          // Tùy chọn: chuyển hướng về trang đăng nhập sau vài giây
-          setTimeout(() => navigate('/login'), 5000);
-        });
+      // ...existing code...
+    } else if (accessToken && refreshToken) {
+      // Lưu token và chuyển hướng
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('refresh_token', refreshToken);
+      navigate('/my-links');
     } else {
-      // Xử lý trường hợp không có 'code' trong URL
+      // Xử lý trường hợp không có 'code' hoặc 'access_token' trong URL
       const errorDescription = searchParams.get('error');
-      setError(errorDescription || 'Không tìm thấy mã ủy quyền trong URL.');
+      setError(errorDescription || 'Không tìm thấy mã ủy quyền hoặc access token trong URL.');
       setTimeout(() => navigate('/login'), 5000);
     }
   }, [navigate, searchParams]);
