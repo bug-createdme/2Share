@@ -61,7 +61,7 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/email-verify-action" element={<EmailVerifyActionPage />} />
           {/* Route xử lý callback OAuth Google */}
-          <Route path="/users/oauth/google" element={<OAuthCallbackHandler />} />
+          <Route path="/oauth/google" element={<OAuthCallbackHandler />} />
         </Routes>
       </div>
     </Router>
