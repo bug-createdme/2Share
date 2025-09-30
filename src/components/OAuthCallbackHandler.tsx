@@ -1,30 +1,44 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { AppContext } from '../context/app.context';
 
 const OAuthCallbackHandler = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const { setIsAuthenticated, setProfile } = useContext(AppContext);
 
   useEffect(() => {
     const code = searchParams.get('code');
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
+    const email = searchParams.get('email');
+    const firstName = searchParams.get('firstName');
+    const lastName = searchParams.get('lastName');
+    const profile_picture_path = searchParams.get('profile_picture_path');
 
     if (code) {
       // ...existing code...
     } else if (accessToken && refreshToken) {
-      // Lưu token và chuyển hướng
+      setIsAuthenticated?.(true);
+      const profile = {
+        first_name: firstName || '',
+        last_name: lastName || '',
+        email: email || '',
+        profile_picture_path: profile_picture_path || '',
+      };
+      setProfile?.(profile);
       localStorage.setItem('token', accessToken);
       localStorage.setItem('refresh_token', refreshToken);
-      navigate('/my-links');
+      localStorage.setItem('profile', JSON.stringify(profile));
+      navigate('/');
     } else {
       // Xử lý trường hợp không có 'code' hoặc 'access_token' trong URL
       const errorDescription = searchParams.get('error');
       setError(errorDescription || 'Không tìm thấy mã ủy quyền hoặc access token trong URL.');
       setTimeout(() => navigate('/login'), 5000);
     }
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, setIsAuthenticated, setProfile]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
