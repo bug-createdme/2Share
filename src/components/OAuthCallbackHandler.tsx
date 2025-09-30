@@ -31,7 +31,9 @@ const OAuthCallbackHandler = () => {
       localStorage.setItem('token', accessToken);
       localStorage.setItem('refresh_token', refreshToken);
       localStorage.setItem('profile', JSON.stringify(profile));
-      navigate('/');
+  // Đánh dấu email đã xác thực khi login bằng Google
+  localStorage.setItem('email_verified', 'true');
+  navigate('/my-links');
     } else {
       // Xử lý trường hợp không có 'code' hoặc 'access_token' trong URL
       const errorDescription = searchParams.get('error');
