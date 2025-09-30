@@ -12,7 +12,7 @@ const PortfolioDesignPage: React.FC = () => {
   const [selectedTheme, setSelectedTheme] = useState("coral");
   const [selectedProfile, setSelectedProfile] = useState(0);
 const avatarColors: Record<string, string> = {
-  coral: 'bg-pink-300',
+  coral: "bg-[#E7A5A5]",
   green: 'bg-green-300',
   dark: 'bg-gray-500',
   gradient: 'bg-purple-400',
@@ -20,7 +20,7 @@ const avatarColors: Record<string, string> = {
 };
 
 const textColors: Record<string, string> = {
-  coral: 'text-pink-400',
+  coral: 'text-[#E7A5A5]',
   green: 'text-green-400',
   dark: 'text-gray-500',
   gradient: 'text-purple-400',
@@ -28,7 +28,7 @@ const textColors: Record<string, string> = {
 };
 
   const themeClasses: Record<string, string> = {
-    coral: "from-pink-300 to-pink-400",
+    coral: "from-[#E7A5A5] to-[#E7A5A5]",
     green: "from-green-300 to-green-400",
     dark: "from-gray-700 to-gray-800",
     gradient: "from-purple-400 via-blue-400 to-green-400",
@@ -43,11 +43,11 @@ const textColors: Record<string, string> = {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">2Share của tôi</h1>
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-400 rounded-lg hover:bg-gray-50">
+            <button className="flex items-center gap-2 px-4 py-2 border border-gray-400 rounded-xl hover:bg-gray-50">
               <Upload className="w-4 h-4" />
               <span className="">Chia sẻ</span>
             </button>
-            <button className="p-2 border border-gray-400 rounded-lg hover:bg-gray-50">
+            <button className="p-3 border border-gray-400 rounded-xl hover:bg-gray-50">
               <Settings className="w-4 h-4" />
             </button>
           </div>
@@ -135,7 +135,7 @@ const textColors: Record<string, string> = {
                         <div
                         onClick={() => setSelectedTheme('coral')}
                         className={`
-                            w-24 h-32 bg-gradient-to-br from-pink-300 to-pink-400 rounded-2xl mb-2 cursor-pointer
+                            w-24 h-32 bg-gradient-to-br from-[#E7A5A5] to-[#E7A5A5] rounded-2xl mb-2 cursor-pointer
                             ${selectedTheme === 'coral' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
                         `}
                         />

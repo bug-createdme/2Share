@@ -18,10 +18,10 @@ export default function Sidebar() {
 
   return (
     <aside className="fixed top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 overflow-y-auto">
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-3">
         {/* User Profile */}
         <div
-          className="flex items-center gap-3 p-3 bg-white rounded-lg border cursor-pointer"
+          className="flex items-center gap-3 p-3 bg-white rounded-lg cursor-pointer"
           onClick={() => setShowUserMenu((p) => !p)}
         >
           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-200 to-pink-300 flex items-center justify-center">
@@ -47,7 +47,7 @@ export default function Sidebar() {
         )}
 
         {/* My 2Share Section */}
-        <div className="bg-gray-100 rounded-lg p-3">
+        <div className=" rounded-lg px-3 py-1">
           <div
             className="flex items-center gap-3 mb-3 cursor-pointer"
             onClick={() => setShow2ShareMenu((p) => !p)}
@@ -61,10 +61,10 @@ export default function Sidebar() {
             )}
           </div>
           {show2ShareMenu && (
-            <div className="border-l border-gray-300 ml-2 pl-4 space-y-2">
+            <div className="border-l ml-2 pl-4 space-y-2">
               <button
                 onClick={() => setActivePage("duongdan")}
-                className={`block w-full text-left px-3 py-2 rounded-lg ${
+                className={`block w-full text-left px-3 py-2 rounded-xl ${
                   activePage === "duongdan"
                     ? "bg-gray-300 text-black"
                     : "bg-white text-gray-600 hover:bg-gray-50"
@@ -74,7 +74,7 @@ export default function Sidebar() {
               </button>
               <button
                 onClick={() => setActivePage("thietke")}
-                className={`block w-full text-left px-3 py-2 rounded-lg ${
+                className={`block w-full text-left px-3 py-2 rounded-xl ${
                   activePage === "thietke"
                     ? "bg-gray-300 text-black"
                     : "bg-white text-gray-600 hover:bg-gray-50"
@@ -89,7 +89,7 @@ export default function Sidebar() {
         {/* NFC Card */}
         <button
           onClick={() => setActivePage("nfc")}
-          className={`flex items-center gap-3 w-full p-3 rounded-lg border ${
+          className={`flex items-center gap-3 w-full p-3 rounded-xl ${
             activePage === "nfc"
               ? "bg-gray-300 text-black"
               : "bg-white text-gray-600 hover:bg-gray-50"
@@ -102,7 +102,7 @@ export default function Sidebar() {
         {/* Statistics */}
         <button
           onClick={() => setActivePage("thongke")}
-          className={`flex items-center gap-3 w-full p-3 rounded-lg border ${
+          className={`flex items-center gap-3 w-full p-3 rounded-xl ${
             activePage === "thongke"
               ? "bg-gray-300 text-black"
               : "bg-white text-gray-600 hover:bg-gray-50"
