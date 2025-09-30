@@ -8,9 +8,9 @@ import {
 import { Button } from "../../components/ui/button";
 // import { BioSection } from "./sections/BioSection/BioSection";
 import type { SocialLink } from "./sections/SocialLinksSection/SocialLinksSection";
-import { NavigationMenuSection } from "./sections/NavigationMenuSection/NavigationMenuSection";
 import { ProfilePictureSection } from "./sections/ProfilePictureSection/ProfilePictureSection";
 import { SocialLinksSection } from "./sections/SocialLinksSection/SocialLinksSection";
+import Sidebar from "../../components/Sidebar";
 import { getMyProfile, updateMyProfile, updatePortfolio } from "../../lib/api";
 
 export const MyLinksPage = (): JSX.Element => {
@@ -110,9 +110,8 @@ export const MyLinksPage = (): JSX.Element => {
   return (
     <div className="bg-[#f7f7f7] w-full min-h-screen">
       {/* Left Sidebar */}
-      <div className="fixed top-0 left-0 h-screen w-[265px] bg-white z-20 border-r border-[#d9d9d9]">
-  <NavigationMenuSection user={user} />
-      </div>
+      <Sidebar />
+
 
       {/* Right Sidebar */}
       <div className="fixed top-0 right-0 h-screen w-[395px] bg-white z-20 border-l border-[#d9d9d9] flex items-center justify-center">
@@ -120,7 +119,7 @@ export const MyLinksPage = (): JSX.Element => {
       </div>
 
       {/* Main Content Area */}
-      <div className="ml-[265px] mr-[395px] h-screen overflow-y-auto flex flex-col items-center">
+      <div className="ml-64 mr-[395px] h-screen overflow-y-auto flex flex-col items-center">
         {/* Header */}
         <header className="sticky top-0 z-10 h-[95px] bg-[#f7f7f7] border-b border-[#ebebeb] flex items-center justify-between px-9 w-full max-w-[700px]">
           <h1 className="[font-family:'League_Spartan',Helvetica] font-bold text-black text-[32px] tracking-[0] leading-[normal]">
