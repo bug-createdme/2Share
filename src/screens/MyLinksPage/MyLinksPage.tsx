@@ -227,7 +227,7 @@ export const MyLinksPage = (): JSX.Element => {
 
       {/* Sidebar phải */}
       <div className="fixed top-0 right-0 h-full min-h-screen w-[395px] bg-white border-l border-[#d9d9d9] flex-shrink-0 flex flex-col items-center justify-center z-20">
-        <ProfilePictureSection user={user} bio={bio} socialLinks={socialLinks} />
+        <ProfilePictureSection user={user} bio={bio} socialLinks={socialLinks.filter(link => link.isEnabled)} />
       </div>
 
       {/* Modal chỉnh sửa title/bio */}
