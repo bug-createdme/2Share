@@ -1,6 +1,6 @@
 import { ArrowUpIcon, PlusIcon, SettingsIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation, Routes, Route } from "react-router-dom";
+import { useNavigate, Routes, Route } from "react-router-dom";
 import SocialModalPage from "./SocialModalPage";
 import {
   Avatar,
@@ -23,7 +23,6 @@ export const MyLinksPage = (): JSX.Element => {
   const [selectedCategory, setSelectedCategory] = useState<'social' | 'media' | 'all'>('social');
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
-  const location = useLocation();
   const [showTitleBioModal, setShowTitleBioModal] = useState(false);
   const [bio, setBio] = useState("");
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
