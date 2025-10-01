@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FiKey } from 'react-icons/fi';
-import { forgotPassword } from '../lib/api';
+import { forgotPassword } from '../../lib/api';
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
