@@ -8,7 +8,7 @@ interface SocialModalPageProps {
   setSelectedCategory: (cat: 'social' | 'media' | 'all') => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
-  onAddSocial: (name: string, color: string, icon: string) => void;
+  onAddSocial: (name: string, color: string) => void;
 }
 
 const SocialModalPage: React.FC<SocialModalPageProps> = ({
@@ -169,7 +169,7 @@ const filterItems = <T extends { name: string; desc?: string }>(items: T[]): T[]
                     <div className="text-center py-8 text-[#78716c]">No results found.</div>
                   )}
                   {filteredAll.map(item => (
-                    <button key={item.name} className="flex items-center gap-4 py-4 hover:bg-gray-50 transition-colors group" onClick={() => onAddSocial(item.name, item.color, item.icon)}>
+                    <button key={item.name} className="flex items-center gap-4 py-4 hover:bg-gray-50 transition-colors group" onClick={() => onAddSocial(item.name, item.color)}>
                       <img src={item.img} alt={item.name} className="w-10 h-10 rounded-full" />
                       <div className="flex-1 text-left">
                         <div className="text-base font-semibold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>{item.name}</div>
@@ -187,7 +187,7 @@ const filterItems = <T extends { name: string; desc?: string }>(items: T[]): T[]
                         <div className="text-center py-8 text-[#78716c]">No results found.</div>
                       )}
                       {filteredSocial.map(item => (
-                        <button key={item.name} className="flex items-center gap-4 py-4 hover:bg-gray-50 transition-colors group" onClick={() => onAddSocial(item.name, item.color, item.icon)}>
+                        <button key={item.name} className="flex items-center gap-4 py-4 hover:bg-gray-50 transition-colors group" onClick={() => onAddSocial(item.name, item.color)}>
                           <img src={item.img} alt={item.name} className="w-10 h-10 rounded-full" />
                           <div className="flex-1 text-left">
                             <div className="text-base font-semibold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>{item.name}</div>
@@ -204,7 +204,7 @@ const filterItems = <T extends { name: string; desc?: string }>(items: T[]): T[]
                         <div className="mb-2 text-lg font-bold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>Video</div>
                       )}
                       {filteredMedia.filter(i => i.type === 'video').map(item => (
-                        <button key={item.name} className="flex items-center gap-4 py-4 hover:bg-gray-50 transition-colors group" onClick={() => onAddSocial(item.name, item.color, item.icon)}>
+                        <button key={item.name} className="flex items-center gap-4 py-4 hover:bg-gray-50 transition-colors group" onClick={() => onAddSocial(item.name, item.color)}>
                           <img src={item.img} alt={item.name} className="w-10 h-10 rounded-full" />
                           <div className="flex-1 text-left">
                             <div className="text-base font-semibold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>{item.name}</div>
@@ -217,7 +217,7 @@ const filterItems = <T extends { name: string; desc?: string }>(items: T[]): T[]
                         <div className="mb-2 mt-6 text-lg font-bold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>Audio</div>
                       )}
                       {filteredMedia.filter(i => i.type === 'audio').map(item => (
-                        <button key={item.name} className="flex items-center gap-4 py-4 hover:bg-gray-50 transition-colors group" onClick={() => onAddSocial(item.name, item.color, item.icon)}>
+                        <button key={item.name} className="flex items-center gap-4 py-4 hover:bg-gray-50 transition-colors group" onClick={() => onAddSocial(item.name, item.color)}>
                           <img src={item.img} alt={item.name} className="w-10 h-10 rounded-full" />
                           <div className="flex-1 text-left">
                             <div className="text-base font-semibold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>{item.name}</div>
@@ -237,7 +237,7 @@ const filterItems = <T extends { name: string; desc?: string }>(items: T[]): T[]
                         <div className="text-center py-8 text-[#78716c]">No results found.</div>
                       )}
                       {filteredAll.map(item => (
-                        <button key={item.name} className="flex items-center gap-4 py-4 hover:bg-gray-50 transition-colors group" onClick={() => onAddSocial(item.name, item.color, item.icon)}>
+                        <button key={item.name} className="flex items-center gap-4 py-4 hover:bg-gray-50 transition-colors group" onClick={() => onAddSocial(item.name, item.color)}>
                           <img src={item.img} alt={item.name} className="w-10 h-10 rounded-full" />
                           <div className="flex-1 text-left">
                             <div className="text-base font-semibold text-black" style={{ fontFamily: 'Inter, sans-serif' }}>{item.name}</div>

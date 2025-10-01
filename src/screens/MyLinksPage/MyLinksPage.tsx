@@ -112,27 +112,20 @@ export const MyLinksPage = (): JSX.Element => {
   }
 
   return (
-    <div className="bg-[#f7f7f7] w-full min-h-screen">
-      {/* Left Sidebar */}
-      <div className="fixed top-0 left-0 h-screen w-[265px] bg-white z-20 border-r border-[#d9d9d9]">
-  <NavigationMenuSection user={user} />
-      </div>
+    <div className="bg-[#f7f7f7] w-full min-h-screen flex flex-row">
+      {/* Sidebar trái */}
+      <aside className="h-screen w-[265px] bg-white border-r border-[#d9d9d9] flex-shrink-0 flex flex-col">
+        <NavigationMenuSection user={user} />
+      </aside>
 
-      {/* Right Sidebar */}
-      <div className="fixed top-0 right-0 h-screen w-[395px] bg-white z-20 border-l border-[#d9d9d9] flex items-center justify-center">
-  <ProfilePictureSection user={user} bio={bio} socialLinks={socialLinks} />
-      </div>
-
-      {/* Main Content Area */}
-      <div className="ml-[265px] mr-[395px] h-screen overflow-y-auto flex flex-col items-center">
+      {/* Main content */}
+      <main className="flex-1 min-h-screen flex flex-col items-center overflow-y-auto">
         {/* Header */}
-        <header className="sticky top-0 z-10 h-[95px] bg-[#f7f7f7] border-b border-[#ebebeb] flex items-center justify-between px-9 w-full max-w-[700px]">
-          <h1 className="[font-family:'League_Spartan',Helvetica] font-bold text-black text-[32px] tracking-[0] leading-[normal]">
+        <header className="sticky top-0 z-10 h-[95px] bg-[#f7f7f7] border-b border-[#ebebeb] flex items-center px-9 w-full">
+          <h1 className="[font-family:'League_Spartan',Helvetica] font-bold text-black text-[32px] tracking-[0] leading-[normal] text-left flex-1">
             2Share của tôi
           </h1>
-
-          <div className="flex items-center gap-4">
-            {/* Đã gỡ nút Lưu theo yêu cầu */}
+          <div className="flex items-center gap-4 ml-auto">
             <Button
               variant="outline"
               size="sm"
@@ -143,7 +136,6 @@ export const MyLinksPage = (): JSX.Element => {
                 Chia sẻ
               </span>
             </Button>
-
             <Button
               variant="outline"
               size="sm"
@@ -153,93 +145,90 @@ export const MyLinksPage = (): JSX.Element => {
             </Button>
           </div>
         </header>
-
-        {/* Profile Section */}
-        <div className="w-full max-w-[700px] flex flex-col items-center px-9 pt-12">
-          <div className="flex flex-col items-center gap-4 mb-8 w-full">
-            <div className="flex flex-col items-center gap-4">
-              <Avatar className="w-[77px] h-[77px]">
-                <AvatarImage
-                  src={user.avatar_url || undefined}
-                  alt="Profile picture"
-                />
-                <AvatarFallback>{user.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
-              </Avatar>
-              <div className="flex items-center gap-4">
+        {/* Content Section */}
+        <div className="w-full flex flex-col items-center flex-1">
+          <section className="w-full max-w-[700px] flex flex-col items-center px-9 pt-12">
+            <div className="flex flex-col items-center gap-4 mb-8 w-full">
+              <div className="flex flex-col items-center gap-4">
+                <Avatar className="w-[77px] h-[77px]">
+                  <AvatarImage
+                    src={user.avatar_url || undefined}
+                    alt="Profile picture"
+                  />
+                  <AvatarFallback>{user.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+                </Avatar>
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    className="[font-family:'Carlito',Helvetica] font-normal text-black text-2xl tracking-[2.40px] leading-[normal] hover:underline"
+                    onClick={() => {
+                      setTmpUsername(user.username || "");
+                      setTmpBio(bio || "");
+                      setShowTitleBioModal(true);
+                    }}
+                    aria-label="Chỉnh sửa title và bio"
+                  >
+                    @{user.username}
+                  </button>
+                </div>
                 <button
                   type="button"
-                  className="[font-family:'Carlito',Helvetica] font-normal text-black text-2xl tracking-[2.40px] leading-[normal] hover:underline"
+                  className="text-[#6e6e6e] text-sm hover:underline"
                   onClick={() => {
                     setTmpUsername(user.username || "");
                     setTmpBio(bio || "");
                     setShowTitleBioModal(true);
                   }}
-                  aria-label="Chỉnh sửa title và bio"
                 >
-                  @{user.username}
+                  {bio ? bio : "bio"}
                 </button>
-                {/* <Button variant="ghost" size="sm" className="h-auto p-0">
-                  <EditIcon className="w-6 h-6" />
-                </Button> */}
               </div>
-              {/* Bio inline clickable text */}
-              <button
-                type="button"
-                className="text-[#6e6e6e] text-sm hover:underline"
-                onClick={() => {
-                  setTmpUsername(user.username || "");
-                  setTmpBio(bio || "");
-                  setShowTitleBioModal(true);
-                }}
-              >
-                {bio ? bio : "bio"}
-              </button>
-              {/* Social icons giữ nguyên */}
             </div>
-          </div>
-          {/* Add Button */}
-          <Button
-            className="h-auto w-full max-w-[400px] bg-[#639fff] hover:bg-[#5a8fee] rounded-[35px] py-4 flex items-center justify-center gap-2 shadow-lg"
-            onClick={() => navigate("/my-links/add-social")}
-          >
-            <PlusIcon className="w-6 h-6 text-white" />
-            <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-xl tracking-[2.00px]">
-              Thêm
-            </span>
-          </Button>
-
-          {/* Modal as a route */}
-          <Routes>
-            <Route path="add-social" element={
-              <SocialModalPage
-                show={true}
-                onClose={() => {
-                  navigate("/my-links");
-                  setSearchQuery("");
-                  setSelectedCategory("social");
-                }}
-                selectedCategory={selectedCategory}
-                setSelectedCategory={setSelectedCategory}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                onAddSocial={(name, color, icon) => {
-                  window.dispatchEvent(new CustomEvent("add-social-link", { detail: { name, color, icon } }));
-                  navigate("/my-links");
-                  setSearchQuery("");
-                  setSelectedCategory("social");
-                }}
-              />
-            } />
-          </Routes>
+            <Button
+              className="h-auto w-full max-w-[400px] bg-[#639fff] hover:bg-[#5a8fee] rounded-[35px] py-4 flex items-center justify-center gap-2 shadow-lg mb-8"
+              onClick={() => navigate("/my-links/add-social")}
+            >
+              <PlusIcon className="w-6 h-6 text-white" />
+              <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-xl tracking-[2.00px]">
+                Thêm
+              </span>
+            </Button>
+            {/* Modal as a route */}
+            <Routes>
+              <Route path="add-social" element={
+                <SocialModalPage
+                  show={true}
+                  onClose={() => {
+                    navigate("/my-links");
+                    setSearchQuery("");
+                    setSelectedCategory("social");
+                  }}
+                  selectedCategory={selectedCategory}
+                  setSelectedCategory={setSelectedCategory}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  onAddSocial={(name, color) => {
+                    window.dispatchEvent(new CustomEvent("add-social-link", { detail: { name, color } }));
+                    navigate("/my-links");
+                    setSearchQuery("");
+                    setSelectedCategory("social");
+                  }}
+                />
+              } />
+            </Routes>
+          </section>
+          <section className="w-full max-w-[700px] flex flex-col items-center px-9">
+            <SocialLinksSection socialLinks={socialLinks} setSocialLinks={setSocialLinks} />
+          </section>
         </div>
+      </main>
 
-        {/* Content Sections */}
+      {/* Sidebar phải */}
+      <aside className="h-screen w-[395px] bg-white border-l border-[#d9d9d9] flex-shrink-0 flex flex-col items-center justify-center">
+        <ProfilePictureSection user={user} bio={bio} socialLinks={socialLinks} />
+      </aside>
 
-        <div className="w-full max-w-[700px] flex flex-col items-center px-9">
-          <SocialLinksSection socialLinks={socialLinks} setSocialLinks={setSocialLinks} />
-        </div>
-      </div>
-
+      {/* Modal chỉnh sửa title/bio */}
       {showTitleBioModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] p-6 relative">
