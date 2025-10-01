@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import OAuthCallbackHandler from './components/OAuthCallbackHandler';
-import LoginPage from './components/LoginPage';
-import RegisterPage from './components/RegisterPage';
-import ForgotPasswordPage from './components/ForgotPasswordPage';
-import ResetPasswordPage from './components/ResetPasswordPage';
+import OAuthCallbackHandler from './components/AuthGoogle/OAuthCallbackHandler';
+import LoginPage from './components/LoginRegister/LoginPage';
+import RegisterPage from './components/LoginRegister/RegisterPage';
+import ForgotPasswordPage from './components/Password/ForgotPasswordPage';
+import ResetPasswordPage from './components/Password/ResetPasswordPage';
 import { MyLinksPage } from './screens/MyLinksPage/MyLinksPage';
 import UserProfilePage from './screens/UserProfilePage';
 import VerifyEmailPage from './screens/VerifyEmailPage';
 import EmailVerifyActionPage from './screens/EmailVerifyActionPage';
 import { getMyProfile } from './lib/api';
-import Header from './components/Header';
-import Hero from './components/Hero';
+import Header from './components/MainLayout/Header';
+import Hero from './components/MainLayout/Hero';
 
 // Wrapper để lấy user từ API và truyền vào UserProfilePage
 function UserProfilePageWrapper() {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { resetPassword, verifyForgotPassword, testLogin } from '../lib/api';
+import { resetPassword, verifyForgotPassword, testLogin } from '../../lib/api';
 
 const ResetPasswordPage: React.FC = () => {
   const [password, setPassword] = useState('');
