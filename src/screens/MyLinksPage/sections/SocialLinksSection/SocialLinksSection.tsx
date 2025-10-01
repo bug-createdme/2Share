@@ -105,7 +105,7 @@ export const SocialLinksSection = ({ socialLinks, setSocialLinks }: { socialLink
                         <div className="flex flex-col items-end gap-2 ml-4">
                           <Switch
                             checked={link.isEnabled}
-                            className="data-[state=checked]:bg-[#6e6e6e] data-[state=unchecked]:bg-[#e0e0e0]"
+                            className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-green-400 data-[state=checked]:to-green-600 data-[state=unchecked]:bg-gray-200 hover:data-[state=checked]:from-green-500 hover:data-[state=checked]:to-green-700 hover:data-[state=unchecked]:bg-gray-300 transition-all duration-300 ease-in-out shadow-md hover:shadow-lg h-6 w-11 border-0"
                             onCheckedChange={checked => {
                               const newLinks = [...socialLinks];
                               newLinks[index].isEnabled = checked;

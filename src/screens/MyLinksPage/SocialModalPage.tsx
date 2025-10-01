@@ -25,48 +25,48 @@ const SocialModalPage: React.FC<SocialModalPageProps> = ({
   // Danh sách các item
   const socialItems = [
     {
-      name: 'Instagram', color: '#e4405f', icon: '📷', img: '/images/social/Instagram_icon.png',
+      name: 'Instagram', color: '#e4405f', img: '/images/social/Instagram_icon.png',
       desc: 'Display up to six of your Instagram posts and reels, right on your 2Share page with the Instagram link app. Previewing Instagram content visually on your 2Share draws attention, and helps you grow your following by driving discovery from other platforms! In fact, you can see up to 3x more clicks using more visual link apps to promote your Instagram, compared to a regular link.'
     },
     {
-      name: 'TikTok', color: '#69c9d0', icon: '🎵', img: '/images/social/Tiktok_icon.png',
+      name: 'TikTok', color: '#69c9d0', img: '/images/social/Tiktok_icon.png',
       desc: 'Share your TikToks directly on your 2Share to gain exposure and followers.  Use TikTok Profile to make it easy for all your visitors to see your content, follow your account, and even connect for collaboration. Showcase your profile and up to six of your best or latest videos directly on your 2Share. Use TikTok Video to add a single TikTok from any profile directly on your 2Share. Highlight one of your own TikToks or a TikTok from one of your favorite creators.'
     },
     {
-      name: 'X', color: '#000000', icon: '✖️', img: '/images/social/X_icon.png',
+      name: 'X', color: '#000000', img: '/images/social/X_icon.png',
       desc: `Use X app to select your own (or your favorite) posts to display on your 2Share. If you're on a Pro plan on 2Share, you can showcase what's new on your feed automatically. Paste the X link, select 'Display this profile's latest post on my 2Share', and you're good to go.`
     },
     {
-      name: 'Threads', color: '#000000', icon: '🧵', img: '/images/social/Threads_icon.png',
+      name: 'Threads', color: '#000000', img: '/images/social/Threads_icon.png',
       desc: `Driving your audience to follow you on Threads just got easier, Select your own (or your favorite) Threads posts to display on your 2Share. If you're on a Pro plan, you can showcase what's new on your Threads feed automatically. Past the link to your profile, select 'Display this profile's latest Thread on my 2Share', and you're good to go.`
     },
     {
-      name: 'Facebook', color: '#1877f3', icon: '📘', img: '/images/social/Facebook_icon.png',
+      name: 'Facebook', color: '#1877f3', img: '/images/social/Facebook_icon.png',
       desc: 'Show your visitors any Facebook video, right on your 2Share. With this app, visitors can watch your Facebook videos in full, without opening another app, browser or tab.'
     },
     {
-      name: 'Pinterest', color: '#e60023', icon: '📌', img: '/images/social/Pinterest_icon.png',
+      name: 'Pinterest', color: '#e60023', img: '/images/social/Pinterest_icon.png',
       desc: `Share what you love on Pinterest so visitors can get inspired and explore what's inspiring you. If you've saved Pins to a board, you can share it on your 2Share. You can also share as many individual Pins as you like!`
     },
   ];
   const mediaItems = [
     {
-      name: 'YouTube', color: '#ff0000', icon: '▶️', img: '/images/social/Youtube_icon.png',
+      name: 'YouTube', color: '#ff0000', img: '/images/social/Youtube_icon.png',
       desc: 'Show your visitors any YouTube video, right on your 2Share. Visitors can stay on your Linktree and watch it in full, or click through to the Youtube profile to like, subscribe or leave a comment. You can also choose to automatically show your latest YouTube video.',
       type: 'video'
     },
     {
-      name: 'TikTok Video', color: '#69c9d0', icon: '🎬', img: '/images/social/Tiktok_icon.png',
+      name: 'TikTok Video', color: '#69c9d0', img: '/images/social/Tiktok_icon.png',
       desc: 'Highlight one of your TikToks or share a TikTok from another creator. Add a single TikTok from any profile directly on your 2Share for your visitors to watch and enjoy.',
       type: 'video'
     },
     {
-      name: 'Spotify', color: '#1db954', icon: '🎵', img: '/images/social/Spotify_icon.png',
+      name: 'Spotify', color: '#1db954', img: '/images/social/Spotify_icon.png',
       desc: `Whether you're an artist ready to show your fans what's new, or a music tastemaker sharing what you're listening to: Spotify on 2Share keeps your visitors in touch with the sounds you're putting out there. On Spotify, you get access to the world of music, curated playlists, artists, and podcasts you love - so share your own (or your favorite) Spotify sounds on your 2Share.`,
       type: 'audio'
     },
     {
-      name: 'SoundCloud', color: '#ff5500', icon: '🎧', img: '/images/social/Soundcloud_icon.png',
+      name: 'SoundCloud', color: '#ff5500', img: '/images/social/Soundcloud_icon.png',
       desc: `SoundCloud is the world's largest music streaming platform and community, where artists and fans can upload and share their tracks with millions of listeners. When you add the SoundCloud app to your Linktree, the music on your SoundCloud page can be heard everywhere your link is.`,
       type: 'audio'
     },
