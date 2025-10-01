@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { verifyEmail, resendVerifyEmail, refreshAccessToken } from '../lib/api';
+import { verifyEmail, resendVerifyEmail, refreshAccessToken } from '../../lib/api';
 
 const EmailVerifyActionPage: React.FC = () => {
   const location = useLocation();

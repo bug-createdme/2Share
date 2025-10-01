@@ -7,11 +7,14 @@ import ForgotPasswordPage from './components/Password/ForgotPasswordPage';
 import ResetPasswordPage from './components/Password/ResetPasswordPage';
 import { MyLinksPage } from './screens/MyLinksPage/MyLinksPage';
 import UserProfilePage from './screens/UserProfilePage';
-import VerifyEmailPage from './screens/VerifyEmailPage';
-import EmailVerifyActionPage from './screens/EmailVerifyActionPage';
+import VerifyEmailPage from './screens/VerifyEmail/VerifyEmailPage';
+import EmailVerifyActionPage from './screens/VerifyEmail/EmailVerifyActionPage';
+import SuccessPage from './screens/Payment/SuccessPage';
+import CancelPage from './screens/Payment/CancelPage';
 import { getMyProfile } from './lib/api';
 import Header from './components/MainLayout/Header';
 import Hero from './components/MainLayout/Hero';
+import PaymentButton from './components/PaymentButton';
 
 // Wrapper để lấy user từ API và truyền vào UserProfilePage
 function UserProfilePageWrapper() {
@@ -62,6 +65,9 @@ function App() {
           <Route path="/email-verify-action" element={<EmailVerifyActionPage />} />
           {/* Route xử lý callback OAuth Google */}
           <Route path="/oauth/google" element={<OAuthCallbackHandler />} />
+          <Route path="/payment" element={<PaymentButton />} />
+          <Route path="/success" element={<SuccessPage />} />
+          <Route path="/cancel" element={<CancelPage />} />
         </Routes>
       </div>
     </Router>
