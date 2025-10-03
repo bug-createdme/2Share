@@ -12,7 +12,9 @@ interface PaymentButtonProps {
   plan?: any;
 }
 
-const API_URL = 'https://2share.icu/subscriptions/create-payment';
+
+// API cho upgrade plan
+const API_UPGRADE_URL = 'https://2share.icu/subscriptions/create-payment-upgrade';
 
 export const PaymentButton: React.FC<PaymentButtonProps> = (props) => {
   // Ưu tiên lấy từ plan nếu có
@@ -31,24 +33,21 @@ export const PaymentButton: React.FC<PaymentButtonProps> = (props) => {
     setError(null);
     try {
       const token = localStorage.getItem('token');
-      // Xác định plan_id đúng
       let plan_id = undefined;
       if (plan && typeof plan === 'object') {
         if (plan._id) plan_id = plan._id;
         else if (plan.id) plan_id = plan.id;
       }
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      // Gọi API upgrade đúng chuẩn
       const body = {
-        orderCode,
+        plan_id,
         amount,
         description,
         items,
-        ...(plan_id ? { plan_id } : {}),
-        cancelUrl: origin + '/cancel',
-        returnUrl: origin + '/success',
       };
-      console.log('Payment body:', body);
-      const res = await fetch(API_URL, {
+      console.log('Upgrade payment body:', body);
+      const res = await fetch(API_UPGRADE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -57,7 +56,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = (props) => {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Lỗi tạo thanh toán');
+      if (!res.ok) throw new Error(data.message || 'Lỗi tạo thanh toán nâng cấp');
       if (data?.paymentUrl) {
         window.location.href = data.paymentUrl;
       } else {
@@ -70,10 +69,14 @@ export const PaymentButton: React.FC<PaymentButtonProps> = (props) => {
     }
   };
 
+  // Nếu plan là free thì không hiển thị nút thanh toán
+  if (plan && (plan.price === 0 || plan.isFree)) {
+    return <div className="text-green-600 font-semibold">Gói miễn phí</div>;
+  }
   return (
     <div>
       <button onClick={handlePayment} disabled={loading} style={{ padding: '8px 16px', fontSize: 16 }}>
-        {loading ? 'Đang xử lý...' : 'Thanh toán ngay'}
+        {loading ? 'Đang xử lý...' : 'Thanh toán nâng cấp'}
       </button>
       {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
     </div>
