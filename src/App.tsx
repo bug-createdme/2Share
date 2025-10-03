@@ -6,6 +6,7 @@ import RegisterPage from './components/LoginRegister/RegisterPage';
 import ForgotPasswordPage from './components/Password/ForgotPasswordPage';
 import ResetPasswordPage from './components/Password/ResetPasswordPage';
 import { MyLinksPage } from './screens/MyLinksPage/MyLinksPage';
+import PlansPage from './screens/PlansPage';
 import UserProfilePage from './screens/UserProfilePage';
 import VerifyEmailPage from './screens/VerifyEmail/VerifyEmailPage';
 import EmailVerifyActionPage from './screens/VerifyEmail/EmailVerifyActionPage';
@@ -68,6 +69,7 @@ function App() {
           <Route path="/payment" element={<PaymentButton />} />
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/cancel" element={<CancelPage />} />
+          <Route path="/plans" element={<PlansPage />} />
         </Routes>
       </div>
     </Router>

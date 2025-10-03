@@ -9,16 +9,20 @@ interface PaymentButtonProps {
     quantity: number;
     price: number;
   }>;
+  plan?: any;
 }
 
 const API_URL = 'https://2share.icu/subscriptions/create-payment';
 
-export const PaymentButton: React.FC<PaymentButtonProps> = ({
-  orderCode = 1,
-  amount = 0,
-  description = '',
-  items = [],
-}) => {
+export const PaymentButton: React.FC<PaymentButtonProps> = (props) => {
+  // Ưu tiên lấy từ plan nếu có
+  const { plan } = props;
+  const orderCode = props.orderCode ?? 1;
+  const amount = plan?.price ?? props.amount ?? 0;
+  const description = plan?.description ?? props.description ?? '';
+  const items = plan
+    ? [{ name: plan.name, quantity: 1, price: plan.price }]
+    : props.items ?? [];
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,19 +30,30 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     setLoading(true);
     setError(null);
     try {
+      const token = localStorage.getItem('token');
+      // Xác định plan_id đúng
+      let plan_id = undefined;
+      if (plan && typeof plan === 'object') {
+        if (plan._id) plan_id = plan._id;
+        else if (plan.id) plan_id = plan.id;
+      }
+      const body = {
+        orderCode,
+        amount,
+        description,
+        items,
+        ...(plan_id ? { plan_id } : {}),
+        cancelUrl: 'http://localhost:3000/cancel.html',
+        returnUrl: 'http://localhost:3000/success.html',
+      };
+      console.log('Payment body:', body);
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({
-          orderCode,
-          amount,
-          description,
-          items,
-          cancelUrl: 'http://localhost:3000/cancel.html',
-          returnUrl: 'http://localhost:3000/success.html',
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Lỗi tạo thanh toán');
