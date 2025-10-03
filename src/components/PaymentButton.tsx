@@ -37,14 +37,15 @@ export const PaymentButton: React.FC<PaymentButtonProps> = (props) => {
         if (plan._id) plan_id = plan._id;
         else if (plan.id) plan_id = plan.id;
       }
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const body = {
         orderCode,
         amount,
         description,
         items,
         ...(plan_id ? { plan_id } : {}),
-        cancelUrl: 'http://localhost:3000/cancel.html',
-        returnUrl: 'http://localhost:3000/success.html',
+        cancelUrl: origin + '/cancel',
+        returnUrl: origin + '/success',
       };
       console.log('Payment body:', body);
       const res = await fetch(API_URL, {
