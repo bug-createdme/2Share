@@ -57,24 +57,30 @@ export const SocialLinksSection = ({ socialLinks, setSocialLinks }: { socialLink
                 {(provided, snapshot) => (
                   <Card
                     ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    className={`w-full bg-white rounded-[25px] border border-[#ececec] shadow-[0_2px_8px_#0001] px-6 py-5 flex gap-3 transition-shadow ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                    className={`w-full bg-white rounded-[25px] border border-[#ececec] shadow-[0_2px_8px_#0001] flex flex-row transition-shadow ${snapshot.isDragging ? 'shadow-lg' : ''}`}
                   >
-                    {/* Drag handle */}
-                    <div className="flex items-start cursor-grab pt-1" {...provided.dragHandleProps}>
-                      <span className="w-5 h-16 rounded bg-gray-300 flex items-center justify-center">
-                        <svg width="16" height="16" fill="none" viewBox="0 0 16 16">
-                          <circle cx="6" cy="4" r="1" fill="#999"/>
-                          <circle cx="10" cy="4" r="1" fill="#999"/>
-                          <circle cx="6" cy="8" r="1" fill="#999"/>
-                          <circle cx="10" cy="8" r="1" fill="#999"/>
-                          <circle cx="6" cy="12" r="1" fill="#999"/>
-                          <circle cx="10" cy="12" r="1" fill="#999"/>
-                        </svg>
-                      </span>
-                    </div>
-                    {/* Content */}
-                    <div className="flex-1 flex flex-col gap-2">
+                    {/* Drag handle as button full height, no margin */}
+                    <button
+                      type="button"
+                      className="flex items-center justify-center self-stretch w-8 rounded-l-[25px] rounded-r-none bg-white border-r border-[#d7dce1] cursor-grab active:cursor-grabbing"
+                      style={{ padding: 0, borderTop: 'none', borderBottom: 'none', borderLeft: 'none' }}
+                      {...provided.dragHandleProps}
+                      tabIndex={0}
+                      aria-label="Kéo để di chuyển"
+                    >
+                      <svg width="16" height="32" fill="none" viewBox="0 0 16 32">
+                        <circle cx="6" cy="6" r="1" fill="#999"/>
+                        <circle cx="10" cy="6" r="1" fill="#999"/>
+                        <circle cx="6" cy="12" r="1" fill="#999"/>
+                        <circle cx="10" cy="12" r="1" fill="#999"/>
+                        <circle cx="6" cy="18" r="1" fill="#999"/>
+                        <circle cx="10" cy="18" r="1" fill="#999"/>
+                        <circle cx="6" cy="24" r="1" fill="#999"/>
+                        <circle cx="10" cy="24" r="1" fill="#999"/>
+                      </svg>
+                    </button>
+                    {/* Content full width except drag handle */}
+                    <div className="flex-1 flex flex-col gap-2 justify-between px-6 py-5 h-full">
                       <div className="flex items-start justify-between w-full">
                         <div className="flex flex-col gap-1 flex-1 min-w-0">
                           <div className="flex items-center gap-2">
@@ -105,7 +111,7 @@ export const SocialLinksSection = ({ socialLinks, setSocialLinks }: { socialLink
                         <div className="flex flex-col items-end gap-2 ml-4">
                           <Switch
                             checked={link.isEnabled}
-                            className="data-[state=checked]:bg-[#6e6e6e] data-[state=unchecked]:bg-[#e0e0e0]"
+                            className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-green-400 data-[state=checked]:to-green-600 data-[state=unchecked]:bg-gray-200 hover:data-[state=checked]:from-green-500 hover:data-[state=checked]:to-green-700 hover:data-[state=unchecked]:bg-gray-300 transition-all duration-300 ease-in-out shadow-md hover:shadow-lg h-6 w-11 border-0"
                             onCheckedChange={checked => {
                               const newLinks = [...socialLinks];
                               newLinks[index].isEnabled = checked;

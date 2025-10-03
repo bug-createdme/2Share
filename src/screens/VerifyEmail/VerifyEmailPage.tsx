@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { verifyEmail, refreshAccessToken } from '../lib/api';
+import { verifyEmail, refreshAccessToken } from '../../lib/api';
 
 const VerifyEmailPage: React.FC = () => {
   const [searchParams] = useSearchParams();

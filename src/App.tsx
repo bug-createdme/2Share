@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import OAuthCallbackHandler from './components/OAuthCallbackHandler';
-import LoginPage from './components/LoginPage';
-import RegisterPage from './components/RegisterPage';
-import ForgotPasswordPage from './components/ForgotPasswordPage';
-import ResetPasswordPage from './components/ResetPasswordPage';
+import OAuthCallbackHandler from './components/AuthGoogle/OAuthCallbackHandler';
+import LoginPage from './components/LoginRegister/LoginPage';
+import RegisterPage from './components/LoginRegister/RegisterPage';
+import ForgotPasswordPage from './components/Password/ForgotPasswordPage';
+import ResetPasswordPage from './components/Password/ResetPasswordPage';
 import { MyLinksPage } from './screens/MyLinksPage/MyLinksPage';
 import UserProfilePage from './screens/UserProfilePage';
-import VerifyEmailPage from './screens/VerifyEmailPage';
-import EmailVerifyActionPage from './screens/EmailVerifyActionPage';
 import PortfolioDesignPage from './screens/PortfolioDesignPage';
+import VerifyEmailPage from './screens/VerifyEmail/VerifyEmailPage';
+import EmailVerifyActionPage from './screens/VerifyEmail/EmailVerifyActionPage';
+import SuccessPage from './screens/Payment/SuccessPage';
+import CancelPage from './screens/Payment/CancelPage';
 import { getMyProfile } from './lib/api';
-import Header from './components/Header';
-import Hero from './components/Hero';
+import Header from './components/MainLayout/Header';
+import Hero from './components/MainLayout/Hero';
+import PaymentButton from './components/PaymentButton';
 
 // Wrapper để lấy user từ API và truyền vào UserProfilePage
 function UserProfilePageWrapper() {
@@ -59,11 +62,15 @@ function App() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/my-links" element={<MyLinksPage />} />
           <Route path="/portfolio/design" element={<PortfolioDesignPage />} />
+          <Route path="/my-links/*" element={<MyLinksPage />} />
           <Route path="/account" element={<UserProfilePageWrapper />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/email-verify-action" element={<EmailVerifyActionPage />} />
           {/* Route xử lý callback OAuth Google */}
-          <Route path="/users/oauth/google" element={<OAuthCallbackHandler />} />
+          <Route path="/oauth/google" element={<OAuthCallbackHandler />} />
+          <Route path="/payment" element={<PaymentButton />} />
+          <Route path="/success" element={<SuccessPage />} />
+          <Route path="/cancel" element={<CancelPage />} />
         </Routes>
       </div>
     </Router>

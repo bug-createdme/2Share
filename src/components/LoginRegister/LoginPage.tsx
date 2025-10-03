@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
-import { getOauthGoogleUrl } from '../lib/api';
+import { getOauthGoogleUrl } from '../../lib/api';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');

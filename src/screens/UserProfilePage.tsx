@@ -20,6 +20,11 @@ interface UserProfileProps {
 }
 
 const UserProfilePage: React.FC<UserProfileProps> = ({ user }) => {
+  // Nếu đã xác thực email qua Google, ép verify = 1
+  const emailVerified = typeof window !== 'undefined' && localStorage.getItem('email_verified') === 'true';
+  if (emailVerified && user.verify !== 1) {
+    user.verify = 1;
+  }
   const [form, setForm] = useState({
     name: user.name || '',
     phone: user.phone || '',
