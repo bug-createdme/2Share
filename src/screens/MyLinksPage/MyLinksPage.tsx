@@ -38,14 +38,24 @@ export const MyLinksPage = (): JSX.Element => {
         setUser(profile);
         if (typeof profile.bio === 'string') setBio(profile.bio);
         if (profile.social_links) {
-          const links: SocialLink[] = Object.entries(profile.social_links).map(([key, value]: any) => ({
-            name: key.charAt(0).toUpperCase() + key.slice(1),
-            url: String(value || ""),
-            clicks: 0,
-            isEnabled: Boolean(value),
-            color: "#6e6e6e",
-            icon: "🔗",
-          }));
+          const links: SocialLink[] = Object.entries(profile.social_links).map(([key, value]: any) => {
+            // Nếu value đã có id thì giữ nguyên, nếu không thì tạo mới
+            if (typeof value === 'object' && value !== null && value.id) {
+              return {
+                ...value,
+                name: key.charAt(0).toUpperCase() + key.slice(1),
+              };
+            }
+            return {
+              id: `${key}-defaultid`,
+              name: key.charAt(0).toUpperCase() + key.slice(1),
+              url: String(value || ""),
+              clicks: 0,
+              isEnabled: Boolean(value),
+              color: "#6e6e6e",
+              icon: "🔗",
+            };
+          });
           if (links.length) setSocialLinks(links);
         }
         // After we know the user, overlay any local draft for THIS user
@@ -57,7 +67,27 @@ export const MyLinksPage = (): JSX.Element => {
           const localLinks = localStorage.getItem(kLinks);
           const localUsername = localStorage.getItem(kUsername);
           if (localBio !== null) setBio(localBio);
-          if (localLinks) setSocialLinks(JSON.parse(localLinks));
+          if (localLinks) {
+            // Parse và chỉ gán id nếu chưa có, giữ nguyên id cũ nếu đã tồn tại
+            let parsedLinks = JSON.parse(localLinks);
+            let changed = false;
+            parsedLinks = parsedLinks.map((link: any) => {
+              if (!link.id) {
+                changed = true;
+                return {
+                  ...link,
+                  id: `${link.name || 'link'}-defaultid`,
+                };
+              }
+              return link;
+            });
+            if (changed) {
+              setSocialLinks(parsedLinks);
+              localStorage.setItem(kLinks, JSON.stringify(parsedLinks));
+            } else {
+              setSocialLinks(parsedLinks);
+            }
+          }
           if (localUsername) {
             setUser((prev: any) => ({ ...prev, username: localUsername }));
           }

@@ -5,6 +5,7 @@ import { Switch } from "../../../../components/ui/switch";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 export type SocialLink = {
+  id: string;
   name: string;
   url: string;
   clicks: number;
@@ -22,6 +23,7 @@ export const SocialLinksSection = ({ socialLinks, setSocialLinks }: { socialLink
       setSocialLinks(links => [
         ...links,
         {
+          id: `${name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           name,
           url: "",
           clicks: 0,
@@ -53,7 +55,7 @@ export const SocialLinksSection = ({ socialLinks, setSocialLinks }: { socialLink
             ref={provided.innerRef}
           >
             {socialLinks.map((link, index) => (
-              <Draggable key={link.name + index} draggableId={link.name + index} index={index}>
+              <Draggable key={link.id} draggableId={link.id} index={index}>
                 {(provided, snapshot) => (
                   <Card
                     ref={provided.innerRef}
