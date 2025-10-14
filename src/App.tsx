@@ -16,6 +16,7 @@ import { getMyProfile } from './lib/api';
 import Header from './components/MainLayout/Header';
 import Hero from './components/MainLayout/Hero';
 import PaymentButton from './components/PaymentButton';
+import NfcDesignPage from './screens/NfcDesignPage';
 
 // Wrapper để lấy user từ API và truyền vào UserProfilePage
 function UserProfilePageWrapper() {
@@ -60,8 +61,8 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/my-links" element={<MyLinksPage />} />
           <Route path="/portfolio/design" element={<PortfolioDesignPage />} />
+          <Route path="/nfc" element={<NfcDesignPage />} />
           <Route path="/my-links/*" element={<MyLinksPage />} />
           <Route path="/account" element={<UserProfilePageWrapper />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />

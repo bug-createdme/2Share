@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "../components/Sidebar"; // adjust path if needed
+import Header from "../components/Header";
+import PhonePreview from "../components/PhonePreview";
 import {
   Settings,
   Upload,
@@ -7,10 +9,22 @@ import {
   Plus,
   Zap,
 } from "lucide-react";
+import { FaFillDrip, FaRegCircle } from "react-icons/fa";
+import {
+  TbBorderCornerSquare,
+  TbBorderCornerRounded,
+  TbBorderCornerPill,
+} from "react-icons/tb";
+
 
 const PortfolioDesignPage: React.FC = () => {
+  const [selectedLayout, setSelectedLayout] = useState(1); // 1-4
   const [selectedTheme, setSelectedTheme] = useState("coral");
   const [selectedProfile, setSelectedProfile] = useState(0);
+  const [activeTab, setActiveTab] = useState<"text" | "button">("text");
+const [buttonFill, setButtonFill] = useState(0); // 0 = solid, 1 = outline
+const [buttonCorner, setButtonCorner] = useState(1); // 0 = hard, 1 = soft, 2 = round
+
 const avatarColors: Record<string, string> = {
   coral: "bg-[#E7A5A5]",
   green: 'bg-green-300',
@@ -37,22 +51,7 @@ const textColors: Record<string, string> = {
   return (
     <div className="min-h-screen bg-gray-50 font-spartan">
       {/* Header */}
-      <header
-        className="fixed top-0 left-64 right-0 bg-white border-b border-gray-200 px-6 py-4 z-50" // ⭐ changed: fixed header
-      >
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">2Share của tôi</h1>
-          <div className="flex items-center gap-4">
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-400 rounded-xl hover:bg-gray-50">
-              <Upload className="w-4 h-4" />
-              <span className="">Chia sẻ</span>
-            </button>
-            <button className="p-3 border border-gray-400 rounded-xl hover:bg-gray-50">
-              <Settings className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <div className="flex pt-20">
         {/* Sidebar */}
@@ -66,44 +65,102 @@ const textColors: Record<string, string> = {
             <h2 className="text-2xl font-bold mb-6">Hồ sơ</h2>
             <div className="bg-white rounded-3xl border border-gray-400 p-8 max-w-xl mx-auto">
                 <div className="flex justify-center gap-6 mb-8">
-                {[0, 1, 2, 3].map((index) => {
-                    const baseBg =
-                    selectedProfile === index
-                        ? "bg-gray-300"
-                        : "bg-gray-100";
+  {[0, 1, 2, 3].map((index) => {
+    const baseBg =
+      selectedProfile === index
+        ? "bg-gray-300"
+        : "bg-gray-100";
 
-                    return (
-                    <div
-                        key={index}
-                        onClick={() => setSelectedProfile(index)}
-                        className={`
-                        w-24 h-32 rounded-2xl cursor-pointer transition-all 
-                        ${baseBg} 
-                        hover:bg-gray-200
-                        ${selectedProfile === index ? "border-2 border-blue-400" : "border border-gray-300"}
-                        flex flex-col items-center justify-start p-3
-                        `}
-                    >
-                        {/* avatar mock */}
-                        <div className="w-8 h-8 bg-gray-50 rounded-lg mb-2 flex flex-col items-center justify-end">
-                        <div
-                            className={`w-3 h-3 rounded-full ${avatarColors[selectedTheme]}`}
-                        />
-                        <div
-                            className={`w-5 h-2 rounded-t-full mt-1 ${avatarColors[selectedTheme]}`}
-                        />
-                        </div>
+    return (
+      <div
+        key={index}
+        onClick={() => setSelectedProfile(index)}
+        className={`
+          w-24 h-32 rounded-2xl cursor-pointer transition-all 
+          ${baseBg} 
+          hover:bg-gray-200
+          ${selectedProfile === index ? "border-2 border-blue-400" : "border border-gray-300"}
+          flex flex-col items-center justify-start p-3
+        `}
+      >
+        {/* index-specific mini-layout mocks */}
+        {index === 0 && (
+          <>
+            {/* Avatar */}
+            <div className="w-8 h-8 bg-gray-50 rounded-lg mb-2 flex flex-col items-center justify-end">
+              <div className={`w-3 h-3 rounded-full ${avatarColors[selectedTheme]}`} />
+              <div className={`w-5 h-2 rounded-t-full mt-1 ${avatarColors[selectedTheme]}`} />
+            </div>
+            {/* Username */}
+            <div className="w-10 h-2 bg-white rounded mb-1"></div>
+            {/* Socials */}
+            <div className="w-16 h-2 bg-white rounded mb-2"></div>
+            {/* Bio block */}
+            <div className="w-16 h-6 bg-white rounded"></div>
+          </>
+        )}
 
-                        {/* mock text lines */}
-                        <div className="w-10 h-2 bg-white rounded mb-1"></div>
-                        <div className="w-16 h-2 bg-white rounded mb-2"></div>
+        {index === 1 && (
+          <>
+            {/* Avatar + username/social row */}
+            <div className="flex items-center gap-1 mb-2">
+              <div className="w-6 h-6 bg-gray-50 rounded-md flex flex-col items-center justify-end">                
+                <div className={`w-2 h-2 rounded-full ${avatarColors[selectedTheme]}`} />
+                <div className={`w-3 h-1 rounded-t-full mt-0.5 ${avatarColors[selectedTheme]}`} />
 
-                        {/* mock button */}
-                        <div className="w-16 h-6 bg-white rounded"></div>
-                    </div>
-                    );
-                })}
-                </div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <div className="w-8 h-2 bg-white rounded"></div>
+                <div className="w-10 h-2 bg-white rounded"></div>
+              </div>
+            </div>
+            {/* Bio */}
+            <div className="w-full h-6 bg-white rounded mb-2"></div>
+            {/* Links */}
+            <div className="w-14 h-4 bg-white rounded mb-1"></div>
+            <div className="w-14 h-4 bg-white rounded"></div>
+          </>
+        )}
+
+        {index === 2 && (
+          <>
+            {/* Username */}
+            <div className="w-12 h-2 bg-white rounded mb-1"></div>
+            {/* Socials */}
+            <div className="w-16 h-2 bg-white rounded mb-2"></div>
+            {/* Avatar large middle */}
+            <div className="w-12 h-10 bg-gray-50 rounded-lg mb-2 flex flex-col items-center justify-end">                
+                <div className={`w-3 h-3 rounded-full ${avatarColors[selectedTheme]}`} />
+                <div className={`w-5 h-2 rounded-t-full mt-1 ${avatarColors[selectedTheme]}`} />
+
+            </div>
+            {/* Bio */}
+            <div className="w-full h-6 bg-white rounded mb-2"></div>
+            {/* Links */}
+            <div className="w-14 h-4 bg-white rounded"></div>
+          </>
+        )}
+
+        {index === 3 && (
+          <>
+            {/* Background avatar style */}
+            <div className="w-full h-24 bg-gray-200 rounded-xl mb-2 relative flex flex-col items-center justify-center">
+              <div className="w-12 h-2 mt-2 bg-white rounded mb-1"></div>
+              <div className="w-16 h-2 bg-white rounded mb-2"></div>
+              <div className={`w-5 h-5 rounded-full  opacity-70 ${avatarColors[selectedTheme]}`} />
+              <div className={`w-8 h-4 rounded-t-full mt-1  opacity-70 ${avatarColors[selectedTheme]}`} />
+
+            </div>
+                        
+            {/* Link buttons */}
+            <div className="w-14 h-4 bg-white rounded mb-1"></div>
+          </>
+        )}
+      </div>
+    );
+  })}
+</div>
+
 
                 <button className="w-full p-4 border border-gray-400 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-50">
                 <GalleryHorizontalEnd className="w-6 h-6" />
@@ -111,8 +168,6 @@ const textColors: Record<string, string> = {
                 </button>
             </div>
             </section>
-
-
 
             {/* Theme Section */}
                 <section>
@@ -245,125 +300,166 @@ const textColors: Record<string, string> = {
                         <span className="text-sm ">Chấm bi</span>
                         </div>
 
-                        {/* Stripes Pattern */}
+                        {/* Stripes - Diagonal */}
                         <div className="text-center">
-                        <div className="w-24 h-32 bg-gray-600 rounded-2xl mb-2 relative overflow-hidden">
+                          <div className="w-24 h-32 bg-gray-600 rounded-2xl mb-2 relative overflow-hidden">
                             <div className="absolute inset-0">
-                            {Array.from({ length: 10 }).map((_, i) => (
+                              {Array.from({ length: 10 }).map((_, i) => (
                                 <div
-                                key={i}
-                                className="absolute w-full h-1 bg-white opacity-30 transform rotate-45"
-                                style={{ top: `${i * 15}%` }}
+                                  key={i}
+                                  className="absolute w-40 h-2 bg-white opacity-25 transform -rotate-45"
+                                  style={{ 
+                                    top: `${i * 18 - 20}%`,
+                                    left: `${i * 8 - 50}%`
+                                  }}
                                 />
-                            ))}
+                              ))}
                             </div>
-                        </div>
-                        <span className="text-sm ">Kẻ sọc</span>
+                          </div>
+                          <span className="text-sm">Kẻ sọc</span>
                         </div>
                     </div>
                     </div>
                 </div>
                 </section>
 
-
-
               {/* Style Section */}
-              <section>
-              <div className="bg-white rounded-3xl border border-gray-400 p-8 max-w-xl mx-auto">
-                <h3 className="text-xl font-bold  mb-6">Kiểu</h3>
-                
-                {/* Tab buttons */}
-                <div className="flex border-b border-gray-300 mb-6">
-                  <button className="px-6 py-3 font-bold  border-b-2 border-black">
-                    Chữ viết
-                  </button>
-                  <button className="px-6 py-3 font-bold  text-gray-500">
-                    Nút
-                  </button>
-                </div>
+<section>
+  <div className="bg-white rounded-3xl border border-gray-400 p-8 max-w-xl mx-auto">
+    <h3 className="text-xl font-bold mb-6">Kiểu</h3>
 
-                {/* Font Selection */}
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm  mb-2">Phông chữ</label>
-                    <div className="w-full p-4 bg-gray-200 rounded-2xl">
-                      <span className="font-bold ">Carlito</span>
-                    </div>
-                  </div>
+    {/* Tabs */}
+    <div className="flex border-b border-gray-300 mb-6">
+      <button
+        onClick={() => setActiveTab("text")}
+        className={`px-6 py-3 font-bold transition-all ${
+          activeTab === "text"
+            ? "border-b-2 border-black text-black"
+            : "text-gray-500"
+        }`}
+      >
+        Chữ viết
+      </button>
+      <button
+        onClick={() => setActiveTab("button")}
+        className={`px-6 py-3 font-bold transition-all ${
+          activeTab === "button"
+            ? "border-b-2 border-black text-black"
+            : "text-gray-500"
+        }`}
+      >
+        Nút
+      </button>
+    </div>
 
-                  {/* Text Color */}
-                  <div>
-                    <label className="block text-sm  mb-2">Màu chữ viết trên trang</label>
-                    <div className="w-full p-4 bg-gray-200 rounded-2xl flex items-center gap-3">
-                      <div className="w-5 h-5 bg-black rounded"></div>
-                      <span className="font-bold ">#000000</span>
-                    </div>
-                  </div>
+    {/* TEXT TAB */}
+    {activeTab === "text" && (
+      <div className="space-y-6">
+        <div>
+          <label className="block text-sm mb-2">Phông chữ</label>
+          <div className="w-full p-4 bg-gray-200 rounded-2xl">
+            <span className="font-bold">Carlito</span>
+          </div>
+        </div>
 
-                  {/* Button Text Color */}
-                  <div>
-                    <label className="block text-sm  mb-2">Màu chữ viết trên nút</label>
-                    <div className="w-full p-4 bg-gray-200 rounded-2xl flex items-center gap-3">
-                      <div className="w-5 h-5 bg-black rounded"></div>
-                      <span className="font-bold ">#000000</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
+        {/* Text Color */}
+        <div>
+          <label className="block text-sm mb-2">Màu chữ viết trên trang</label>
+          <div className="w-full p-4 bg-gray-200 rounded-2xl flex items-center gap-3">
+            <div className="w-5 h-5 bg-black rounded"></div>
+            <span className="font-bold">#000000</span>
+          </div>
+        </div>
+
+        {/* Button Text Color */}
+        <div>
+          <label className="block text-sm mb-2">Màu chữ viết trên nút</label>
+          <div className="w-full p-4 bg-gray-200 rounded-2xl flex items-center gap-3">
+            <div className="w-5 h-5 bg-black rounded"></div>
+            <span className="font-bold">#000000</span>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* BUTTON TAB */}
+    {activeTab === "button" && (
+  <div className="space-y-8">
+    {/* Fill Style */}
+    <div>
+      <label className="block text-sm mb-2">Tô nền</label>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {[
+          { icon: <FaFillDrip size={18} />, label: "Tô khối" },
+          { icon: <FaRegCircle size={18} />, label: "Tô viền" },
+        ].map((item, i) => (
+          <button
+            key={item.label}
+            onClick={() => setButtonFill(i)}
+            className={`flex flex-col items-center justify-center gap-1 py-1 rounded-2xl text-sm font-medium transition-all ${
+              buttonFill === i
+                ? "bg-gray-300 border border-gray-400"
+                : "bg-gray-100 border border-gray-300 hover:bg-gray-200"
+            }`}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    {/* Corner Style */}
+    <div>
+      <label className="block text-sm mb-2">Góc</label>
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { icon: <TbBorderCornerSquare size={20} />, label: "Góc cứng" },
+          { icon: <TbBorderCornerRounded size={20} />, label: "Góc mềm" },
+          { icon: <TbBorderCornerPill size={20} />, label: "Góc tròn" },
+        ].map((item, i) => (
+          <button
+            key={item.label}
+            onClick={() => setButtonCorner(i)}
+            className={`flex flex-col items-center justify-center gap-1 py-1   rounded-2xl text-sm font-medium transition-all ${
+              buttonCorner === i
+                ? "bg-gray-300 border border-gray-400"
+                : "bg-gray-100 border border-gray-300 hover:bg-gray-200"
+            }`}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    {/* Button Color */}
+    <div>
+      <label className="block text-sm mb-2">Màu nút</label>
+      <div className="w-full p-4 bg-gray-200 rounded-2xl flex items-center gap-3">
+        <div className="w-5 h-5 bg-black rounded"></div>
+        <span className="font-bold">#000000</span>
+      </div>
+    </div>
+  </div>
+)}
+
+  </div>
+</section>
+
+
           </div>
         </main>
 
         {/* Mobile Preview */}
-        <div
-          className="w-70 py-4 px-20 mx-auto bg-white border-l border-gray-200 fixed top-0 right-0 h-screen overflow-hidden z-40" // ⭐ changed: fixed preview, removed scroll
-        >
-          <div
-            className={`w-60 h-[580px] bg-gradient-to-br ${themeClasses[selectedTheme]} 
-            rounded-3xl border-4 border-gray-600 p-6 relative overflow-hidden mt-20`} // ⭐ mt-20 to drop below header
-          >
-            {/* Profile Section */}
-            <div className="mt-8 text-center">
-            <div className="w-20 h-20 bg-white/90 rounded-2xl mx-auto mb-4 flex flex-col items-center justify-end shadow-lg">
-                <div className={`w-7 h-7 rounded-full ${avatarColors[selectedTheme]}`} />
-                <div className={`w-12 h-6 rounded-t-full mt-1 ${avatarColors[selectedTheme]}`} />
-            </div>
-            <h3 className="text-white text-sm tracking-wide">username_123</h3>
-            </div>
-
-            {/* Social Icons */}
-            <div className="flex justify-center gap-3 mt-4 mb-4">
-            {["♪", "in", "📷", "f", "Be"].map((icon, index) => (
-                <div
-                key={index}
-                className="w-4 h-4 bg-white rounded flex items-center justify-center text-[10px]"
-                >
-                {icon}
-                </div>
-            ))}
-            </div>
-
-            {/* Bio */}
-            <div className="bg-white/90 rounded-2xl p-3 mb-4 shadow-lg">
-            <p className={`text-[10px] leading-relaxed ${textColors[selectedTheme]}`}>
-                Mình là username_123, sinh viên thiết kế đồ họa với niềm yêu thích sáng tạo và sự chỉn chu trong từng chi tiết. Mình tập trung vào thiết kế thương hiệu, UI và minh họa số, với mong muốn tạo ra những trải nghiệm có chiều sâu. Theo dõi mình để cùng khám phá hành trình thiết kế và phát triển bản thân mỗi ngày nhé!
-            </p>
-            </div>
-
-            {/* Social Links */}
-            <div className="space-y-2">
-            {["LinkedIn", "Behance", "Instagram"].map((platform) => (
-                <button
-                key={platform}
-                className="w-full py-2 bg-white/10 border-2 border-white rounded-2xl text-white text-xs"
-                >
-                {platform}
-                </button>
-            ))}
-            </div>
-        </div>
-        </div>
-
+        <PhonePreview
+          themeClasses={themeClasses}
+          avatarColors={avatarColors}
+          textColors={textColors}
+          selectedTheme={selectedTheme}
+          selectedLayout={selectedProfile + 1} // 🔑 map 0–3 → 1–4
+        />
       </div>
 
       {/* SVG Gradients */}
