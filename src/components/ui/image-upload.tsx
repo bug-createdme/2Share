@@ -27,14 +27,14 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   variant = 'circle',
   size = 'lg',
   showRemoveButton = false,
-  placeholder = 'Chọn hoặc kéo thả ảnh vào đây',
+  // Bỏ placeholder vì không sử dụng
   title = 'Profile Photo',
   showTitle = false
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string>('');
   const [previewImage, setPreviewImage] = useState<string>(currentImage || '');
-  const [isDragOver, setIsDragOver] = useState(false);
+  // Đã loại bỏ isDragOver vì không còn sử dụng
   const [lastUploadedFile, setLastUploadedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -112,7 +112,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setIsDragOver(false);
+    // Đã loại bỏ setIsDragOver
 
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
@@ -122,12 +122,12 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setIsDragOver(true);
+    // Đã loại bỏ setIsDragOver
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setIsDragOver(false);
+    // Đã loại bỏ setIsDragOver
   }, []);
 
   const handleClick = useCallback(() => {
