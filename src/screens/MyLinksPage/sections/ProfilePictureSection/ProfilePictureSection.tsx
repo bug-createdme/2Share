@@ -4,8 +4,6 @@ import { Card, CardContent } from "../../../../components/ui/card";
 
 
 export const ProfilePictureSection = ({ user, bio, socialLinks }: { user: any; bio: string; socialLinks: import("../SocialLinksSection/SocialLinksSection").SocialLink[] }): JSX.Element => {
-
-
   return (
     <div className="w-[300px] h-[650px] translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:0ms]">
       <Card className="w-full h-full bg-[#e7a5a5] rounded-[25px] border-none shadow-xl overflow-hidden">

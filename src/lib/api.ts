@@ -221,3 +221,33 @@ export async function testLogin(email: string, password: string) {
   console.log('Test login response:', data);
   return { success: res.ok, data };
 }
+
+// Upload image function
+export async function uploadImage(file: File): Promise<string> {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('No token');
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  console.log('Uploading file:', file.name, 'Size:', file.size, 'Type:', file.type);
+
+  const res = await fetch('https://2share.icu/medias/upload-image', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      // Không set Content-Type vì FormData tự động set boundary
+    },
+    body: formData,
+  });
+
+  const result = await res.json();
+  console.log('Upload response:', result);
+
+  if (!res.ok) {
+    console.error('Upload failed:', result);
+    throw new Error(result.message || 'Lỗi upload ảnh');
+  }
+
+  return result.result?.url || result.url || result.image_url;
+}
