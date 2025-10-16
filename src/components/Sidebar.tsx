@@ -15,7 +15,11 @@ import {
   Zap
 } from "lucide-react";
 
-export default function Sidebar() {
+interface SidebarProps {
+  user?: any;
+}
+
+export default function Sidebar({ user }: SidebarProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [show2ShareMenu, setShow2ShareMenu] = useState(true);
   const location = useLocation(); // to know the current route
@@ -32,7 +36,7 @@ export default function Sidebar() {
   }, []);
 
   return (
-    <aside className="fixed top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 overflow-y-auto">
+    <aside className="fixed top-0 left-0 h-screen w-64 bg-white overflow-y-auto">
       <div className="p-4 space-y-3">
         {/* User Profile */}
         <div className="relative" ref={profileRef}>
@@ -43,10 +47,12 @@ export default function Sidebar() {
             aria-haspopup="menu"
             aria-expanded={showUserMenu}
           >
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-200 to-pink-300 flex items-center justify-center">
-              <div className="w-3 h-3 rounded-full bg-pink-300"></div>
-            </div>
-            <span className="text-gray-600 truncate">@username_123</span>
+            <img
+              className="w-6 h-6 rounded-full"
+              src={user?.avatar_url || "https://c.animaapp.com/mfwch0g78qp4H9/img/profile-picture-1.png"}
+              alt="User avatar"
+            />
+            <span className="text-gray-600 truncate">@{user?.username || "username"}</span>
             <ChevronDown
               className={`w-4 h-4 ml-auto text-gray-600 transition-transform ${
                 showUserMenu ? "rotate-180" : ""
@@ -59,17 +65,12 @@ export default function Sidebar() {
               <button
                 className="w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-t-lg"
                 onClick={() => {
-                  // navigate to profile
+                  window.location.href = '/account';
+                  setShowUserMenu(false);
                 }}
               >
                 <User className="w-5 h-5 mr-3 text-gray-700" />
                 <span className="text-sm flex-1 text-left">Tài khoản</span>
-              </button>
-              <button
-                className="w-full flex items-center px-4 py-2 text-[#a259ff] hover:bg-gray-50"
-              >
-                <Zap className="w-5 h-5 mr-3 text-[#a259ff]" />
-                <span className="text-sm flex-1 text-left">Nâng cấp</span>
               </button>
               <button
                 className="w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
@@ -80,7 +81,8 @@ export default function Sidebar() {
               <button
                 className="w-full flex items-center px-4 py-2 text-red-500 hover:bg-gray-50 rounded-b-lg border-t border-gray-200"
                 onClick={() => {
-                  // logout logic
+                  localStorage.removeItem('token');
+                  window.location.href = '/login';
                 }}
               >
                 <LogOut className="w-5 h-5 mr-3 text-red-500" />

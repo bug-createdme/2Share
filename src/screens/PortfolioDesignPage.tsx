@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar"; // adjust path if needed
 import Header from "../components/Header";
 import PhonePreview from "../components/PhonePreview";
@@ -15,15 +15,18 @@ import {
   TbBorderCornerRounded,
   TbBorderCornerPill,
 } from "react-icons/tb";
-
+import { getMyProfile } from "../lib/api";
 
 const PortfolioDesignPage: React.FC = () => {
+  const [user, setUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [selectedLayout, setSelectedLayout] = useState(1); // 1-4
   const [selectedTheme, setSelectedTheme] = useState("coral");
   const [selectedProfile, setSelectedProfile] = useState(0);
   const [activeTab, setActiveTab] = useState<"text" | "button">("text");
-const [buttonFill, setButtonFill] = useState(0); // 0 = solid, 1 = outline
-const [buttonCorner, setButtonCorner] = useState(1); // 0 = hard, 1 = soft, 2 = round
+  const [buttonFill, setButtonFill] = useState(0); // 0 = solid, 1 = outline
+  const [buttonCorner, setButtonCorner] = useState(1); // 0 = hard, 1 = soft, 2 = round
 
 const avatarColors: Record<string, string> = {
   coral: "bg-[#E7A5A5]",
@@ -48,6 +51,28 @@ const textColors: Record<string, string> = {
     gradient: "from-purple-400 via-blue-400 to-green-400",
     orange: "from-blue-400 to-orange-400",
   };
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const profile = await getMyProfile();
+        setUser(profile);
+      } catch (err: any) {
+        setError(err.message || "Lỗi lấy thông tin người dùng");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Đang tải thông tin...</div>;
+  }
+  if (error || !user) {
+    return <div className="flex items-center justify-center h-screen text-red-500">{error || "Không có thông tin người dùng"}</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 font-spartan">
       {/* Header */}
@@ -55,7 +80,7 @@ const textColors: Record<string, string> = {
 
       <div className="flex pt-20">
         {/* Sidebar */}
-        <Sidebar />
+        <Sidebar user={user} />
 
         {/* Main Content */}
         <main className="flex ml-72 p-8 overflow-y-auto">

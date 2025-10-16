@@ -9,12 +9,14 @@ import {
 } from "../../components/ui/avatar";
 import { Button } from "../../components/ui/button";
 // import { BioSection } from "./sections/BioSection/BioSection";
-import { NavigationMenuSection } from "./sections/NavigationMenuSection/NavigationMenuSection";
+
 import type { SocialLink } from "./sections/SocialLinksSection/SocialLinksSection";
 import { ProfilePictureSection } from "./sections/ProfilePictureSection/ProfilePictureSection";
 import { SocialLinksSection } from "./sections/SocialLinksSection/SocialLinksSection";
-import Sidebar from "../../components/Sidebar";
+
 import { getMyProfile, updateMyProfile, updatePortfolio } from "../../lib/api";
+import Sidebar from "../../components/Sidebar";
+import Header from "../../components/Header";
 
 export const MyLinksPage = (): JSX.Element => {
   const [user, setUser] = useState<any | null>(null);
@@ -146,37 +148,14 @@ export const MyLinksPage = (): JSX.Element => {
     <div>
       {/* Sidebar trái */}
       <div className="fixed top-0 left-0 h-full min-h-screen w-[265px] bg-white border-r border-[#d9d9d9] flex-shrink-0 flex flex-col z-20">
-        <NavigationMenuSection user={user} />
+        <Sidebar user={user} />
       </div>
 
       {/* Main content */}
       <div className="ml-[265px] mr-[395px] bg-[#f7f7f7] min-h-screen flex flex-col items-center">
-        <main className="flex-1 w-full flex flex-col items-center">
+        <main className="flex-1 w-full flex flex-col items-center pt-20">
           {/* Header */}
-          <header className="sticky top-0 z-10 h-[95px] bg-[#f7f7f7] border-b border-[#ebebeb] flex items-center px-9 w-full">
-            <h1 className="[font-family:'League_Spartan',Helvetica] font-bold text-black text-[32px] tracking-[0] leading-[normal] text-left flex-1">
-              2Share của tôi
-            </h1>
-            <div className="flex items-center gap-4 ml-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-auto w-[113px] bg-white rounded-[10px] border border-[#6e6e6e] flex items-center gap-2 px-4 py-3"
-              >
-                <ArrowUpIcon className="w-3.5 h-3.5" />
-                <span className="[font-family:'Carlito',Helvetica] font-normal text-black text-base tracking-[1.60px]">
-                  Chia sẻ
-                </span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-10 h-10 bg-white rounded-[10px] border border-[#6e6e6e] p-0 flex items-center justify-center"
-              >
-                <SettingsIcon className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </header>
+          <Header />
           {/* Content Section */}
           <div className="w-full flex flex-col items-center flex-1">
             <section className="w-full max-w-[700px] flex flex-col items-center px-9 pt-12">

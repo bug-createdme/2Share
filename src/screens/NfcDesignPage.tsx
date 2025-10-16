@@ -1,12 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import NFCCardPreview from "../components/NfcCardPreview";
 import { GalleryHorizontalEnd, Plus, Zap } from "lucide-react";
+import { getMyProfile } from "../lib/api";
 
 const NfcDesignPage: React.FC = () => {
+  const [user, setUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [selectedTheme, setSelectedTheme] = useState("coral");
 
   const avatarColors: Record<string, string> = {
@@ -33,12 +37,33 @@ const NfcDesignPage: React.FC = () => {
     orange: "from-blue-400 to-orange-400",
   };
 
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const profile = await getMyProfile();
+        setUser(profile);
+      } catch (err: any) {
+        setError(err.message || "Lỗi lấy thông tin người dùng");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Đang tải thông tin...</div>;
+  }
+  if (error || !user) {
+    return <div className="flex items-center justify-center h-screen text-red-500">{error || "Không có thông tin người dùng"}</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 font-spartan">
       <Header />
 
       <div className="flex pt-20">
-        <Sidebar />
+        <Sidebar user={user} />
 
         {/* --- MAIN CONTENT --- */}
         <main className="flex-1 ml-72 p-8 overflow-y-auto">
