@@ -30,3 +30,5 @@ pnpm-debug.log*
 # Mac / Linux system files
 .DS_Store
 Thumbs.db
+
+.config/

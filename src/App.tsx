@@ -8,14 +8,14 @@ import ResetPasswordPage from './components/Password/ResetPasswordPage';
 import { MyLinksPage } from './screens/MyLinksPage/MyLinksPage';
 
 import UserProfilePage from './screens/UserProfilePage';
+import PortfolioDesignPage from './screens/PortfolioDesignPage';
 import VerifyEmailPage from './screens/VerifyEmail/VerifyEmailPage';
 import EmailVerifyActionPage from './screens/VerifyEmail/EmailVerifyActionPage';
 
 import { getMyProfile } from './lib/api';
 import Header from './components/MainLayout/Header';
 import Hero from './components/MainLayout/Hero';
-
-
+import NfcDesignPage from './screens/NfcDesignPage';
 // Wrapper để lấy user từ API và truyền vào UserProfilePage
 function UserProfilePageWrapper() {
   const [user, setUser] = useState<any | null>(null);
@@ -28,7 +28,7 @@ function UserProfilePageWrapper() {
         const profile = await getMyProfile();
         setUser(profile);
       } catch (err: any) {
-        setError(err.message || "Lỗi lấy thông tin người dùng");
+        setError(err.message || "Lỗi l��y thông tin người dùng");
       } finally {
         setLoading(false);
       }
@@ -59,6 +59,8 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/portfolio/design" element={<PortfolioDesignPage />} />
+          <Route path="/nfc" element={<NfcDesignPage />} />
           <Route path="/my-links/*" element={<MyLinksPage />} />
           <Route path="/account" element={<UserProfilePageWrapper />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />

@@ -44,6 +44,11 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        fontFamily: {
+          mono: ['IBM Plex Mono', 'monospace'],
+          goblin: ['Goblin One', 'cursive'],
+          spartan: ['League Spartan', 'sans-serif'],
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
