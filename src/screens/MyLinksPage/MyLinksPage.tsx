@@ -50,7 +50,7 @@ export const MyLinksPage = (): JSX.Element => {
               };
             }
             return {
-              id: `${key}-defaultid`,
+              id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               name: key.charAt(0).toUpperCase() + key.slice(1),
               url: String(value || ""),
               clicks: 0,
@@ -79,7 +79,7 @@ export const MyLinksPage = (): JSX.Element => {
                 changed = true;
                 return {
                   ...link,
-                  id: `${link.name || 'link'}-defaultid`,
+                  id: `${link.name || 'link'}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 };
               }
               return link;
