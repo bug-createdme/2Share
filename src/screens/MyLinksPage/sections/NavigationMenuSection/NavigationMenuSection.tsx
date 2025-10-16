@@ -4,7 +4,6 @@ import {
   CreditCardIcon,
   HelpCircleIcon,
   UserIcon,
-  ZapIcon,
   LogOutIcon,
   SendIcon,
 } from "lucide-react";

@@ -9,10 +9,8 @@ import {
   BarChart3,
   HelpCircle,
   User,
-  Settings,
   LogOut,
-  Send,
-  Zap
+  Send
 } from "lucide-react";
 
 interface SidebarProps {

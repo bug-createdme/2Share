@@ -13,22 +13,6 @@ const NfcDesignPage: React.FC = () => {
   const [error, setError] = useState("");
   const [selectedTheme, setSelectedTheme] = useState("coral");
 
-  const avatarColors: Record<string, string> = {
-    coral: "bg-[#E7A5A5]",
-    green: "bg-green-300",
-    dark: "bg-gray-500",
-    gradient: "bg-purple-400",
-    orange: "bg-orange-400",
-  };
-
-  const textColors: Record<string, string> = {
-    coral: "text-[#E7A5A5]",
-    green: "text-green-400",
-    dark: "text-gray-500",
-    gradient: "text-purple-400",
-    orange: "text-orange-400",
-  };
-
   const themeClasses: Record<string, string> = {
     coral: "from-[#E7A5A5] to-[#E7A5A5]",
     green: "from-green-300 to-green-400",
@@ -244,10 +228,7 @@ const NfcDesignPage: React.FC = () => {
             <div className="flex-shrink-0">
               <NFCCardPreview
                 themeClasses={themeClasses}
-                avatarColors={avatarColors}
-                textColors={textColors}
                 selectedTheme={selectedTheme}
-                selectedLayout={1}
               />
             </div>
           </div>

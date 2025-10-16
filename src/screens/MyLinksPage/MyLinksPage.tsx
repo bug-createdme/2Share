@@ -1,4 +1,4 @@
-import { ArrowUpIcon, PlusIcon, SettingsIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, Routes, Route } from "react-router-dom";
 import SocialModalPage from "./SocialModalPage";

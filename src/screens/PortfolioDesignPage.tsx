@@ -3,8 +3,6 @@ import Sidebar from "../components/Sidebar"; // adjust path if needed
 import Header from "../components/Header";
 import PhonePreview from "../components/PhonePreview";
 import {
-  Settings,
-  Upload,
   GalleryHorizontalEnd,
   Plus,
   Zap,
@@ -21,7 +19,6 @@ const PortfolioDesignPage: React.FC = () => {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedLayout, setSelectedLayout] = useState(1); // 1-4
   const [selectedTheme, setSelectedTheme] = useState("coral");
   const [selectedProfile, setSelectedProfile] = useState(0);
   const [activeTab, setActiveTab] = useState<"text" | "button">("text");
