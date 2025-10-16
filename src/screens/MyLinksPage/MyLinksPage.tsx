@@ -9,10 +9,11 @@ import {
 } from "../../components/ui/avatar";
 import { Button } from "../../components/ui/button";
 // import { BioSection } from "./sections/BioSection/BioSection";
-import type { SocialLink } from "./sections/SocialLinksSection/SocialLinksSection";
 import { NavigationMenuSection } from "./sections/NavigationMenuSection/NavigationMenuSection";
+import type { SocialLink } from "./sections/SocialLinksSection/SocialLinksSection";
 import { ProfilePictureSection } from "./sections/ProfilePictureSection/ProfilePictureSection";
 import { SocialLinksSection } from "./sections/SocialLinksSection/SocialLinksSection";
+import Sidebar from "../../components/Sidebar";
 import { getMyProfile, updateMyProfile, updatePortfolio } from "../../lib/api";
 
 export const MyLinksPage = (): JSX.Element => {
