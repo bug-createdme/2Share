@@ -6,6 +6,11 @@ import tailwind from "tailwindcss";
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
+  },
   server: {
     port: 5173, // Thay đổi port ở đây
   },
@@ -15,4 +20,3 @@ export default defineConfig({
     },
   },
 })
-

@@ -1,4 +1,4 @@
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, Camera, Share2, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, Routes, Route } from "react-router-dom";
 import SocialModalPage from "./SocialModalPage";
@@ -18,6 +18,7 @@ import { getMyProfile, updateMyProfile, updatePortfolio } from "../../lib/api";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 
+
 export const MyLinksPage = (): JSX.Element => {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,6 +33,7 @@ export const MyLinksPage = (): JSX.Element => {
   const [tmpUsername, setTmpUsername] = useState("");
   const [tmpBio, setTmpBio] = useState("");
   const [savingTitleBio, setSavingTitleBio] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // Load from backend first (source of truth), then overlay per-user drafts from localStorage
@@ -113,6 +115,23 @@ export const MyLinksPage = (): JSX.Element => {
     } catch {}
   }, [bio, socialLinks, user?._id]);
 
+  // 4) Handle click tracking for social links
+  useEffect(() => {
+    function handleIncreaseClick(e: any) {
+      const { id } = e.detail;
+      setSocialLinks(prevLinks =>
+        prevLinks.map(link =>
+          link.id === id
+            ? { ...link, clicks: link.clicks + 1 }
+            : link
+        )
+      );
+    }
+
+    window.addEventListener('increase-click', handleIncreaseClick);
+    return () => window.removeEventListener('increase-click', handleIncreaseClick);
+  }, []);
+
 
   async function handleSaveTitleBio() {
     if (!user) return;
@@ -136,6 +155,30 @@ export const MyLinksPage = (): JSX.Element => {
       setSavingTitleBio(false);
     }
   }
+
+  // Function để copy portfolio link
+  const handleCopyPortfolioLink = async () => {
+    if (!user?.username) return;
+
+    const portfolioUrl = `${window.location.origin}/portfolio/${user.username}`;
+
+    try {
+      await navigator.clipboard.writeText(portfolioUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // Reset copied state sau 2 giây
+    } catch (error) {
+      console.error('Failed to copy:', error);
+      // Fallback cho trường hợp clipboard API không hoạt động
+      const textArea = document.createElement('textarea');
+      textArea.value = portfolioUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Đang tải thông tin...</div>;
@@ -161,13 +204,41 @@ export const MyLinksPage = (): JSX.Element => {
             <section className="w-full max-w-[700px] flex flex-col items-center px-9 pt-12">
               <div className="flex flex-col items-center gap-4 mb-8 w-full">
                 <div className="flex flex-col items-center gap-4">
-                  <Avatar className="w-[77px] h-[77px]">
-                    <AvatarImage
-                      src={user.avatar_url || undefined}
-                      alt="Profile picture"
-                    />
-                    <AvatarFallback>{user.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
-                  </Avatar>
+                  {/* Avatar với nút upload ảnh */}
+                  <div className="relative">
+                    <Avatar className="w-[77px] h-[77px]">
+                      <AvatarImage
+                        src={user.avatar_url || undefined}
+                        alt="Profile picture"
+                      />
+                      <AvatarFallback>{user.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+                    </Avatar>
+                    {/* Icon camera nhỏ gọn */}
+                    <button
+                      className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-blue-600 transition-all duration-200 shadow-lg border-2 border-white"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = async (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) {
+                            try {
+                              const { uploadImage } = await import('../../lib/api');
+                              const imageUrl = await uploadImage(file);
+                              await updateMyProfile({ avatar_url: imageUrl });
+                              setUser({ ...user, avatar_url: imageUrl });
+                            } catch (error) {
+                              console.error('Error updating avatar:', error);
+                            }
+                          }
+                        };
+                        input.click();
+                      }}
+                    >
+                      <Camera className="w-3 h-3" />
+                    </button>
+                  </div>
                   <div className="flex items-center gap-4">
                     <button
                       type="button"
@@ -195,15 +266,46 @@ export const MyLinksPage = (): JSX.Element => {
                   </button>
                 </div>
               </div>
-              <Button
-                className="h-auto w-full max-w-[400px] bg-[#639fff] hover:bg-[#5a8fee] rounded-[35px] py-4 flex items-center justify-center gap-2 shadow-lg mb-8"
-                onClick={() => navigate("/my-links/add-social")}
-              >
-                <PlusIcon className="w-6 h-6 text-white" />
-                <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-xl tracking-[2.00px]">
-                  Thêm
-                </span>
-              </Button>
+
+
+              {/* Share Portfolio Button */}
+              <div className="flex gap-3 w-full max-w-[400px] mb-8">
+                <Button
+                  className="flex-1 h-auto bg-[#639fff] hover:bg-[#5a8fee] rounded-[35px] py-4 flex items-center justify-center gap-2 shadow-lg"
+                  onClick={() => navigate("/my-links/add-social")}
+                >
+                  <PlusIcon className="w-6 h-6 text-white" />
+                  <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-xl tracking-[2.00px]">
+                    Thêm
+                  </span>
+                </Button>
+
+                <Button
+                  className={`h-auto px-6 py-4 rounded-[35px] flex items-center justify-center gap-2 shadow-lg transition-all duration-200 ${
+                    copied
+                      ? 'bg-green-500 hover:bg-green-600'
+                      : 'bg-gray-600 hover:bg-gray-700'
+                  }`}
+                  onClick={handleCopyPortfolioLink}
+                  title="Chia sẻ portfolio của bạn"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-6 h-6 text-white" />
+                      <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-sm">
+                        Đã copy!
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-6 h-6 text-white" />
+                      <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-sm">
+                        Chia sẻ
+                      </span>
+                    </>
+                  )}
+                </Button>
+              </div>
               {/* Modal as a route */}
               <Routes>
                 <Route path="add-social" element={

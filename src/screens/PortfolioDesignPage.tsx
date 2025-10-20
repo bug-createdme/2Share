@@ -3,8 +3,6 @@ import Sidebar from "../components/Sidebar"; // adjust path if needed
 import Header from "../components/Header";
 import PhonePreview from "../components/PhonePreview";
 import {
-  GalleryHorizontalEnd,
-  Plus,
   Zap,
 } from "lucide-react";
 import { FaFillDrip, FaRegCircle } from "react-icons/fa";
@@ -14,6 +12,7 @@ import {
   TbBorderCornerPill,
 } from "react-icons/tb";
 import { getMyProfile } from "../lib/api";
+import { ImageUpload } from "../components/ui/image-upload";
 
 const PortfolioDesignPage: React.FC = () => {
   const [user, setUser] = useState<any | null>(null);
@@ -184,10 +183,17 @@ const textColors: Record<string, string> = {
 </div>
 
 
-                <button className="w-full p-4 border border-gray-400 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-50">
-                <GalleryHorizontalEnd className="w-6 h-6" />
-                <span className=" text-lg">Chỉnh hình ảnh</span>
-                </button>
+                <div className="w-full">
+                  <ImageUpload
+                    onImageUploaded={(imageUrl) => {
+                      console.log('Profile image uploaded:', imageUrl);
+                    }}
+                    className="w-full"
+                    size="md"
+                    placeholder="Chỉnh hình ảnh"
+                    maxSize={3}
+                  />
+                </div>
             </div>
             </section>
 
@@ -282,13 +288,16 @@ const textColors: Record<string, string> = {
                     <div className="grid grid-cols-5 gap-6">
                         {/* Add Image */}
                         <div className="text-center">
-                        <div className="w-24 h-32 border-2 border-dashed border-gray-400 rounded-2xl bg-white flex flex-col items-center justify-center mb-2">
-                            <GalleryHorizontalEnd className="w-8 h-8 text-gray-400 mb-2" />
-                        </div>
-                        <div className="flex items-center justify-center gap-1 text-sm ">
-                            <Plus className="w-3 h-3" />
-                            Hình ảnh
-                        </div>
+                          <ImageUpload
+                            onImageUploaded={(imageUrl) => {
+                              console.log('Background image uploaded:', imageUrl);
+                            }}
+                            size="md"
+                            variant="rounded"
+                            className="mb-2"
+                            placeholder="Hình ảnh"
+                            maxSize={5}
+                          />
                         </div>
 
                         {/* Solid Color */}

@@ -9,13 +9,17 @@ import { MyLinksPage } from './screens/MyLinksPage/MyLinksPage';
 
 import UserProfilePage from './screens/UserProfilePage';
 import PortfolioDesignPage from './screens/PortfolioDesignPage';
+import PublicPortfolioPage from './screens/PublicPortfolioPage';
 import VerifyEmailPage from './screens/VerifyEmail/VerifyEmailPage';
 import EmailVerifyActionPage from './screens/VerifyEmail/EmailVerifyActionPage';
+import AdminPage from './screens/AdminPage';
 
 import { getMyProfile } from './lib/api';
 import Header from './components/MainLayout/Header';
 import Hero from './components/MainLayout/Hero';
 import NfcDesignPage from './screens/NfcDesignPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
 // Wrapper để lấy user từ API và truyền vào UserProfilePage
 function UserProfilePageWrapper() {
   const [user, setUser] = useState<any | null>(null);
@@ -44,32 +48,71 @@ function UserProfilePageWrapper() {
 function App() {
   return (
     <Router>
-      <div className="min-h-screen">
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <div className="bg-[#225C29]">
-                <Header />
-                <Hero />
-              </div>
-            }
-          />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/portfolio/design" element={<PortfolioDesignPage />} />
-          <Route path="/nfc" element={<NfcDesignPage />} />
-          <Route path="/my-links/*" element={<MyLinksPage />} />
-          <Route path="/account" element={<UserProfilePageWrapper />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/email-verify-action" element={<EmailVerifyActionPage />} />
-          {/* Route xử lý callback OAuth Google */}
-          <Route path="/oauth/google" element={<OAuthCallbackHandler />} />
-
-        </Routes>
-      </div>
+      <AuthProvider>
+        <div className="min-h-screen">
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <div className="bg-[#225C29]">
+                  <Header />
+                  <Hero />
+                </div>
+              }
+            />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route
+              path="/portfolio/design"
+              element={
+                <ProtectedRoute allowedRoles={['user']}>
+                  <PortfolioDesignPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/nfc"
+              element={
+                <ProtectedRoute allowedRoles={['user']}>
+                  <NfcDesignPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-links/*"
+              element={
+                <ProtectedRoute allowedRoles={['user']}>
+                  <MyLinksPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <ProtectedRoute allowedRoles={['user']}>
+                  <UserProfilePageWrapper />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/email-verify-action" element={<EmailVerifyActionPage />} />
+            {/* Public portfolio route - không cần authentication */}
+            <Route path="/portfolio/:username" element={<PublicPortfolioPage />} />
+            {/* Route xử lý callback OAuth Google */}
+            <Route path="/oauth/google" element={<OAuthCallbackHandler />} />
+          </Routes>
+        </div>
+      </AuthProvider>
     </Router>
   );
 }
