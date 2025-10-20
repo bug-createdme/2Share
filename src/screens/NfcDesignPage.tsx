@@ -8,6 +8,8 @@ import { GalleryHorizontalEnd, Plus, Zap } from "lucide-react";
 
 const NfcDesignPage: React.FC = () => {
   const [selectedTheme, setSelectedTheme] = useState("coral");
+  const [userName, setUserName] = useState("username_123");
+  const [userCategory, setUserCategory] = useState("Thiết kế đồ họa");
 
   const avatarColors: Record<string, string> = {
     coral: "bg-[#E7A5A5]",
@@ -56,7 +58,8 @@ const NfcDesignPage: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        defaultValue="username_123"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
                         className="w-full border border-gray-300 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
                       />
                     </div>
@@ -67,7 +70,8 @@ const NfcDesignPage: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        defaultValue="Thiết kế đồ họa"
+                        value={userCategory}
+                        onChange={(e) => setUserCategory(e.target.value)}
                         className="w-full border border-gray-300 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
                       />
                     </div>
@@ -77,7 +81,6 @@ const NfcDesignPage: React.FC = () => {
                         Logo của bạn
                       </label>
                       <button className="w-full p-4 border border-gray-400 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-50">
-                        <GalleryHorizontalEnd className="w-6 h-6" />
                         <span className="text-lg">Chọn logo hoặc hình ảnh</span>
                       </button>
                     </div>
@@ -120,7 +123,7 @@ const NfcDesignPage: React.FC = () => {
               {/* SECTION 3: BACKGROUND DESIGN */}
               <section>
                 <div className="flex items-center gap-3 mb-6">
-                  <Zap className="w-6 h-6" />
+                  <Zap className="w-6 h-6  text-[#a259ff]" />
                   <h2 className="text-2xl font-bold">Giao diện tự thiết kế</h2>
                 </div>
 
@@ -223,6 +226,8 @@ const NfcDesignPage: React.FC = () => {
                 textColors={textColors}
                 selectedTheme={selectedTheme}
                 selectedLayout={1}
+                userName={userName}
+                userCategory={userCategory}
               />
             </div>
           </div>

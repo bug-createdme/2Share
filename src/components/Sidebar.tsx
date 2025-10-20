@@ -1,6 +1,7 @@
 // src/components/Sidebar.tsx
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   ChevronDown,
   ChevronUp,
@@ -20,6 +21,7 @@ export default function Sidebar() {
   const [show2ShareMenu, setShow2ShareMenu] = useState(true);
   const location = useLocation(); // to know the current route
   const profileRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -67,10 +69,14 @@ export default function Sidebar() {
               </button>
               <button
                 className="w-full flex items-center px-4 py-2 text-[#a259ff] hover:bg-gray-50"
+                onClick={() => {
+                  navigate("/subscription");
+                }}
               >
                 <Zap className="w-5 h-5 mr-3 text-[#a259ff]" />
                 <span className="text-sm flex-1 text-left">Nâng cấp</span>
               </button>
+
               <button
                 className="w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
               >
@@ -146,10 +152,10 @@ export default function Sidebar() {
 
         {/* Statistics */}
         <Link
-          to="/statistics" // or whatever route you’ll use for statistics
+          to="/insights" // or whatever route you’ll use for statistics
           className={`flex items-center gap-3 w-full p-3 rounded-xl ${
-            location.pathname === "/statistics"
-              ? "bg-gray-300 text-black"
+            location.pathname === "/insights"
+              ? "bg-gray-300 text-black"  
               : "bg-white text-gray-600 hover:bg-gray-50"
           }`}
         >

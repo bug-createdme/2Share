@@ -247,7 +247,7 @@ const textColors: Record<string, string> = {
             {/* Custom Appearance Section */}   
                 <section>
                 <div className="flex items-center gap-3 mb-6">
-                    <Zap className="w-6 h-6" />
+                    <Zap className="w-6 h-6  text-[#a259ff]" />
                     <h2 className="text-2xl font-bold ">Giao diện tự thiết kế</h2>
                 </div>
 
