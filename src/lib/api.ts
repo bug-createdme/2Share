@@ -286,11 +286,7 @@ export async function uploadImage(file: File): Promise<string> {
     tokenPrefix: token.substring(0, 20) + '...'
   });
 
-  // Thử với URL khác nếu có
-  const uploadUrls = [
-    'https://2share.icu/medias/upload-image',
-    // Thử URL backup nếu có
-  ];
+
 
   try {
     // Đợi một chút để đảm bảo file được xử lý
