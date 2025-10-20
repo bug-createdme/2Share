@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BarChart3Icon, EditIcon, Trash2Icon } from "lucide-react";
 import { Card } from "../../../../components/ui/card";
 import { Switch } from "../../../../components/ui/switch";
@@ -25,6 +25,7 @@ import { CSS } from '@dnd-kit/utilities';
 export type SocialLink = {
   id: string;
   name: string;
+  displayName?: string; // Tên tùy chỉnh để hiển thị
   url: string;
   clicks: number;
   isEnabled: boolean;
@@ -37,11 +38,14 @@ interface SortableItemProps {
   link: SocialLink;
   index: number;
   onUrlChange: (index: number, url: string) => void;
+  onDisplayNameChange: (index: number, displayName: string) => void;
   onToggle: (index: number, checked: boolean) => void;
   onDelete: (index: number) => void;
+  isEditingName: boolean;
+  setEditingName: (index: number | null) => void;
 }
 
-const SortableItem = ({ link, index, onUrlChange, onToggle, onDelete }: SortableItemProps) => {
+const SortableItem = ({ link, index, onUrlChange, onDisplayNameChange, onToggle, onDelete, isEditingName, setEditingName }: SortableItemProps) => {
   const {
     attributes,
     listeners,
@@ -90,9 +94,32 @@ const SortableItem = ({ link, index, onUrlChange, onToggle, onDelete }: Sortable
             <div className="flex items-center gap-2">
               <h3 className="[font-family:'Carlito',Helvetica] font-bold text-black text-lg tracking-[1.80px] leading-[normal] flex items-center gap-2">
                 <span style={{ color: link.color, fontSize: 22 }}>{link.icon}</span>
-                <span>{link.name}</span>
+                {isEditingName ? (
+                  <input
+                    className="border-b border-dashed border-[#ccc] bg-transparent px-1 py-0 text-lg font-bold"
+                    value={link.displayName || link.name}
+                    onChange={e => onDisplayNameChange(index, e.target.value)}
+                    onBlur={() => setEditingName(null)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setEditingName(null);
+                      }
+                    }}
+                    autoFocus
+                  />
+                ) : (
+                  <span
+                    className="cursor-pointer hover:underline"
+                    onClick={() => setEditingName(index)}
+                  >
+                    {link.displayName || link.name}
+                  </span>
+                )}
               </h3>
-              <button className="hover:opacity-70 transition-opacity">
+              <button
+                className="hover:opacity-70 transition-opacity"
+                onClick={() => setEditingName(isEditingName ? null : index)}
+              >
                 <EditIcon className="w-4 h-4 text-gray-500" />
               </button>
             </div>
@@ -128,7 +155,7 @@ const SortableItem = ({ link, index, onUrlChange, onToggle, onDelete }: Sortable
         {/* Chỉ hiển thị dòng hướng dẫn khi chưa có URL */}
         {!link.url && (
           <div className="bg-[#fff7d6] rounded-b-xl px-4 py-2 mt-2 text-[#a67c00] text-sm border-t border-[#ffe7a0]">
-            Enter your {link.name} URL, then set up your link.
+            Enter your {link.displayName || link.name} URL, then set up your link.
           </div>
         )}
       </div>
@@ -137,6 +164,8 @@ const SortableItem = ({ link, index, onUrlChange, onToggle, onDelete }: Sortable
 };
 
 export const SocialLinksSection = ({ socialLinks, setSocialLinks }: { socialLinks: SocialLink[]; setSocialLinks: React.Dispatch<React.SetStateAction<SocialLink[]>> }): JSX.Element => {
+  const [editingNameIndex, setEditingNameIndex] = useState<number | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -186,6 +215,17 @@ export const SocialLinksSection = ({ socialLinks, setSocialLinks }: { socialLink
     setSocialLinks(newLinks);
   };
 
+  const handleDisplayNameChange = (index: number, displayName: string) => {
+    const newLinks = [...socialLinks];
+    if (displayName.trim() === "") {
+      // Nếu xóa hết tên tùy chỉnh, set về undefined
+      delete newLinks[index].displayName;
+    } else {
+      newLinks[index].displayName = displayName.trim();
+    }
+    setSocialLinks(newLinks);
+  };
+
   const handleToggle = (index: number, checked: boolean) => {
     const newLinks = [...socialLinks];
     newLinks[index].isEnabled = checked;
@@ -213,8 +253,11 @@ export const SocialLinksSection = ({ socialLinks, setSocialLinks }: { socialLink
               link={link}
               index={index}
               onUrlChange={handleUrlChange}
+              onDisplayNameChange={handleDisplayNameChange}
               onToggle={handleToggle}
               onDelete={handleDelete}
+              isEditingName={editingNameIndex === index}
+              setEditingName={setEditingNameIndex}
             />
           ))}
         </section>

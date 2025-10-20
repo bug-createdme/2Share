@@ -168,7 +168,7 @@ export const ProfilePictureSection = ({ user, bio, socialLinks }: { user: any; b
                 >
                   <SocialAvatar url={link.url} name={link.name} icon={link.icon} />
                   <span className="[font-family:'Itim',Helvetica] font-normal text-white text-sm tracking-[1.40px] leading-[normal]">
-                    {link.name}
+                    {link.displayName || link.name}
                   </span>
                 </Button>
               </div>
