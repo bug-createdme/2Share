@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { getOauthGoogleUrl } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 
 const LoginPage: React.FC = () => {
+  const { login, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -61,36 +63,11 @@ const LoginPage: React.FC = () => {
     }
     setLoading(true);
     try {
-      // Clear any old tokens before login
-      localStorage.removeItem('token');
-      localStorage.removeItem('refresh_token');
-      
-      console.log('Attempting login with:', { email, password: '***' }); // Debug
-      const res = await fetch('https://2share.icu/users/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      console.log('Login response:', data); // Debug response
-      if (!res.ok) {
-        // Handle specific validation errors
-        if (data.errors && data.errors.email) {
-          setFormError(data.errors.email.msg || 'Email hoặc mật khẩu không đúng');
-        } else {
-          setFormError(data.message || 'Đăng nhập thất bại');
-        }
-      } else {
-        // Lưu token, chuyển hướng hoặc xử lý tiếp
-        localStorage.setItem('token', data.result.access_token);
-        if (data.result.refresh_token) {
-          localStorage.setItem('refresh_token', data.result.refresh_token);
-        }
-        navigate('/my-links');
-      }
-    } catch (err) {
+      await login(email, password);
+      // Login successful - navigation is handled by AuthContext
+    } catch (err: any) {
       console.error('Login error:', err);
-      setFormError('Lỗi kết nối máy chủ');
+      setFormError(err.message || 'Đăng nhập thất bại');
     } finally {
       setLoading(false);
     }
@@ -199,8 +176,6 @@ const LoginPage: React.FC = () => {
                 Đăng nhập bằng Google
               </span>
             </button>
-
-        
           </div>
 
           {/* Forgot Password Links */}

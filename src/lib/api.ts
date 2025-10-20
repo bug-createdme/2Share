@@ -63,6 +63,35 @@ export async function updatePortfolio(data: {
   }
   return result;
 }
+
+// Lấy portfolio của chính mình (cần authentication)
+export async function getMyPortfolio() {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('No token');
+  const res = await fetch('https://2share.icu/portfolios/get-my-portfolio', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || 'Lỗi lấy portfolio');
+  return result.result;
+}
+
+// Lấy portfolio public theo username (không cần authentication)
+export async function getPortfolioByUsername(username: string) {
+  const res = await fetch(`https://2share.icu/portfolios/get-portfolio?username=${encodeURIComponent(username)}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || 'Lỗi lấy portfolio công khai');
+  return result.result;
+}
 // src/lib/api.ts
 export async function getMyProfile() {
   const token = localStorage.getItem('token');
@@ -227,27 +256,97 @@ export async function uploadImage(file: File): Promise<string> {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('No token');
 
-  const formData = new FormData();
-  formData.append('image', file);
-
-  console.log('Uploading file:', file.name, 'Size:', file.size, 'Type:', file.type);
-
-  const res = await fetch('https://2share.icu/medias/upload-image', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      // Không set Content-Type vì FormData tự động set boundary
-    },
-    body: formData,
-  });
-
-  const result = await res.json();
-  console.log('Upload response:', result);
-
-  if (!res.ok) {
-    console.error('Upload failed:', result);
-    throw new Error(result.message || 'Lỗi upload ảnh');
+  // Kiểm tra token có hợp lệ không
+  if (!token.startsWith('eyJ')) {
+    throw new Error('Token không hợp lệ. Vui lòng đăng nhập lại.');
   }
 
-  return result.result?.url || result.url || result.image_url;
+  const formData = new FormData();
+
+  // Chỉ gửi field 'image' như trong Postman
+  formData.append('image', file);
+
+  console.log('FormData contents:', {
+    fieldName: 'image',
+    fileName: file.name,
+    fileSize: file.size,
+    fileType: file.type
+  });
+
+  // Log FormData entries để debug
+  for (let [key, value] of formData.entries()) {
+    console.log('FormData entry:', key, value instanceof File ? `[File: ${value.name}]` : value);
+  }
+
+  console.log('Uploading file:', {
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    lastModified: new Date(file.lastModified).toISOString(),
+    tokenPrefix: token.substring(0, 20) + '...'
+  });
+
+  // Thử với URL khác nếu có
+  const uploadUrls = [
+    'https://2share.icu/medias/upload-image',
+    // Thử URL backup nếu có
+  ];
+
+  try {
+    // Đợi một chút để đảm bảo file được xử lý
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const res = await fetch('https://2share.icu/medias/upload-image', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        // Thử thêm Accept header
+        'Accept': 'application/json',
+      },
+      body: formData,
+    });
+
+    const result = await res.json();
+    console.log('Upload response:', {
+      status: res.status,
+      ok: res.ok,
+      result: result
+    });
+
+    if (!res.ok) {
+      console.error('Upload failed:', {
+        status: res.status,
+        statusText: res.statusText,
+        result: result
+      });
+
+      // Xử lý các lỗi cụ thể
+      if (res.status === 413) {
+        throw new Error('File quá lớn. Vui lòng chọn file nhỏ hơn 5MB.');
+      } else if (res.status === 415) {
+        throw new Error('Định dạng file không được hỗ trợ. Vui lòng chọn file hình ảnh.');
+      } else if (res.status === 401) {
+        throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else {
+        throw new Error(result.message || `Lỗi server: ${res.status}`);
+      }
+    }
+
+    // Kiểm tra response structure
+    const imageUrl = result.result?.url || result.url || result.image_url;
+    if (!imageUrl) {
+      console.error('Invalid response structure:', result);
+      throw new Error('Phản hồi từ server không hợp lệ');
+    }
+
+    console.log('Upload successful, image URL:', imageUrl);
+    return imageUrl;
+
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.error('Network error:', error);
+      throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.');
+    }
+    throw error;
+  }
 }
