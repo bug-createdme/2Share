@@ -1,7 +1,111 @@
 // ...existing code...
+import { useState, useEffect } from "react";
 import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
 
+// Component để lấy và hiển thị avatar từ social link
+const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: string }) => {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!url) {
+      setAvatarUrl(null);
+      return;
+    }
+
+    const getSocialAvatar = async (socialUrl: string) => {
+      setLoading(true);
+      try {
+        // Cách tiếp cận đơn giản và đáng tin cậy hơn: sử dụng unavatar.io cho hầu hết các platform
+        if (socialUrl.includes('youtube.com') || socialUrl.includes('youtu.be')) {
+          // Với YouTube, thử unavatar service trước
+          const videoMatch = socialUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+          if (videoMatch) {
+            const videoId = videoMatch[1];
+            setAvatarUrl(`https://img.youtube.com/vi/${videoId}/default.jpg`);
+          } else {
+            // Với channel, sử dụng ảnh đại diện chung
+            setAvatarUrl(`https://www.youtube.com/favicon.ico`);
+          }
+        }
+        else if (socialUrl.includes('tiktok.com')) {
+          const usernameMatch = socialUrl.match(/tiktok\.com\/@([^\/\?]+)/);
+          if (usernameMatch) {
+            const username = usernameMatch[1];
+            // Sử dụng unavatar cho TikTok
+            setAvatarUrl(`https://unavatar.io/tiktok/${username}`);
+          }
+        }
+        else if (socialUrl.includes('soundcloud.com')) {
+          const usernameMatch = socialUrl.match(/soundcloud\.com\/([^\/\?]+)/);
+          if (usernameMatch) {
+            const username = usernameMatch[1];
+            setAvatarUrl(`https://unavatar.io/soundcloud/${username}`);
+          }
+        }
+        else if (socialUrl.includes('pinterest.com')) {
+          const usernameMatch = socialUrl.match(/pinterest\.com\/([^\/\?]+)/);
+          if (usernameMatch) {
+            const username = usernameMatch[1];
+            setAvatarUrl(`https://unavatar.io/pinterest/${username}`);
+          }
+        }
+        else if (socialUrl.includes('instagram.com')) {
+          const usernameMatch = socialUrl.match(/instagram\.com\/([^\/\?]+)/);
+          if (usernameMatch) {
+            const username = usernameMatch[1];
+            setAvatarUrl(`https://unavatar.io/instagram/${username}`);
+          }
+        }
+        else if (socialUrl.includes('twitter.com') || socialUrl.includes('x.com')) {
+          const usernameMatch = socialUrl.match(/(?:twitter\.com|x\.com)\/([^\/\?]+)/);
+          if (usernameMatch) {
+            const username = usernameMatch[1];
+            setAvatarUrl(`https://unavatar.io/twitter/${username}`);
+          }
+        }
+        else if (socialUrl.includes('facebook.com')) {
+          const usernameMatch = socialUrl.match(/facebook\.com\/([^\/\?]+)/);
+          if (usernameMatch) {
+            const username = usernameMatch[1];
+            setAvatarUrl(`https://unavatar.io/facebook/${username}`);
+          }
+        }
+        // Nếu không match được platform nào hoặc unavatar không hoạt động
+        else {
+          setAvatarUrl(null);
+        }
+      } catch (error) {
+        console.error('Error getting social avatar:', error);
+        setAvatarUrl(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      getSocialAvatar(url);
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [url]);
+
+  return (
+    <div className="absolute top-[11px] left-[11px] w-[18px] h-[18px] rounded-full overflow-hidden bg-white flex items-center justify-center">
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt={`${name} avatar`}
+          className="w-full h-full object-cover"
+          onError={() => setAvatarUrl(null)} // Fallback nếu ảnh lỗi
+        />
+      ) : (
+        <span className="text-lg">{icon}</span>
+      )}
+    </div>
+  );
+};
 
 export const ProfilePictureSection = ({ user, bio, socialLinks }: { user: any; bio: string; socialLinks: import("../SocialLinksSection/SocialLinksSection").SocialLink[] }): JSX.Element => {
   return (
@@ -62,11 +166,7 @@ export const ProfilePictureSection = ({ user, bio, socialLinks }: { user: any; b
                     opacity: link.url && link.isEnabled ? 1 : 0.5
                   }}
                 >
-                  <img
-                    className="absolute top-[11px] left-[11px] w-[18px] h-[18px]"
-                    alt={link.name}
-                    src={link.icon}
-                  />
+                  <SocialAvatar url={link.url} name={link.name} icon={link.icon} />
                   <span className="[font-family:'Itim',Helvetica] font-normal text-white text-sm tracking-[1.40px] leading-[normal]">
                     {link.name}
                   </span>
