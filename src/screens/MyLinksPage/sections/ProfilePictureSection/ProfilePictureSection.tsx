@@ -46,6 +46,21 @@ export const ProfilePictureSection = ({ user, bio, socialLinks }: { user: any; b
                 <Button
                   variant="outline"
                   className="w-[210px] h-[39px] rounded-[10px] border-2 border-solid border-white bg-transparent hover:bg-white/10 transition-colors h-auto"
+                  onClick={() => {
+                    if (link.url && link.isEnabled) {
+                      // Tăng số lượt click
+                      window.dispatchEvent(new CustomEvent('increase-click', {
+                        detail: { id: link.id }
+                      }));
+                      // Mở link trong tab mới
+                      window.open(link.url, '_blank', 'noopener,noreferrer');
+                    }
+                  }}
+                  disabled={!link.url || !link.isEnabled}
+                  style={{
+                    cursor: link.url && link.isEnabled ? 'pointer' : 'not-allowed',
+                    opacity: link.url && link.isEnabled ? 1 : 0.5
+                  }}
                 >
                   <img
                     className="absolute top-[11px] left-[11px] w-[18px] h-[18px]"

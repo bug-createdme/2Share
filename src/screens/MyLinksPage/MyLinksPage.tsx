@@ -114,6 +114,23 @@ export const MyLinksPage = (): JSX.Element => {
     } catch {}
   }, [bio, socialLinks, user?._id]);
 
+  // 4) Handle click tracking for social links
+  useEffect(() => {
+    function handleIncreaseClick(e: any) {
+      const { id } = e.detail;
+      setSocialLinks(prevLinks =>
+        prevLinks.map(link =>
+          link.id === id
+            ? { ...link, clicks: link.clicks + 1 }
+            : link
+        )
+      );
+    }
+
+    window.addEventListener('increase-click', handleIncreaseClick);
+    return () => window.removeEventListener('increase-click', handleIncreaseClick);
+  }, []);
+
 
   async function handleSaveTitleBio() {
     if (!user) return;

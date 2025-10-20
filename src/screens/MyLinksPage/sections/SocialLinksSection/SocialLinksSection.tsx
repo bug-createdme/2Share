@@ -125,9 +125,12 @@ const SortableItem = ({ link, index, onUrlChange, onToggle, onDelete }: Sortable
             {link.clicks} clicks
           </span>
         </div>
-        <div className="bg-[#fff7d6] rounded-b-xl px-4 py-2 mt-2 text-[#a67c00] text-sm border-t border-[#ffe7a0]">
-          Enter your {link.name} URL, then set up your link.
-        </div>
+        {/* Chỉ hiển thị dòng hướng dẫn khi chưa có URL */}
+        {!link.url && (
+          <div className="bg-[#fff7d6] rounded-b-xl px-4 py-2 mt-2 text-[#a67c00] text-sm border-t border-[#ffe7a0]">
+            Enter your {link.name} URL, then set up your link.
+          </div>
+        )}
       </div>
     </Card>
   );
