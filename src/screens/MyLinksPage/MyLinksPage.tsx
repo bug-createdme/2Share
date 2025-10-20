@@ -1,4 +1,4 @@
-import { PlusIcon, Camera } from "lucide-react";
+import { PlusIcon, Camera, Share2, Copy, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, Routes, Route } from "react-router-dom";
 import SocialModalPage from "./SocialModalPage";
@@ -33,6 +33,7 @@ export const MyLinksPage = (): JSX.Element => {
   const [tmpUsername, setTmpUsername] = useState("");
   const [tmpBio, setTmpBio] = useState("");
   const [savingTitleBio, setSavingTitleBio] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // Load from backend first (source of truth), then overlay per-user drafts from localStorage
@@ -155,6 +156,30 @@ export const MyLinksPage = (): JSX.Element => {
     }
   }
 
+  // Function để copy portfolio link
+  const handleCopyPortfolioLink = async () => {
+    if (!user?.username) return;
+
+    const portfolioUrl = `${window.location.origin}/portfolio/${user.username}`;
+
+    try {
+      await navigator.clipboard.writeText(portfolioUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // Reset copied state sau 2 giây
+    } catch (error) {
+      console.error('Failed to copy:', error);
+      // Fallback cho trường hợp clipboard API không hoạt động
+      const textArea = document.createElement('textarea');
+      textArea.value = portfolioUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Đang tải thông tin...</div>;
   }
@@ -243,15 +268,44 @@ export const MyLinksPage = (): JSX.Element => {
               </div>
 
 
-              <Button
-                className="h-auto w-full max-w-[400px] bg-[#639fff] hover:bg-[#5a8fee] rounded-[35px] py-4 flex items-center justify-center gap-2 shadow-lg mb-8"
-                onClick={() => navigate("/my-links/add-social")}
-              >
-                <PlusIcon className="w-6 h-6 text-white" />
-                <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-xl tracking-[2.00px]">
-                  Thêm
-                </span>
-              </Button>
+              {/* Share Portfolio Button */}
+              <div className="flex gap-3 w-full max-w-[400px] mb-8">
+                <Button
+                  className="flex-1 h-auto bg-[#639fff] hover:bg-[#5a8fee] rounded-[35px] py-4 flex items-center justify-center gap-2 shadow-lg"
+                  onClick={() => navigate("/my-links/add-social")}
+                >
+                  <PlusIcon className="w-6 h-6 text-white" />
+                  <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-xl tracking-[2.00px]">
+                    Thêm
+                  </span>
+                </Button>
+
+                <Button
+                  className={`h-auto px-6 py-4 rounded-[35px] flex items-center justify-center gap-2 shadow-lg transition-all duration-200 ${
+                    copied
+                      ? 'bg-green-500 hover:bg-green-600'
+                      : 'bg-gray-600 hover:bg-gray-700'
+                  }`}
+                  onClick={handleCopyPortfolioLink}
+                  title="Chia sẻ portfolio của bạn"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-6 h-6 text-white" />
+                      <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-sm">
+                        Đã copy!
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-6 h-6 text-white" />
+                      <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-sm">
+                        Chia sẻ
+                      </span>
+                    </>
+                  )}
+                </Button>
+              </div>
               {/* Modal as a route */}
               <Routes>
                 <Route path="add-social" element={
