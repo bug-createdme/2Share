@@ -4,7 +4,6 @@ import {
   CreditCardIcon,
   HelpCircleIcon,
   UserIcon,
-  ZapIcon,
   LogOutIcon,
   SendIcon,
 } from "lucide-react";
@@ -94,11 +93,7 @@ export const NavigationMenuSection = ({ user }: { user: any }): JSX.Element => {
               <UserIcon className="w-5 h-5 mr-3 text-[#222]" />
               <span className="text-[15px] text-left flex-1">Tài khoản</span>
             </button>
-            <button className="w-full flex items-center px-4 py-2 text-[#a259ff] hover:bg-gray-100 focus:outline-none">
-              <ZapIcon className="w-5 h-5 mr-3 text-[#a259ff]" />
-              <span className="text-[15px] text-left flex-1">Nâng cấp</span>
-            </button>
-            
+
             <button className="w-full flex items-center px-4 py-2 text-[#222] hover:bg-gray-100 focus:outline-none">
               <SendIcon className="w-5 h-5 mr-3 text-[#222]" />
               <span className="text-[15px] text-left flex-1">Để phản hồi</span>

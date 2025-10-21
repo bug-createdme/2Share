@@ -4,18 +4,13 @@ import { IoQrCodeOutline } from "react-icons/io5";
 
 interface NFCCardPreviewProps {
   themeClasses: Record<string, string>;
-  avatarColors: Record<string, string>;
-  textColors: Record<string, string>;
   selectedTheme: string;
-  selectedLayout: number;
   userName: string;
   userCategory: string;
 }
 
 const NFCCardPreview: React.FC<NFCCardPreviewProps> = ({
   themeClasses,
-  avatarColors,
-  textColors,
   selectedTheme,
   userName,
   userCategory,

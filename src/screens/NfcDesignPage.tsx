@@ -1,31 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import NFCCardPreview from "../components/NfcCardPreview";
-import { GalleryHorizontalEnd, Plus, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
+import { getMyProfile } from "../lib/api";
+import { ImageUpload } from "../components/ui/image-upload";
 
 const NfcDesignPage: React.FC = () => {
+  const [user, setUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [selectedTheme, setSelectedTheme] = useState("coral");
   const [userName, setUserName] = useState("username_123");
   const [userCategory, setUserCategory] = useState("Thiết kế đồ họa");
-
-  const avatarColors: Record<string, string> = {
-    coral: "bg-[#E7A5A5]",
-    green: "bg-green-300",
-    dark: "bg-gray-500",
-    gradient: "bg-purple-400",
-    orange: "bg-orange-400",
-  };
-
-  const textColors: Record<string, string> = {
-    coral: "text-[#E7A5A5]",
-    green: "text-green-400",
-    dark: "text-gray-500",
-    gradient: "text-purple-400",
-    orange: "text-orange-400",
-  };
 
   const themeClasses: Record<string, string> = {
     coral: "from-[#E7A5A5] to-[#E7A5A5]",
@@ -35,12 +24,33 @@ const NfcDesignPage: React.FC = () => {
     orange: "from-blue-400 to-orange-400",
   };
 
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const profile = await getMyProfile();
+        setUser(profile);
+      } catch (err: any) {
+        setError(err.message || "Lỗi lấy thông tin người dùng");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Đang tải thông tin...</div>;
+  }
+  if (error || !user) {
+    return <div className="flex items-center justify-center h-screen text-red-500">{error || "Không có thông tin người dùng"}</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 font-spartan">
       <Header />
 
       <div className="flex pt-20">
-        <Sidebar />
+        <Sidebar user={user} />
 
         {/* --- MAIN CONTENT --- */}
         <main className="flex-1 ml-72 p-8 overflow-y-auto">
@@ -80,9 +90,17 @@ const NfcDesignPage: React.FC = () => {
                       <label className="block text-sm font-medium mb-2">
                         Logo của bạn
                       </label>
-                      <button className="w-full p-4 border border-gray-400 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-50">
-                        <span className="text-lg">Chọn logo hoặc hình ảnh</span>
-                      </button>
+                      <div className="w-full">
+                        <ImageUpload
+                          onImageUploaded={(imageUrl) => {
+                            console.log('Logo uploaded:', imageUrl);
+                          }}
+                          className="w-full"
+                          size="md"
+                          placeholder="Chọn logo hoặc hình ảnh"
+                          maxSize={3}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -132,13 +150,16 @@ const NfcDesignPage: React.FC = () => {
                   <div className="grid grid-cols-3 gap-6 place-items-center">
                     {/* Add Image */}
                     <div className="text-center">
-                      <div className="w-36 h-24 border-2 border-dashed border-gray-400 rounded-2xl flex flex-col items-center justify-center mb-2">
-                        <GalleryHorizontalEnd className="w-8 h-8 text-gray-400 mb-2" />
-                      </div>
-                      <div className="flex items-center justify-center gap-1 text-sm">
-                        <Plus className="w-3 h-3" />
-                        Hình ảnh
-                      </div>
+                      <ImageUpload
+                        onImageUploaded={(imageUrl) => {
+                          console.log('Background image uploaded:', imageUrl);
+                        }}
+                        size="md"
+                        variant="rounded"
+                        className="mb-2"
+                        placeholder="Hình ảnh"
+                        maxSize={5}
+                      />
                     </div>
 
                     {/* Flat */}
@@ -222,13 +243,7 @@ const NfcDesignPage: React.FC = () => {
             <div className="flex-shrink-0">
               <NFCCardPreview
                 themeClasses={themeClasses}
-                avatarColors={avatarColors}
-                textColors={textColors}
-                selectedTheme={selectedTheme}
-                selectedLayout={1}
-                userName={userName}
-                userCategory={userCategory}
-              />
+                selectedTheme={selectedTheme} userName={""} userCategory={""}/>
             </div>
           </div>
         </main>

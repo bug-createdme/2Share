@@ -1,12 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar"; // adjust path if needed
 import Header from "../components/Header";
 import PhonePreview from "../components/PhonePreview";
 import {
-  Settings,
-  Upload,
-  GalleryHorizontalEnd,
-  Plus,
   Zap,
 } from "lucide-react";
 import { FaFillDrip, FaRegCircle } from "react-icons/fa";
@@ -15,15 +11,18 @@ import {
   TbBorderCornerRounded,
   TbBorderCornerPill,
 } from "react-icons/tb";
-
+import { getMyProfile } from "../lib/api";
+import { ImageUpload } from "../components/ui/image-upload";
 
 const PortfolioDesignPage: React.FC = () => {
-  const [selectedLayout, setSelectedLayout] = useState(1); // 1-4
+  const [user, setUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [selectedTheme, setSelectedTheme] = useState("coral");
   const [selectedProfile, setSelectedProfile] = useState(0);
   const [activeTab, setActiveTab] = useState<"text" | "button">("text");
-const [buttonFill, setButtonFill] = useState(0); // 0 = solid, 1 = outline
-const [buttonCorner, setButtonCorner] = useState(1); // 0 = hard, 1 = soft, 2 = round
+  const [buttonFill, setButtonFill] = useState(0); // 0 = solid, 1 = outline
+  const [buttonCorner, setButtonCorner] = useState(1); // 0 = hard, 1 = soft, 2 = round
 
 const avatarColors: Record<string, string> = {
   coral: "bg-[#E7A5A5]",
@@ -48,6 +47,28 @@ const textColors: Record<string, string> = {
     gradient: "from-purple-400 via-blue-400 to-green-400",
     orange: "from-blue-400 to-orange-400",
   };
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const profile = await getMyProfile();
+        setUser(profile);
+      } catch (err: any) {
+        setError(err.message || "Lỗi lấy thông tin người dùng");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Đang tải thông tin...</div>;
+  }
+  if (error || !user) {
+    return <div className="flex items-center justify-center h-screen text-red-500">{error || "Không có thông tin người dùng"}</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 font-spartan">
       {/* Header */}
@@ -55,7 +76,7 @@ const textColors: Record<string, string> = {
 
       <div className="flex pt-20">
         {/* Sidebar */}
-        <Sidebar />
+        <Sidebar user={user} />
 
         {/* Main Content */}
         <main className="flex ml-72 p-8 overflow-y-auto">
@@ -162,10 +183,17 @@ const textColors: Record<string, string> = {
 </div>
 
 
-                <button className="w-full p-4 border border-gray-400 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-50">
-                <GalleryHorizontalEnd className="w-6 h-6" />
-                <span className=" text-lg">Chỉnh hình ảnh</span>
-                </button>
+                <div className="w-full">
+                  <ImageUpload
+                    onImageUploaded={(imageUrl) => {
+                      console.log('Profile image uploaded:', imageUrl);
+                    }}
+                    className="w-full"
+                    size="md"
+                    placeholder="Chỉnh hình ảnh"
+                    maxSize={3}
+                  />
+                </div>
             </div>
             </section>
 
@@ -260,13 +288,16 @@ const textColors: Record<string, string> = {
                     <div className="grid grid-cols-5 gap-6">
                         {/* Add Image */}
                         <div className="text-center">
-                        <div className="w-24 h-32 border-2 border-dashed border-gray-400 rounded-2xl bg-white flex flex-col items-center justify-center mb-2">
-                            <GalleryHorizontalEnd className="w-8 h-8 text-gray-400 mb-2" />
-                        </div>
-                        <div className="flex items-center justify-center gap-1 text-sm ">
-                            <Plus className="w-3 h-3" />
-                            Hình ảnh
-                        </div>
+                          <ImageUpload
+                            onImageUploaded={(imageUrl) => {
+                              console.log('Background image uploaded:', imageUrl);
+                            }}
+                            size="md"
+                            variant="rounded"
+                            className="mb-2"
+                            placeholder="Hình ảnh"
+                            maxSize={5}
+                          />
                         </div>
 
                         {/* Solid Color */}
