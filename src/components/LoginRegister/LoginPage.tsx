@@ -4,7 +4,7 @@ import { getOauthGoogleUrl } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 
 const LoginPage: React.FC = () => {
-  const { login, isLoading } = useAuth();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

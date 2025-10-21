@@ -1,4 +1,4 @@
-import { PlusIcon, Camera, Share2, Copy, Check } from "lucide-react";
+import { PlusIcon, Camera, Share2, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, Routes, Route } from "react-router-dom";
 import SocialModalPage from "./SocialModalPage";

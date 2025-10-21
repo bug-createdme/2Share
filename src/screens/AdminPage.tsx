@@ -46,11 +46,10 @@ const AdminPage: React.FC = () => {
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [portfolioStats, setPortfolioStats] = useState<PortfolioStats | null>(null);
   const [revenueStats, setRevenueStats] = useState<RevenueStats | null>(null);
-  const [loading, setLoading] = useState(false);
+
   const [activeTab, setActiveTab] = useState('overview');
 
   const fetchAllStats = async () => {
-    setLoading(true);
     try {
       await Promise.all([
         fetchUserStats(),
@@ -59,8 +58,6 @@ const AdminPage: React.FC = () => {
       ]);
     } catch (error) {
       console.error('Error fetching stats:', error);
-    } finally {
-      setLoading(false);
     }
   };
 

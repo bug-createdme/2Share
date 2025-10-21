@@ -8,7 +8,7 @@ import type { SocialLink } from "./MyLinksPage/sections/SocialLinksSection/Socia
 // Component để lấy và hiển thị avatar từ social link
 const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: string }) => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+
 
   useEffect(() => {
     if (!url) {
@@ -17,7 +17,6 @@ const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: st
     }
 
     const getSocialAvatar = async (socialUrl: string) => {
-      setLoading(true);
       try {
         // Cách tiếp cận đơn giản và đáng tin cậy hơn: sử dụng unavatar.io cho hầu hết các platform
         if (socialUrl.includes('youtube.com') || socialUrl.includes('youtu.be')) {
@@ -81,8 +80,6 @@ const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: st
       } catch (error) {
         console.error('Error getting social avatar:', error);
         setAvatarUrl(null);
-      } finally {
-        setLoading(false);
       }
     };
 
