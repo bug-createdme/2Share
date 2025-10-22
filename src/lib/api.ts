@@ -251,7 +251,7 @@ export async function testLogin(email: string, password: string) {
   return { success: res.ok, data };
 }
 
-// Upload image function
+// Upload image function with presigned URL (2 steps process)
 export async function uploadImage(file: File): Promise<string> {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('No token');
@@ -261,84 +261,136 @@ export async function uploadImage(file: File): Promise<string> {
     throw new Error('Token không hợp lệ. Vui lòng đăng nhập lại.');
   }
 
-  const formData = new FormData();
-
-  // Chỉ gửi field 'image' như trong Postman
-  formData.append('image', file);
-
-  console.log('FormData contents:', {
-    fieldName: 'image',
-    fileName: file.name,
-    fileSize: file.size,
-    fileType: file.type
-  });
-
-  // Log FormData entries để debug
-  for (let [key, value] of formData.entries()) {
-    console.log('FormData entry:', key, value instanceof File ? `[File: ${value.name}]` : value);
-  }
-
-  console.log('Uploading file:', {
+  console.log('Starting upload process for file:', {
     name: file.name,
     size: file.size,
     type: file.type,
-    lastModified: new Date(file.lastModified).toISOString(),
-    tokenPrefix: token.substring(0, 20) + '...'
   });
 
-
-
   try {
-    // Đợi một chút để đảm bảo file được xử lý
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // ==================== BƯỚC 1: Lấy presigned URL ====================
+    const formData = new FormData();
+    formData.append('image', file);
 
-    const res = await fetch('https://2share.icu/medias/upload-image', {
+    console.log('Step 1: Getting presigned URL...');
+    console.log('File details:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: file.lastModified
+    });
+
+    const step1Response = await fetch('https://2share.icu/medias/upload-image', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
-        // Thử thêm Accept header
-        'Accept': 'application/json',
+        // Không thêm Content-Type, để browser tự động set với boundary cho multipart/form-data
       },
       body: formData,
     });
 
-    const result = await res.json();
-    console.log('Upload response:', {
-      status: res.status,
-      ok: res.ok,
-      result: result
+    const step1Result = await step1Response.json();
+    console.log('Step 1 response (full):', JSON.stringify(step1Result, null, 2));
+    console.log('Step 1 response summary:', {
+      status: step1Response.status,
+      ok: step1Response.ok,
+      hasResult: !!step1Result.result,
+      resultKeys: step1Result.result ? Object.keys(step1Result.result) : [],
+      topLevelKeys: Object.keys(step1Result)
     });
 
-    if (!res.ok) {
-      console.error('Upload failed:', {
-        status: res.status,
-        statusText: res.statusText,
-        result: result
+    if (!step1Response.ok) {
+      console.error('Step 1 failed:', {
+        status: step1Response.status,
+        statusText: step1Response.statusText,
+        message: step1Result.message,
+        errorInfo: step1Result.errorInfo
       });
 
       // Xử lý các lỗi cụ thể
-      if (res.status === 413) {
+      if (step1Response.status === 413) {
         throw new Error('File quá lớn. Vui lòng chọn file nhỏ hơn 5MB.');
-      } else if (res.status === 415) {
+      } else if (step1Response.status === 415) {
         throw new Error('Định dạng file không được hỗ trợ. Vui lòng chọn file hình ảnh.');
-      } else if (res.status === 401) {
+      } else if (step1Response.status === 401) {
         throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else if (step1Response.status === 500 && step1Result.message?.includes('Input file is missing')) {
+        throw new Error('Lỗi server: Không thể xử lý file upload. Backend có thể chưa hỗ trợ presigned URL hoặc cần cấu hình khác.');
       } else {
-        throw new Error(result.message || `Lỗi server: ${res.status}`);
+        throw new Error(step1Result.message || `Lỗi server: ${step1Response.status}`);
       }
     }
 
-    // Kiểm tra response structure
-    const imageUrl = result.result?.url || result.url || result.image_url;
-    if (!imageUrl) {
-      console.error('Invalid response structure:', result);
-      throw new Error('Phản hồi từ server không hợp lệ');
+    // Lấy presigned URL và final URL từ response - thử nhiều cách
+    const presignedUrl = step1Result.result?.presignedUrl || 
+                         step1Result.result?.presigned_url ||
+                         step1Result.presignedUrl || 
+                         step1Result.presigned_url ||
+                         step1Result.result?.uploadUrl ||
+                         step1Result.uploadUrl;
+                         
+    const finalImageUrl = step1Result.result?.url || 
+                         step1Result.result?.image_url ||
+                         step1Result.result?.imageUrl ||
+                         step1Result.url || 
+                         step1Result.image_url ||
+                         step1Result.imageUrl;
+
+    // Kiểm tra xem có presigned URL không
+    if (!presignedUrl) {
+      console.warn('No presigned URL found in response. Checking if direct upload was used...');
+      
+      // Nếu không có presigned URL, có thể backend đã upload trực tiếp và trả về URL
+      if (finalImageUrl) {
+        console.log('Direct upload successful (no presigned URL needed), image URL:', finalImageUrl);
+        return finalImageUrl;
+      }
+      
+      console.error('Invalid response structure - no presignedUrl or finalUrl:', step1Result);
+      throw new Error('Backend không trả về presigned URL hoặc URL ảnh. Response structure: ' + JSON.stringify(Object.keys(step1Result)));
     }
 
-    console.log('Upload successful, image URL:', imageUrl);
-    return imageUrl;
+    console.log('Received presigned URL:', presignedUrl.substring(0, 80) + '...');
+    console.log('Final image URL will be:', finalImageUrl);
+
+    // ==================== BƯỚC 2: Upload file lên S3 với presigned URL ====================
+    console.log('Step 2: Uploading file to S3 using presigned URL...');
+    
+    const step2Response = await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type || 'image/jpeg',
+      },
+      body: file, // Gửi file binary trực tiếp
+    });
+
+    console.log('Step 2 response:', {
+      status: step2Response.status,
+      ok: step2Response.ok,
+      statusText: step2Response.statusText
+    });
+
+    if (!step2Response.ok) {
+      console.error('Step 2 (S3 upload) failed:', {
+        status: step2Response.status,
+        statusText: step2Response.statusText,
+      });
+      throw new Error(`Lỗi upload file lên S3: ${step2Response.status} ${step2Response.statusText}`);
+    }
+
+    console.log('Upload to S3 successful!');
+
+    // Trả về URL cuối cùng của ảnh
+    if (!finalImageUrl) {
+      console.error('Invalid response structure - missing final URL:', step1Result);
+      throw new Error('Không nhận được URL ảnh từ server');
+    }
+
+    console.log('Upload completed successfully, image URL:', finalImageUrl);
+    return finalImageUrl;
 
   } catch (error) {
+    console.error('Upload error:', error);
     if (error instanceof TypeError && error.message.includes('fetch')) {
       console.error('Network error:', error);
       throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.');
