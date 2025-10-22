@@ -15,8 +15,10 @@ import {
   CollapsibleTrigger,
 } from "../../../../components/ui/collapsible";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "../../../../context/AuthContext";
 
 export const NavigationMenuSection = ({ user }: { user: any }): JSX.Element => {
+  const { logout } = useAuth();
   const location = useLocation();
   const [isMyShareOpen, setIsMyShareOpen] = useState(true);
 
@@ -100,8 +102,8 @@ export const NavigationMenuSection = ({ user }: { user: any }): JSX.Element => {
             </button>
             <button className="w-full flex items-center px-4 py-2 text-[#222] hover:bg-gray-100 rounded-b-[10px] border-t border-[#ececec] focus:outline-none"
               onClick={() => {
-                localStorage.removeItem('token');
-                window.location.href = '/login';
+                setProfileMenuOpen(false);
+                logout();
               }}
             >
               <LogOutIcon className="w-5 h-5 mr-3 text-[#222]" />
