@@ -137,17 +137,17 @@ const AdminPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Welcome back, {user?.name || user?.email}</p>
+          <h1 className="text-3xl font-bold text-gray-900">Bảng điều khiển Admin</h1>
+          <p className="text-gray-600">Chào mừng quay trở lại, {user?.name || user?.email}</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="portfolios">Portfolios</TabsTrigger>
-            <TabsTrigger value="top-users">Top Users</TabsTrigger>
-            <TabsTrigger value="revenue">Revenue</TabsTrigger>
+            <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+            <TabsTrigger value="users">Người dùng</TabsTrigger>
+            <TabsTrigger value="portfolios">Portfolio</TabsTrigger>
+            <TabsTrigger value="top-users">Người dùng hàng đầu</TabsTrigger>
+            <TabsTrigger value="revenue">Doanh thu</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -158,7 +158,7 @@ const AdminPage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {userStats?.result?.totalUsers ?? 'Error loading data'}
+                    {userStats?.result?.totalUsers ?? 'Lỗi tải dữ liệu'}
                   </div>
                 </CardContent>
               </Card>
@@ -169,7 +169,7 @@ const AdminPage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {portfolioStats?.result?.totalPortfolios ?? 'Error loading data'}
+                    {portfolioStats?.result?.totalPortfolios ?? 'Lỗi tải dữ liệu'}
                   </div>
                 </CardContent>
               </Card>
@@ -180,7 +180,7 @@ const AdminPage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {userStats?.result?.premiumUsers ?? 'Error loading data'}
+                    {userStats?.result?.premiumUsers ?? 'Lỗi tải dữ liệu'}
                   </div>
                 </CardContent>
               </Card>
@@ -194,16 +194,16 @@ const AdminPage: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
-                  <span>Total Users:</span>
-                  <span className="font-semibold">{userStats?.result?.totalUsers ?? 'Error loading data'}</span>
+                  <span>Tổng số người dùng:</span>
+                  <span className="font-semibold">{userStats?.result?.totalUsers ?? 'Lỗi tải dữ liệu'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Active Users Daily:</span>
-                  <span className="font-semibold">{userStats?.result?.activeUsersDaily ?? 'Error loading data'}</span>
+                  <span>Người dùng hoạt động hàng ngày:</span>
+                  <span className="font-semibold">{userStats?.result?.activeUsersDaily ?? 'Lỗi tải dữ liệu'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Premium Users:</span>
-                  <span className="font-semibold">{userStats?.result?.premiumUsers ?? 'Error loading data'}</span>
+                  <span>Người dùng Premium:</span>
+                  <span className="font-semibold">{userStats?.result?.premiumUsers ?? 'Lỗi tải dữ liệu'}</span>
                 </div>
               </CardContent>
             </Card>
@@ -211,7 +211,7 @@ const AdminPage: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle>New Users Daily</CardTitle>
-                <CardDescription>Daily new user registrations</CardDescription>
+                <CardDescription>Đăng ký người dùng mới hàng ngày</CardDescription>
               </CardHeader>
               <CardContent>
                 {userStats?.result?.newUsersDaily && userStats.result.newUsersDaily.length > 0 ? (
@@ -219,19 +219,19 @@ const AdminPage: React.FC = () => {
                     {userStats.result.newUsersDaily.map((dailyData, index) => (
                       <div key={dailyData._id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
                         <div>
-                          <div className="font-medium">Date: {dailyData._id}</div>
-                          <div className="text-sm text-gray-500">Day {index + 1}</div>
+                          <div className="font-medium">Ngày: {dailyData._id}</div>
+                          <div className="text-sm text-gray-500">Ngày {index + 1}</div>
                         </div>
                         <div className="text-right">
                           <div className="font-semibold text-green-600">{dailyData.count}</div>
-                          <div className="text-sm text-gray-500">new users</div>
+                          <div className="text-sm text-gray-500">người dùng mới</div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    No daily registration data available
+                    Không có dữ liệu đăng ký hàng ngày
                   </div>
                 )}
               </CardContent>
@@ -245,16 +245,16 @@ const AdminPage: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
-                  <span>Total Portfolios:</span>
-                  <span className="font-semibold">{portfolioStats?.result?.totalPortfolios ?? 'Error loading data'}</span>
+                  <span>Tổng số Portfolio:</span>
+                  <span className="font-semibold">{portfolioStats?.result?.totalPortfolios ?? 'Lỗi tải dữ liệu'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Avg Blocks Per Portfolio:</span>
-                  <span className="font-semibold">{portfolioStats?.result?.avgBlocksPerPortfolio ?? 'Error loading data'}</span>
+                  <span>Trung bình khối mỗi Portfolio:</span>
+                  <span className="font-semibold">{portfolioStats?.result?.avgBlocksPerPortfolio ?? 'Lỗi tải dữ liệu'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>NFC Cards:</span>
-                  <span className="font-semibold">{portfolioStats?.result?.nfcCards ?? 'Error loading data'}</span>
+                  <span>Thẻ NFC:</span>
+                  <span className="font-semibold">{portfolioStats?.result?.nfcCards ?? 'Lỗi tải dữ liệu'}</span>
                 </div>
               </CardContent>
             </Card>
@@ -262,7 +262,7 @@ const AdminPage: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle>New Portfolios Daily</CardTitle>
-                <CardDescription>Daily new portfolio creations</CardDescription>
+                <CardDescription>Tạo Portfolio mới hàng ngày</CardDescription>
               </CardHeader>
               <CardContent>
                 {portfolioStats?.result?.newPortfoliosDaily && portfolioStats.result.newPortfoliosDaily.length > 0 ? (
@@ -270,19 +270,19 @@ const AdminPage: React.FC = () => {
                     {portfolioStats.result.newPortfoliosDaily.map((dailyData, index) => (
                       <div key={dailyData._id} className="flex justify-between items-center p-3 bg-blue-50 rounded">
                         <div>
-                          <div className="font-medium">Date: {dailyData._id}</div>
-                          <div className="text-sm text-gray-500">Day {index + 1}</div>
+                          <div className="font-medium">Ngày: {dailyData._id}</div>
+                          <div className="text-sm text-gray-500">Ngày {index + 1}</div>
                         </div>
                         <div className="text-right">
                           <div className="font-semibold text-blue-600">{dailyData.count}</div>
-                          <div className="text-sm text-gray-500">new portfolios</div>
+                          <div className="text-sm text-gray-500">Portfolio mới</div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    No daily portfolio creation data available
+                    Không có dữ liệu tạo Portfolio hàng ngày
                   </div>
                 )}
               </CardContent>
@@ -293,7 +293,7 @@ const AdminPage: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Top Users by Portfolio Count</CardTitle>
-                <CardDescription>Users with the most portfolios</CardDescription>
+                <CardDescription>Người dùng có nhiều Portfolio nhất</CardDescription>
               </CardHeader>
               <CardContent>
                 {portfolioStats?.result?.topUsersByPortfolios && portfolioStats.result.topUsersByPortfolios.length > 0 ? (
@@ -305,22 +305,22 @@ const AdminPage: React.FC = () => {
                             #{index + 1}
                           </div>
                           <div>
-                            <div className="font-medium">User ID: {userPortfolio._id}</div>
+                            <div className="font-medium">ID người dùng: {userPortfolio._id}</div>
                             <div className="text-sm text-gray-500">
-                              Portfolio Count: {userPortfolio.count}
+                              Số Portfolio: {userPortfolio.count}
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="font-semibold">{userPortfolio.count}</div>
-                          <div className="text-sm text-gray-500">portfolios</div>
+                          <div className="text-sm text-gray-500">Portfolio</div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    No user portfolio data available
+                    Không có dữ liệu Portfolio người dùng
                   </div>
                 )}
               </CardContent>
@@ -336,20 +336,20 @@ const AdminPage: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
-                  <span>Active Subscriptions:</span>
-                  <span className="font-semibold">{revenueStats?.result?.activeSubscriptions ?? 'Error loading data'}</span>
+                  <span>Đăng ký hoạt động:</span>
+                  <span className="font-semibold">{revenueStats?.result?.activeSubscriptions ?? 'Lỗi tải dữ liệu'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>ARPU:</span>
-                  <span className="font-semibold">${revenueStats?.result?.ARPU ?? 'Error loading data'}</span>
+                  <span className="font-semibold">${revenueStats?.result?.ARPU ?? 'Lỗi tải dữ liệu'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Successful Transactions:</span>
-                  <span className="font-semibold">{revenueStats?.result?.txnSuccess ?? 'Error loading data'}</span>
+                  <span>Giao dịch thành công:</span>
+                  <span className="font-semibold">{revenueStats?.result?.txnSuccess ?? 'Lỗi tải dữ liệu'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Failed Transactions:</span>
-                  <span className="font-semibold">{revenueStats?.result?.txnFailed ?? 'Error loading data'}</span>
+                  <span>Giao dịch thất bại:</span>
+                  <span className="font-semibold">{revenueStats?.result?.txnFailed ?? 'Lỗi tải dữ liệu'}</span>
                 </div>
               </CardContent>
             </Card>
@@ -357,7 +357,7 @@ const AdminPage: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Top Plans</CardTitle>
-                <CardDescription>Most popular subscription plans</CardDescription>
+                <CardDescription>Gói đăng ký phổ biến nhất</CardDescription>
               </CardHeader>
               <CardContent>
                 {revenueStats?.result?.topPlans && revenueStats.result.topPlans.length > 0 ? (
@@ -365,19 +365,19 @@ const AdminPage: React.FC = () => {
                     {revenueStats.result.topPlans.map((plan, index) => (
                       <div key={plan._id || index} className="flex justify-between items-center p-3 bg-green-50 rounded">
                         <div>
-                          <div className="font-medium">Plan ID: {plan._id}</div>
-                          <div className="text-sm text-gray-500">Rank #{index + 1}</div>
+                          <div className="font-medium">ID gói: {plan._id}</div>
+                          <div className="text-sm text-gray-500">Hạng #{index + 1}</div>
                         </div>
                         <div className="text-right">
                           <div className="font-semibold text-green-600">{plan.count || plan.value || 'N/A'}</div>
-                          <div className="text-sm text-gray-500">subscriptions</div>
+                          <div className="text-sm text-gray-500">đăng ký</div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    No plan data available
+                    Không có dữ liệu gói
                   </div>
                 )}
               </CardContent>
@@ -390,7 +390,7 @@ const AdminPage: React.FC = () => {
             onClick={logout}
             variant="outline"
           >
-            Logout
+            Đăng xuất
           </Button>
         </div>
       </div>
