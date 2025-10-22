@@ -1,4 +1,4 @@
-import { PlusIcon, Camera, Share2, Check } from "lucide-react";
+import { PlusIcon, Camera } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, Routes, Route } from "react-router-dom";
 import SocialModalPage from "./SocialModalPage";
@@ -17,6 +17,9 @@ import { SocialLinksSection } from "./sections/SocialLinksSection/SocialLinksSec
 import { getMyProfile, updateMyProfile, updatePortfolio } from "../../lib/api";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
+import { useRef } from 'react';
+
+import ShareDialog from '../../components/ShareDialog';
 
 
 export const MyLinksPage = (): JSX.Element => {
@@ -33,7 +36,8 @@ export const MyLinksPage = (): JSX.Element => {
   const [tmpUsername, setTmpUsername] = useState("");
   const [tmpBio, setTmpBio] = useState("");
   const [savingTitleBio, setSavingTitleBio] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const shareBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     // Load from backend first (source of truth), then overlay per-user drafts from localStorage
@@ -156,28 +160,13 @@ export const MyLinksPage = (): JSX.Element => {
     }
   }
 
-  // Function để copy portfolio link
-  const handleCopyPortfolioLink = async () => {
-    if (!user?.username) return;
-
-    const portfolioUrl = `${window.location.origin}/portfolio/${user.username}`;
-
-    try {
-      await navigator.clipboard.writeText(portfolioUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000); // Reset copied state sau 2 giây
-    } catch (error) {
-      console.error('Failed to copy:', error);
-      // Fallback cho trường hợp clipboard API không hoạt động
-      const textArea = document.createElement('textarea');
-      textArea.value = portfolioUrl;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+  // Hàm mở dialog chia sẻ
+  const handleOpenShareDialog = () => {
+    setShowShareDialog(true);
+  };
+  // Hàm đóng dialog chia sẻ
+  const handleCloseShareDialog = () => {
+    setShowShareDialog(false);
   };
 
   if (loading) {
@@ -198,7 +187,18 @@ export const MyLinksPage = (): JSX.Element => {
       <div className="ml-[265px] mr-[395px] bg-[#f7f7f7] min-h-screen flex flex-col items-center">
         <main className="flex-1 w-full flex flex-col items-center pt-20">
           {/* Header */}
-          <Header />
+          <Header onShare={handleOpenShareDialog} shareBtnRef={shareBtnRef} />
+      {/* Share Dialog */}
+      {showShareDialog && (
+        <ShareDialog
+          open={showShareDialog}
+          onClose={handleCloseShareDialog}
+          portfolioLink={user?.username ? `${window.location.origin}/portfolio/${user.username}` : ''}
+          anchorRef={shareBtnRef}
+          username={user?.username}
+          avatarUrl={user?.avatar_url}
+        />
+      )}
           {/* Content Section */}
           <div className="w-full flex flex-col items-center flex-1">
             <section className="w-full max-w-[700px] flex flex-col items-center px-9 pt-12">
@@ -268,7 +268,7 @@ export const MyLinksPage = (): JSX.Element => {
               </div>
 
 
-              {/* Share Portfolio Button */}
+              {/* Add Social Button */}
               <div className="flex gap-3 w-full max-w-[400px] mb-8">
                 <Button
                   className="flex-1 h-auto bg-[#639fff] hover:bg-[#5a8fee] rounded-[35px] py-4 flex items-center justify-center gap-2 shadow-lg"
@@ -278,32 +278,6 @@ export const MyLinksPage = (): JSX.Element => {
                   <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-xl tracking-[2.00px]">
                     Thêm
                   </span>
-                </Button>
-
-                <Button
-                  className={`h-auto px-6 py-4 rounded-[35px] flex items-center justify-center gap-2 shadow-lg transition-all duration-200 ${
-                    copied
-                      ? 'bg-green-500 hover:bg-green-600'
-                      : 'bg-gray-600 hover:bg-gray-700'
-                  }`}
-                  onClick={handleCopyPortfolioLink}
-                  title="Chia sẻ portfolio của bạn"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-6 h-6 text-white" />
-                      <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-sm">
-                        Đã copy!
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="w-6 h-6 text-white" />
-                      <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-sm">
-                        Chia sẻ
-                      </span>
-                    </>
-                  )}
                 </Button>
               </div>
               {/* Modal as a route */}
