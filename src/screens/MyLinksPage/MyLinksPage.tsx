@@ -39,6 +39,7 @@ export const MyLinksPage = (): JSX.Element => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const shareBtnRef = useRef<HTMLButtonElement>(null);
   const [portfolioExists, setPortfolioExists] = useState(false);
+  const [portfolioSlug, setPortfolioSlug] = useState<string | null>(null);
 
   useEffect(() => {
     // Load from backend (source of truth)
@@ -53,6 +54,9 @@ export const MyLinksPage = (): JSX.Element => {
         try {
           const portfolio = await getMyPortfolio();
           setPortfolioExists(true);
+          if (portfolio?.slug) {
+            setPortfolioSlug(portfolio.slug);
+          }
           if (portfolio && portfolio.social_links) {
             const links: SocialLink[] = Object.entries(portfolio.social_links).map(([key, value]: any) => {
               // Nếu value đã có id thì giữ nguyên, nếu không thì tạo mới
@@ -134,7 +138,7 @@ export const MyLinksPage = (): JSX.Element => {
         // If portfolio doesn't exist, create it first
         if (!portfolioExists) {
           console.log('Portfolio does not exist, creating new portfolio...');
-          await createPortfolio({
+          const newPortfolio = await createPortfolio({
             title: user?.name || 'My Portfolio',
             blocks: [
               {
@@ -146,11 +150,16 @@ export const MyLinksPage = (): JSX.Element => {
             social_links: socialLinksObj,
           });
           setPortfolioExists(true);
+          if (newPortfolio?.slug) {
+            setPortfolioSlug(newPortfolio.slug);
+          }
           console.log('Portfolio created successfully');
         } else {
           // Save to backend
-          await updatePortfolio({ social_links: socialLinksObj });
-          console.log('Social links saved to backend');
+          if (portfolioSlug) {
+            await updatePortfolio(portfolioSlug, { social_links: socialLinksObj });
+            console.log('Social links saved to backend');
+          }
         }
       } catch (error) {
         console.error('Error saving social links:', error);
@@ -191,7 +200,7 @@ export const MyLinksPage = (): JSX.Element => {
 
       // Also save to portfolio
       const blocks = [{ type: "text", content: tmpBio || "", order: 1 }];
-      try { await updatePortfolio({ blocks }); } catch {}
+      try { if (portfolioSlug) await updatePortfolio(portfolioSlug, { blocks }); } catch {}
       setShowTitleBioModal(false);
     } catch (error) {
       console.error('Error saving title/bio:', error);

@@ -4,7 +4,7 @@ import { Button } from "../../../../components/ui/button";
 import React from "react";
 import { updateMyProfile, updatePortfolio } from "../../../../lib/api";
 
-export const BioSection = ({ bio, setBio, user, setUser }: { bio: string; setBio: React.Dispatch<React.SetStateAction<string>>; user: any; setUser: React.Dispatch<React.SetStateAction<any>> }): JSX.Element => {
+export const BioSection = ({ bio, setBio, user, setUser, portfolioSlug }: { bio: string; setBio: React.Dispatch<React.SetStateAction<string>>; user: any; setUser: React.Dispatch<React.SetStateAction<any>>; portfolioSlug: string | null }): JSX.Element => {
   const [showModal, setShowModal] = React.useState(false);
   const [tmpUsername, setTmpUsername] = React.useState(user?.username || "");
   const [tmpBio, setTmpBio] = React.useState(bio || "");
@@ -21,7 +21,7 @@ export const BioSection = ({ bio, setBio, user, setUser }: { bio: string; setBio
       setBio(tmpBio);
       // Optionally push bio to portfolio blocks
       const blocks = [{ type: "text", content: tmpBio || "", order: 1 }];
-      try { await updatePortfolio({ blocks }); } catch {}
+      try { if (portfolioSlug) await updatePortfolio(portfolioSlug, { blocks }); } catch {}
       setShowModal(false);
     } finally {
       setSaving(false);

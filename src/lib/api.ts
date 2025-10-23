@@ -38,7 +38,7 @@ export async function createPortfolio(data: {
   return result;
 }
 // Cập nhật portfolio hiện tại
-export async function updatePortfolio(data: {
+export async function updatePortfolio(slug: string, data: {
   title?: string;
   blocks?: Array<{ type: string; content: string; order: number }>;
   social_links?: Record<string, any>;
@@ -48,10 +48,10 @@ export async function updatePortfolio(data: {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('No token');
 
-  console.log('updatePortfolio - Sending request with data:', data);
+  console.log('updatePortfolio - Sending request with slug:', slug, 'data:', data);
   console.log('updatePortfolio - Token:', token?.substring(0, 20) + '...');
 
-  const res = await fetch('https://2share.icu/portfolios/update-portfolio', {
+  const res = await fetch(`https://2share.icu/portfolios/update-portfolio/${slug}`, {
     method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${token}`,
