@@ -19,9 +19,12 @@ import Header from './components/MainLayout/Header';
 import Hero from './components/MainLayout/Hero';
 import NfcDesignPage from './screens/NfcDesignPage';
 import SubscriptionUpgradePage from './screens/SubscriptionUpgradePage';
+import SubscriptionPlansPage from './screens/SubscriptionPlansPage'; // THÊM DÒNG NÀY
 import InsightsPage from './screens/InsightPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import PaymentSuccessPage from './screens/PaymentSuccessPage';
+
 // Wrapper để lấy user từ API và truyền vào UserProfilePage
 function UserProfilePageWrapper() {
   const [user, setUser] = useState<any | null>(null);
@@ -34,7 +37,7 @@ function UserProfilePageWrapper() {
         const profile = await getMyProfile();
         setUser(profile);
       } catch (err: any) {
-        setError(err.message || "Lỗi l��y thông tin người dùng");
+        setError(err.message || "Lỗi lấy thông tin người dùng");
       } finally {
         setLoading(false);
       }
@@ -90,9 +93,25 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/subscription" element={<SubscriptionUpgradePage/>} />
-          <Route path='/insights' element={<InsightsPage/>}/>
-          <Route
+            {/* THÊM ROUTE MỚI CHO TRANG GÓI ĐĂNG KÝ */}
+            <Route 
+              path="/plans" 
+              element={
+                <ProtectedRoute allowedRoles={['user']}>
+                  <SubscriptionPlansPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/subscription" 
+              element={
+                <ProtectedRoute allowedRoles={['user']}>
+                  <SubscriptionUpgradePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route path='/insights' element={<InsightsPage/>}/>
+            <Route
               path="/account"
               element={
                 <ProtectedRoute allowedRoles={['user']}>
@@ -108,6 +127,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+          <Route path="/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/email-verify-action" element={<EmailVerifyActionPage />} />
             {/* Public portfolio route - không cần authentication */}

@@ -11,7 +11,9 @@ import {
   HelpCircle,
   User,
   LogOut,
-  Send
+  Send,
+  Zap,
+  Crown // THÊM ICON MỚI
 } from "lucide-react";
 
 interface SidebarProps {
@@ -72,14 +74,16 @@ export default function Sidebar({ user }: SidebarProps) {
                 <User className="w-5 h-5 mr-3 text-gray-700" />
                 <span className="text-sm flex-1 text-left">Tài khoản</span>
               </button>
+              {/* CẬP NHẬT: Chuyển hướng đến trang plans thay vì subscription */}
               <button
                 className="w-full flex items-center px-4 py-2 text-[#a259ff] hover:bg-gray-50"
                 onClick={() => {
-                  navigate("/subscription");
+                  navigate("/plans"); // THAY ĐỔI TỪ "/subscription" THÀNH "/plans"
+                  setShowUserMenu(false);
                 }}
               >
-                <Zap className="w-5 h-5 mr-3 text-[#a259ff]" />
-                <span className="text-sm flex-1 text-left">Nâng cấp</span>
+                <Crown className="w-5 h-5 mr-3 text-[#a259ff]" />
+                <span className="text-sm flex-1 text-left">Nâng cấp gói</span>
               </button>
 
               <button
@@ -101,7 +105,6 @@ export default function Sidebar({ user }: SidebarProps) {
             </div>
           )}
         </div>
-
 
         {/* My 2Share Section */}
         <div className="rounded-lg px-3 py-1">
@@ -145,7 +148,7 @@ export default function Sidebar({ user }: SidebarProps) {
 
         {/* NFC Card */}
         <Link
-          to="/nfc" // or whatever route you’ll use for NFC
+          to="/nfc"
           className={`flex items-center gap-3 w-full p-3 rounded-xl ${
             location.pathname === "/nfc"
               ? "bg-gray-300 text-black"
@@ -158,7 +161,7 @@ export default function Sidebar({ user }: SidebarProps) {
 
         {/* Statistics */}
         <Link
-          to="/insights" // or whatever route you’ll use for statistics
+          to="/insights"
           className={`flex items-center gap-3 w-full p-3 rounded-xl ${
             location.pathname === "/insights"
               ? "bg-gray-300 text-black"  
@@ -167,6 +170,19 @@ export default function Sidebar({ user }: SidebarProps) {
         >
           <BarChart3 className="w-4 h-4" />
           <span>Thống kê</span>
+        </Link>
+
+        {/* THÊM MENU MỚI: GÓI ĐĂNG KÝ */}
+        <Link
+          to="/plans"
+          className={`flex items-center gap-3 w-full p-3 rounded-xl ${
+            location.pathname === "/plans"
+              ? "bg-gray-300 text-black"  
+              : "bg-white text-gray-600 hover:bg-gray-50"
+          }`}
+        >
+          <Crown className="w-4 h-4" />
+          <span>Gói đăng ký</span>
         </Link>
       </div>
 
