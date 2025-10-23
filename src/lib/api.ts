@@ -19,7 +19,7 @@ export const getOauthGoogleUrl = () => {
 export async function createPortfolio(data: {
   title: string;
   blocks: Array<{ type: string; content: string; order: number }>;
-  social_links?: Record<string, string>;
+  social_links?: Record<string, any>;
   avatar_url?: string;
   banner_url?: string;
 }) {
@@ -41,12 +41,16 @@ export async function createPortfolio(data: {
 export async function updatePortfolio(data: {
   title?: string;
   blocks?: Array<{ type: string; content: string; order: number }>;
-  social_links?: Record<string, string>;
+  social_links?: Record<string, any>;
   avatar_url?: string;
   banner_url?: string;
 }) {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('No token');
+
+  console.log('updatePortfolio - Sending request with data:', data);
+  console.log('updatePortfolio - Token:', token?.substring(0, 20) + '...');
+
   const res = await fetch('https://2share.icu/portfolios/update-portfolio', {
     method: 'PATCH',
     headers: {
@@ -55,7 +59,21 @@ export async function updatePortfolio(data: {
     },
     body: JSON.stringify(data),
   });
-  const result = await res.json();
+
+  console.log('updatePortfolio - Response status:', res.status);
+  console.log('updatePortfolio - Response headers:', res.headers);
+
+  const contentType = res.headers.get('content-type');
+  let result;
+
+  if (contentType?.includes('application/json')) {
+    result = await res.json();
+  } else {
+    const text = await res.text();
+    console.log('updatePortfolio - Response text:', text.substring(0, 200));
+    throw new Error(`Expected JSON but got ${contentType}: ${text.substring(0, 200)}`);
+  }
+
   if (!res.ok) {
     const message = result?.message || 'Lỗi cập nhật portfolio';
     const error = new Error(`HTTP_${res.status}:${message}`);
@@ -113,7 +131,7 @@ export async function updateMyProfile(data: {
   avatar_url?: string;
   date_of_birth?: string;
   bio?: string;
-  social_links?: Record<string, string>;
+  social_links?: Record<string, any>;
   username?: string;
 }) {
   const token = localStorage.getItem('token');
