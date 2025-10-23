@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { User, Mail, Phone, Calendar, Shield, CreditCard, Camera, Save, AlertCircle } from 'lucide-react';
-import { updateMyProfile } from '../lib/api';
+import { updateMyProfile, getMyPortfolio } from '../lib/api';
 import { showToast } from '../lib/toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -48,6 +48,17 @@ const UserProfilePage: React.FC<UserProfileProps> = ({ user }) => {
   const [loading, setLoading] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const shareBtnRef = useRef<HTMLButtonElement>(null);
+  const [portfolioSlug, setPortfolioSlug] = useState<string | null>(null);
+
+  // Fetch my portfolio to get slug for share link
+  useEffect(() => {
+    (async () => {
+      try {
+        const p = await getMyPortfolio();
+        if (p?.slug) setPortfolioSlug(p.slug);
+      } catch {}
+    })();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -108,7 +119,7 @@ const UserProfilePage: React.FC<UserProfileProps> = ({ user }) => {
             <ShareDialog
               open={showShareDialog}
               onClose={handleCloseShareDialog}
-              portfolioLink={user?.username ? `${window.location.origin}/portfolio/${user.username}` : ''}
+              portfolioLink={portfolioSlug ? `${window.location.origin}/portfolio/${portfolioSlug}` : ''}
               anchorRef={shareBtnRef}
               username={user?.username}
               avatarUrl={user?.avatar_url || undefined}

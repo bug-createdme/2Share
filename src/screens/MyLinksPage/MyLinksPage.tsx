@@ -14,12 +14,13 @@ import type { SocialLink } from "./sections/SocialLinksSection/SocialLinksSectio
 import { ProfilePictureSection } from "./sections/ProfilePictureSection/ProfilePictureSection";
 import { SocialLinksSection } from "./sections/SocialLinksSection/SocialLinksSection";
 
-import { getMyProfile, getMyPortfolio, updateMyProfile, updatePortfolio, createPortfolio } from "../../lib/api";
+import { getMyProfile, getMyPortfolio, updateMyProfile, updatePortfolio, createPortfolio, getCurrentPlan } from "../../lib/api";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import { useRef } from 'react';
 
 import ShareDialog from "../../components/ShareDialog";
+import { showToast } from "../../lib/toast";
 
 
 export const MyLinksPage = (): JSX.Element => {
@@ -40,6 +41,8 @@ export const MyLinksPage = (): JSX.Element => {
   const shareBtnRef = useRef<HTMLButtonElement>(null);
   const [portfolioExists, setPortfolioExists] = useState(false);
   const [portfolioSlug, setPortfolioSlug] = useState<string | null>(null);
+  const [planActive, setPlanActive] = useState<boolean | null>(null);
+  const [maxSocialLinks, setMaxSocialLinks] = useState<number | null>(null);
 
   useEffect(() => {
     // Load from backend (source of truth)
@@ -113,6 +116,28 @@ export const MyLinksPage = (): JSX.Element => {
     fetchProfile();
   }, []);
 
+  // Fetch current plan once
+  useEffect(() => {
+    (async () => {
+      try {
+        const plan = await getCurrentPlan();
+        const status = plan?.status || plan?.result?.status;
+        const info = (plan?.planInfo?.[0]) || (plan?.result?.planInfo?.[0]);
+        setPlanActive(status === 'active');
+        if (typeof info?.maxSocialLinks === 'number') setMaxSocialLinks(info.maxSocialLinks);
+        
+        // Nếu không có gói active, hiển thị cảnh báo
+        if (status !== 'active') {
+          showToast.warning('Bạn chưa có gói nào đang hoạt động. Vui lòng đăng ký gói để cập nhật portfolio.');
+        }
+      } catch (e) {
+        // If cannot read plan, assume inactive so we avoid repeated 403
+        setPlanActive(false);
+        showToast.error('Không thể kiểm tra gói của bạn. Vui lòng thử lại sau.');
+      }
+    })();
+  }, []);
+
   // Auto-save social links to backend when they change
   useEffect(() => {
     if (!user?._id || socialLinks.length === 0) return;
@@ -120,6 +145,12 @@ export const MyLinksPage = (): JSX.Element => {
     // Debounce the save to avoid too many API calls
     const timer = setTimeout(async () => {
       try {
+        // Check plan before saving to avoid 403 loop
+        if (planActive === false) {
+          console.warn('Skip save: no active plan');
+          showToast.warning('Không thể lưu: bạn chưa có gói nào đang hoạt động');
+          return;
+        }
         // Convert socialLinks array back to object format for backend
         const socialLinksObj: Record<string, any> = {};
         socialLinks.forEach(link => {
@@ -134,6 +165,16 @@ export const MyLinksPage = (): JSX.Element => {
             id: link.id,
           };
         });
+
+        // Optional: enforce maxSocialLinks if known
+        if (typeof maxSocialLinks === 'number') {
+          const enabledCount = Object.values(socialLinksObj).filter((v: any) => v?.isEnabled && v?.url).length;
+          if (enabledCount > maxSocialLinks) {
+            console.warn(`Vượt quá số link cho phép (${enabledCount}/${maxSocialLinks}), bỏ qua lưu.`);
+            showToast.warning(`Bạn chỉ được phép tối đa ${maxSocialLinks} link trong gói hiện tại`);
+            return;
+          }
+        }
 
         // If portfolio doesn't exist, create it first
         if (!portfolioExists) {
@@ -167,7 +208,7 @@ export const MyLinksPage = (): JSX.Element => {
     }, 1000); // Wait 1 second after last change before saving
 
     return () => clearTimeout(timer);
-  }, [socialLinks, user?._id, portfolioExists]);
+  }, [socialLinks, user?._id, portfolioExists, planActive, maxSocialLinks]);
 
   // 4) Handle click tracking for social links
   useEffect(() => {
@@ -242,7 +283,7 @@ export const MyLinksPage = (): JSX.Element => {
         <ShareDialog
           open={showShareDialog}
           onClose={handleCloseShareDialog}
-          portfolioLink={user?.username ? `${window.location.origin}/portfolio/${user.username}` : ''}
+          portfolioLink={portfolioSlug ? `${window.location.origin}/portfolio/${portfolioSlug}` : ''}
           anchorRef={shareBtnRef}
           username={user?.username}
           avatarUrl={user?.avatar_url}
@@ -250,6 +291,30 @@ export const MyLinksPage = (): JSX.Element => {
       )}
           {/* Content Section */}
           <div className="w-full flex flex-col items-center flex-1">
+            {/* Banner cảnh báo nếu không có gói active */}
+            {planActive === false && (
+              <div className="w-full max-w-[700px] px-9 pt-6">
+                <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-4 shadow-md">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">!</div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-orange-800 mb-1">Chưa có gói đang hoạt động</h3>
+                      <p className="text-sm text-orange-700">Bạn cần đăng ký gói để có thể cập nhật và lưu portfolio. Các thay đổi sẽ không được lưu.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Hiển thị quota nếu có maxSocialLinks */}
+            {planActive === true && typeof maxSocialLinks === 'number' && (
+              <div className="w-full max-w-[700px] px-9 pt-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                  📊 Gói của bạn: tối đa <strong>{maxSocialLinks}</strong> social links
+                </div>
+              </div>
+            )}
+            
             <section className="w-full max-w-[700px] flex flex-col items-center px-9 pt-12">
               <div className="flex flex-col items-center gap-4 mb-8 w-full">
                 <div className="flex flex-col items-center gap-4">

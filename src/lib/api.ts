@@ -98,7 +98,20 @@ export async function getMyPortfolio() {
   return result.result;
 }
 
-// Lấy portfolio public theo username (không cần authentication)
+// Lấy portfolio public theo slug (không cần authentication)
+export async function getPortfolioBySlug(slug: string) {
+  const res = await fetch(`https://2share.icu/portfolios/get-portfolio/${encodeURIComponent(slug)}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || 'Lỗi lấy portfolio công khai');
+  return result.result;
+}
+
+// (Giữ tương thích cũ) Lấy portfolio public theo username qua query nếu backend còn hỗ trợ
 export async function getPortfolioByUsername(username: string) {
   const res = await fetch(`https://2share.icu/portfolios/get-portfolio?username=${encodeURIComponent(username)}`, {
     method: 'GET',
@@ -198,6 +211,22 @@ export async function refreshAccessToken(refresh_token: string) {
   const result = await res.json();
   if (!res.ok) throw new Error(result.message || 'Lỗi làm mới phiên đăng nhập');
   return result;
+}
+
+// Kiểm tra gói hiện tại của người dùng (yêu cầu đăng nhập)
+export async function getCurrentPlan() {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('No token');
+  const res = await fetch('https://2share.icu/users/get-current-plan', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(result?.message || 'Lỗi lấy gói hiện tại');
+  return result; // backend đang trả thẳng object gói
 }
 
 // Quên mật khẩu: gửi email chứa liên kết đặt lại mật khẩu
