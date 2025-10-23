@@ -5,12 +5,16 @@ import { IoQrCodeOutline } from "react-icons/io5";
 interface NFCCardPreviewProps {
   themeClasses: Record<string, string>;
   selectedTheme: string;
+  user?: any;
 }
 
 const NFCCardPreview: React.FC<NFCCardPreviewProps> = ({
   themeClasses,
   selectedTheme,
+  user,
 }) => {
+  const displayUsername = user?.username || "username_123";
+  const displayField = user?.bio || "Thiết kế đồ họa";
   return (
     <div className="w-70 py-24 px-14 mx-auto bg-white border-l border-gray-200 fixed top-0 right-0 h-screen overflow-hidden z-40">
       <div className="flex flex-col items-center gap-6">
@@ -36,9 +40,9 @@ const NFCCardPreview: React.FC<NFCCardPreviewProps> = ({
             {/* User info */}
             <div className="absolute bottom-6 left-4">
               <h3 className="text-base font-semibold tracking-wide">
-                username_123
+                @{displayUsername}
               </h3>
-              <p className="text-sm opacity-90">Thiết kế đồ họa</p>
+              <p className="text-sm opacity-90">{displayField}</p>
             </div>
 
             {/* QR placeholder bottom-right */}
