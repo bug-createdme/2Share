@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
 import showToast from '@/lib/toast';
+import { adminGetAllUsers, adminCreateUser, adminUpdateUser, adminDeleteUser, type AdminUser } from '@/lib/api';
 import {
   Users,
   FolderOpen,
@@ -64,6 +66,14 @@ const AdminPage: React.FC = () => {
   const [revenueStats, setRevenueStats] = useState<RevenueStats | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
+  // Users CRUD state
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState<boolean>(false);
+  const [showUserModal, setShowUserModal] = useState<boolean>(false);
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [form, setForm] = useState<{ name?: string; email: string; password?: string; role?: string }>(
+    { name: '', email: '', password: '', role: 'user' }
+  );
 
   const fetchAllStats = async () => {
     try {
@@ -148,8 +158,83 @@ const AdminPage: React.FC = () => {
   useEffect(() => {
     if (user) {
       fetchAllStats();
+      loadUsers();
     }
   }, [user]);
+
+  const loadUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const data = await adminGetAllUsers();
+      setUsers(data);
+    } catch (e: any) {
+      console.error(e);
+      showToast.error(e.message || 'Không tải được danh sách người dùng');
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const openCreateModal = () => {
+    setEditingUser(null);
+    setForm({ name: '', email: '', password: '', role: 'user' });
+    setShowUserModal(true);
+  };
+
+  const openEditModal = (u: AdminUser) => {
+    setEditingUser(u);
+    setForm({ name: u.name || '', email: u.email, password: '', role: u.role || 'user' });
+    setShowUserModal(true);
+  };
+
+  const submitUser = async (ev: React.FormEvent) => {
+    ev.preventDefault();
+    try {
+      if (editingUser) {
+        // Only send fields that actually changed to avoid validation like "Email already exists"
+        const payload: any = {
+          name: form.name,
+          role: form.role,
+          ...(form.password ? { password: form.password } : {}),
+        };
+        if (form.email && form.email !== editingUser.email) {
+          payload.email = form.email;
+        }
+        await adminUpdateUser(editingUser._id, payload);
+        showToast.success('Cập nhật người dùng thành công');
+      } else {
+        if (!form.password) {
+          showToast.warning('Vui lòng nhập mật khẩu cho người dùng mới');
+          return;
+        }
+        await adminCreateUser({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          role: form.role,
+        });
+        showToast.success('Tạo người dùng thành công');
+      }
+      setShowUserModal(false);
+      await loadUsers();
+    } catch (e: any) {
+      console.error(e);
+      showToast.error(e.message || 'Lỗi lưu người dùng');
+    }
+  };
+
+  const onDeleteUser = async (u: AdminUser) => {
+    const ok = window.confirm(`Xoá người dùng ${u.email}?`);
+    if (!ok) return;
+    try {
+      await adminDeleteUser(u._id);
+      showToast.success('Đã xoá người dùng');
+      await loadUsers();
+    } catch (e: any) {
+      console.error(e);
+      showToast.error(e.message || 'Không thể xoá');
+    }
+  };
 
   const navigationItems = [
     { id: 'overview', label: 'Tổng quan', icon: BarChart3, color: 'bg-blue-500' },
@@ -307,18 +392,23 @@ const AdminPage: React.FC = () => {
 
   const renderUsers = () => (
     <div className="space-y-6">
+      {/* User stats quick tiles */}
       <Card className="shadow-lg border-0">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <Users className="h-6 w-6 text-blue-500" />
-            Thống kê người dùng
-          </CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Users className="h-6 w-6 text-blue-500" />
+              Quản lý người dùng
+            </CardTitle>
+            <CardDescription>Thống kê và CRUD người dùng</CardDescription>
+          </div>
+          <Button onClick={openCreateModal}>+ Tạo người dùng</Button>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <Users className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-blue-600">{userStats?.result?.totalUsers ?? '0'}</p>
+              <p className="text-2xl font-bold text-blue-600">{userStats?.result?.totalUsers ?? users.length}</p>
               <p className="text-sm text-gray-600">Tổng người dùng</p>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
@@ -333,34 +423,76 @@ const AdminPage: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Đăng ký mới hàng ngày
-            </h3>
-            <div className="space-y-3">
-              {userStats?.result?.newUsersDaily && userStats.result.newUsersDaily.length > 0 ? (
-                userStats.result.newUsersDaily.map((dailyData, index) => (
-                  <div key={dailyData._id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div>
-                      <div className="font-medium">Ngày {dailyData._id}</div>
-                      <div className="text-sm text-gray-500">#{index + 1}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-green-600 text-lg">+{dailyData.count}</div>
-                      <div className="text-sm text-gray-500">người dùng mới</div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  Không có dữ liệu đăng ký hàng ngày
-                </div>
-              )}
-            </div>
+          {/* Users table */}
+          <div className="overflow-x-auto border rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Verified</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {usersLoading ? (
+                  <tr><td className="px-4 py-6 text-center" colSpan={5}>Đang tải...</td></tr>
+                ) : users.length === 0 ? (
+                  <tr><td className="px-4 py-6 text-center" colSpan={5}>Chưa có người dùng</td></tr>
+                ) : (
+                  users.map((u) => (
+                    <tr key={u._id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm">{u.email}</td>
+                      <td className="px-4 py-3 text-sm">{u.name || '-'}</td>
+                      <td className="px-4 py-3 text-sm">{u.role || 'user'}</td>
+                      <td className="px-4 py-3 text-sm">{u.is_verified ? '✔️' : '❌'}</td>
+                      <td className="px-4 py-3 text-sm text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={() => openEditModal(u)}>Sửa</Button>
+                          <Button variant="destructive" size="sm" onClick={() => onDeleteUser(u)}>Xoá</Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal for create/update user */}
+      {showUserModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowUserModal(false)} />
+          <div className="relative w-full max-w-lg bg-white rounded-lg shadow-xl p-6">
+            <h3 className="text-lg font-semibold mb-4">{editingUser ? 'Cập nhật người dùng' : 'Tạo người dùng'}</h3>
+            <form className="space-y-4" onSubmit={submitUser}>
+              <div>
+                <label className="text-sm text-gray-600">Email {editingUser && <span className="text-gray-400">(không thể đổi)</span>}</label>
+                <Input required type="email" disabled={!!editingUser} value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Tên</label>
+                <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Mật khẩu {editingUser && <span className="text-gray-400">(để trống nếu không đổi)</span>}</label>
+                <Input type="password" value={form.password} onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))} />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Role</label>
+                <Input value={form.role} onChange={(e) => setForm(f => ({ ...f, role: e.target.value }))} />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setShowUserModal(false)}>Huỷ</Button>
+                <Button type="submit">{editingUser ? 'Lưu thay đổi' : 'Tạo'}</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 

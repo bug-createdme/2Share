@@ -320,3 +320,87 @@ export async function uploadImage(file: File): Promise<string> {
     throw error;
   }
 }
+
+// =========================
+// Admin - Users CRUD APIs
+// =========================
+export type AdminUser = {
+  _id: string;
+  name?: string;
+  email: string;
+  role?: string;
+  is_verified?: boolean;
+  status?: string;
+  created_at?: string;
+};
+
+const ADMIN_BASE = 'https://2share.icu/admins';
+
+function getAuthHeaders() {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('No token');
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  } as Record<string, string>;
+}
+
+function unwrap<T = any>(res: Response, data: any): T {
+  if (!res.ok) {
+    const msg = data?.message || `HTTP_${res.status}`;
+    throw new Error(msg);
+  }
+  // backend may wrap in {result} or return raw
+  return (data?.result ?? data) as T;
+}
+
+export async function adminGetAllUsers(): Promise<AdminUser[]> {
+  const res = await fetch(`${ADMIN_BASE}/users`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  const unwrapped = unwrap<any>(res, data);
+  // Try common shapes
+  if (Array.isArray(unwrapped)) return unwrapped as AdminUser[];
+  if (Array.isArray(unwrapped?.users)) return unwrapped.users as AdminUser[];
+  if (Array.isArray(data?.users)) return data.users as AdminUser[];
+  return [];
+}
+
+export async function adminCreateUser(payload: {
+  name?: string;
+  email: string;
+  password: string;
+  role?: string;
+}): Promise<AdminUser> {
+  const res = await fetch(`${ADMIN_BASE}/users`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  return unwrap<AdminUser>(res, data);
+}
+
+export async function adminUpdateUser(
+  id: string,
+  payload: Partial<{ name: string; email: string; password: string; role: string; is_verified: boolean; status: string }>
+): Promise<AdminUser> {
+  const res = await fetch(`${ADMIN_BASE}/users/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  return unwrap<AdminUser>(res, data);
+}
+
+export async function adminDeleteUser(id: string): Promise<{ deleted: boolean } | any> {
+  const res = await fetch(`${ADMIN_BASE}/users/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  return unwrap(res, data);
+}
