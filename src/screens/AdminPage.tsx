@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import showToast from '@/lib/toast';
 import {
   Users,
   FolderOpen,
@@ -71,8 +72,10 @@ const AdminPage: React.FC = () => {
         fetchPortfolioStats(),
         fetchRevenueStats(),
       ]);
+      showToast.success('Dữ liệu đã được tải thành công!');
     } catch (error) {
       console.error('Error fetching stats:', error);
+      showToast.error('Không thể tải dữ liệu. Vui lòng thử lại sau.');
     }
   };
 

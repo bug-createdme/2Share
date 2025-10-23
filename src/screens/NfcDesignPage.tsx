@@ -240,6 +240,7 @@ const NfcDesignPage: React.FC = () => {
               <NFCCardPreview
                 themeClasses={themeClasses}
                 selectedTheme={selectedTheme}
+                user={user}
               />
             </div>
           </div>
