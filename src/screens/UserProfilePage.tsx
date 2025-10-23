@@ -66,15 +66,8 @@ const UserProfilePage: React.FC<UserProfileProps> = ({ user }) => {
     }
   };
 
-  // Overlay username from localStorage if present (keeps UI in sync after change)
-  const displayUsername = (() => {
-    try {
-      const cached = localStorage.getItem(`mylinks_${user._id}_username`);
-      return cached || user.username;
-    } catch {
-      return user.username;
-    }
-  })();
+  // Display username from user object (backend is source of truth)
+  const displayUsername = user.username;
 
   // Hàm mở dialog chia sẻ
   const handleOpenShareDialog = () => {

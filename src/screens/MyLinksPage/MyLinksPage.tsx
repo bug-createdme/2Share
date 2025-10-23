@@ -14,7 +14,7 @@ import type { SocialLink } from "./sections/SocialLinksSection/SocialLinksSectio
 import { ProfilePictureSection } from "./sections/ProfilePictureSection/ProfilePictureSection";
 import { SocialLinksSection } from "./sections/SocialLinksSection/SocialLinksSection";
 
-import { getMyProfile, updateMyProfile, updatePortfolio } from "../../lib/api";
+import { getMyProfile, getMyPortfolio, updateMyProfile, updatePortfolio, createPortfolio } from "../../lib/api";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import { useRef } from 'react';
@@ -38,69 +38,68 @@ export const MyLinksPage = (): JSX.Element => {
   const [savingTitleBio, setSavingTitleBio] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const shareBtnRef = useRef<HTMLButtonElement>(null);
+  const [portfolioExists, setPortfolioExists] = useState(false);
 
   useEffect(() => {
-    // Load from backend first (source of truth), then overlay per-user drafts from localStorage
+    // Load from backend (source of truth)
     async function fetchProfile() {
       try {
+        // Get user profile
         const profile = await getMyProfile();
         setUser(profile);
         if (typeof profile.bio === 'string') setBio(profile.bio);
-        if (profile.social_links) {
-          const links: SocialLink[] = Object.entries(profile.social_links).map(([key, value]: any) => {
-            // Nếu value đã có id thì giữ nguyên, nếu không thì tạo mới
-            if (typeof value === 'object' && value !== null && value.id) {
-              return {
-                ...value,
-                name: key.charAt(0).toUpperCase() + key.slice(1),
-              };
-            }
-            return {
-              id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              name: key.charAt(0).toUpperCase() + key.slice(1),
-              url: String(value || ""),
-              clicks: 0,
-              isEnabled: Boolean(value),
-              color: "#6e6e6e",
-              icon: "🔗",
-            };
-          });
-          if (links.length) setSocialLinks(links);
-        }
-        // After we know the user, overlay any local draft for THIS user
+
+        // Get portfolio data (which contains social_links)
         try {
-          const kBio = `mylinks_${profile._id}_bio`;
-          const kLinks = `mylinks_${profile._id}_socialLinks`;
-          const kUsername = `mylinks_${profile._id}_username`;
-          const localBio = localStorage.getItem(kBio);
-          const localLinks = localStorage.getItem(kLinks);
-          const localUsername = localStorage.getItem(kUsername);
-          if (localBio !== null) setBio(localBio);
-          if (localLinks) {
-            // Parse và chỉ gán id nếu chưa có, giữ nguyên id cũ nếu đã tồn tại
-            let parsedLinks = JSON.parse(localLinks);
-            let changed = false;
-            parsedLinks = parsedLinks.map((link: any) => {
-              if (!link.id) {
-                changed = true;
+          const portfolio = await getMyPortfolio();
+          setPortfolioExists(true);
+          if (portfolio && portfolio.social_links) {
+            const links: SocialLink[] = Object.entries(portfolio.social_links).map(([key, value]: any) => {
+              // Nếu value đã có id thì giữ nguyên, nếu không thì tạo mới
+              if (typeof value === 'object' && value !== null && value.id) {
                 return {
-                  ...link,
-                  id: `${link.name || 'link'}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  ...value,
+                  name: key.charAt(0).toUpperCase() + key.slice(1),
                 };
               }
-              return link;
+              return {
+                id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                name: key.charAt(0).toUpperCase() + key.slice(1),
+                url: String(value?.url || value || ""),
+                clicks: value?.clicks || 0,
+                isEnabled: Boolean(value?.url || value),
+                color: value?.color || "#6e6e6e",
+                icon: value?.icon || "🔗",
+                displayName: value?.displayName,
+              };
             });
-            if (changed) {
-              setSocialLinks(parsedLinks);
-              localStorage.setItem(kLinks, JSON.stringify(parsedLinks));
-            } else {
-              setSocialLinks(parsedLinks);
-            }
+            if (links.length) setSocialLinks(links);
           }
-          if (localUsername) {
-            setUser((prev: any) => ({ ...prev, username: localUsername }));
+        } catch (portfolioErr) {
+          console.log('Portfolio not found or error loading it, using profile social_links');
+          setPortfolioExists(false);
+          // Fallback to profile social_links if portfolio doesn't exist
+          if (profile.social_links) {
+            const links: SocialLink[] = Object.entries(profile.social_links).map(([key, value]: any) => {
+              if (typeof value === 'object' && value !== null && value.id) {
+                return {
+                  ...value,
+                  name: key.charAt(0).toUpperCase() + key.slice(1),
+                };
+              }
+              return {
+                id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                name: key.charAt(0).toUpperCase() + key.slice(1),
+                url: String(value || ""),
+                clicks: 0,
+                isEnabled: Boolean(value),
+                color: "#6e6e6e",
+                icon: "🔗",
+              };
+            });
+            if (links.length) setSocialLinks(links);
           }
-        } catch {}
+        }
       } catch (err: any) {
         setError(err.message || "Lỗi lấy thông tin người dùng");
       } finally {
@@ -110,14 +109,56 @@ export const MyLinksPage = (): JSX.Element => {
     fetchProfile();
   }, []);
 
-  // 3) Auto-persist to localStorage on change (per-user keys)
+  // Auto-save social links to backend when they change
   useEffect(() => {
-    if (!user?._id) return;
-    try {
-      localStorage.setItem(`mylinks_${user._id}_bio`, bio || "");
-      localStorage.setItem(`mylinks_${user._id}_socialLinks`, JSON.stringify(socialLinks));
-    } catch {}
-  }, [bio, socialLinks, user?._id]);
+    if (!user?._id || socialLinks.length === 0) return;
+
+    // Debounce the save to avoid too many API calls
+    const timer = setTimeout(async () => {
+      try {
+        // Convert socialLinks array back to object format for backend
+        const socialLinksObj: Record<string, any> = {};
+        socialLinks.forEach(link => {
+          const key = link.name.toLowerCase();
+          socialLinksObj[key] = {
+            url: link.url,
+            clicks: link.clicks,
+            isEnabled: link.isEnabled,
+            color: link.color,
+            icon: link.icon,
+            displayName: link.displayName,
+            id: link.id,
+          };
+        });
+
+        // If portfolio doesn't exist, create it first
+        if (!portfolioExists) {
+          console.log('Portfolio does not exist, creating new portfolio...');
+          await createPortfolio({
+            title: user?.name || 'My Portfolio',
+            blocks: [
+              {
+                type: 'text',
+                content: user?.bio || 'Hello, this is my portfolio',
+                order: 1,
+              }
+            ],
+            social_links: socialLinksObj,
+          });
+          setPortfolioExists(true);
+          console.log('Portfolio created successfully');
+        } else {
+          // Save to backend
+          await updatePortfolio({ social_links: socialLinksObj });
+          console.log('Social links saved to backend');
+        }
+      } catch (error) {
+        console.error('Error saving social links:', error);
+      }
+    }, 1000); // Wait 1 second after last change before saving
+
+    return () => clearTimeout(timer);
+  }, [socialLinks, user?._id, portfolioExists]);
 
   // 4) Handle click tracking for social links
   useEffect(() => {
@@ -142,14 +183,13 @@ export const MyLinksPage = (): JSX.Element => {
     setSavingTitleBio(true);
     try {
       console.log('Saving username:', tmpUsername, 'bio:', tmpBio);
+      // Save to user profile
       const result = await updateMyProfile({ username: tmpUsername, bio: tmpBio });
       console.log('Update result:', result);
       setUser({ ...user, username: tmpUsername });
       setBio(tmpBio);
-      // Also persist to localStorage for this user
-      if (user._id) {
-        localStorage.setItem(`mylinks_${user._id}_username`, tmpUsername);
-      }
+
+      // Also save to portfolio
       const blocks = [{ type: "text", content: tmpBio || "", order: 1 }];
       try { await updatePortfolio({ blocks }); } catch {}
       setShowTitleBioModal(false);
