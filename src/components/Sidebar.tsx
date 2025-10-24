@@ -15,12 +15,14 @@ import {
   Zap,
   Crown // THÊM ICON MỚI
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 interface SidebarProps {
   user?: any;
 }
 
 export default function Sidebar({ user }: SidebarProps) {
+  const { logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [show2ShareMenu, setShow2ShareMenu] = useState(true);
   const location = useLocation(); // to know the current route
@@ -95,8 +97,8 @@ export default function Sidebar({ user }: SidebarProps) {
               <button
                 className="w-full flex items-center px-4 py-2 text-red-500 hover:bg-gray-50 rounded-b-lg border-t border-gray-200"
                 onClick={() => {
-                  localStorage.removeItem('token');
-                  window.location.href = '/login';
+                  setShowUserMenu(false);
+                  logout();
                 }}
               >
                 <LogOut className="w-5 h-5 mr-3 text-red-500" />

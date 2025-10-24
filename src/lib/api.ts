@@ -19,7 +19,7 @@ export const getOauthGoogleUrl = () => {
 export async function createPortfolio(data: {
   title: string;
   blocks: Array<{ type: string; content: string; order: number }>;
-  social_links?: Record<string, string>;
+  social_links?: Record<string, any>;
   avatar_url?: string;
   banner_url?: string;
 }) {
@@ -38,16 +38,20 @@ export async function createPortfolio(data: {
   return result;
 }
 // Cập nhật portfolio hiện tại
-export async function updatePortfolio(data: {
+export async function updatePortfolio(slug: string, data: {
   title?: string;
   blocks?: Array<{ type: string; content: string; order: number }>;
-  social_links?: Record<string, string>;
+  social_links?: Record<string, any>;
   avatar_url?: string;
   banner_url?: string;
 }) {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('No token');
-  const res = await fetch('https://2share.icu/portfolios/update-portfolio', {
+
+  console.log('updatePortfolio - Sending request with slug:', slug, 'data:', data);
+  console.log('updatePortfolio - Token:', token?.substring(0, 20) + '...');
+
+  const res = await fetch(`https://2share.icu/portfolios/update-portfolio/${slug}`, {
     method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -55,7 +59,21 @@ export async function updatePortfolio(data: {
     },
     body: JSON.stringify(data),
   });
-  const result = await res.json();
+
+  console.log('updatePortfolio - Response status:', res.status);
+  console.log('updatePortfolio - Response headers:', res.headers);
+
+  const contentType = res.headers.get('content-type');
+  let result;
+
+  if (contentType?.includes('application/json')) {
+    result = await res.json();
+  } else {
+    const text = await res.text();
+    console.log('updatePortfolio - Response text:', text.substring(0, 200));
+    throw new Error(`Expected JSON but got ${contentType}: ${text.substring(0, 200)}`);
+  }
+
   if (!res.ok) {
     const message = result?.message || 'Lỗi cập nhật portfolio';
     const error = new Error(`HTTP_${res.status}:${message}`);
@@ -80,7 +98,20 @@ export async function getMyPortfolio() {
   return result.result;
 }
 
-// Lấy portfolio public theo username (không cần authentication)
+// Lấy portfolio public theo slug (không cần authentication)
+export async function getPortfolioBySlug(slug: string) {
+  const res = await fetch(`https://2share.icu/portfolios/get-portfolio/${encodeURIComponent(slug)}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message || 'Lỗi lấy portfolio công khai');
+  return result.result;
+}
+
+// (Giữ tương thích cũ) Lấy portfolio public theo username qua query nếu backend còn hỗ trợ
 export async function getPortfolioByUsername(username: string) {
   const res = await fetch(`https://2share.icu/portfolios/get-portfolio?username=${encodeURIComponent(username)}`, {
     method: 'GET',
@@ -113,7 +144,7 @@ export async function updateMyProfile(data: {
   avatar_url?: string;
   date_of_birth?: string;
   bio?: string;
-  social_links?: Record<string, string>;
+  social_links?: Record<string, any>;
   username?: string;
 }) {
   const token = localStorage.getItem('token');
@@ -180,6 +211,22 @@ export async function refreshAccessToken(refresh_token: string) {
   const result = await res.json();
   if (!res.ok) throw new Error(result.message || 'Lỗi làm mới phiên đăng nhập');
   return result;
+}
+
+// Kiểm tra gói hiện tại của người dùng (yêu cầu đăng nhập)
+export async function getCurrentPlan() {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('No token');
+  const res = await fetch('https://2share.icu/users/get-current-plan', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(result?.message || 'Lỗi lấy gói hiện tại');
+  return result; // backend đang trả thẳng object gói
 }
 
 // Quên mật khẩu: gửi email chứa liên kết đặt lại mật khẩu
@@ -251,98 +298,138 @@ export async function testLogin(email: string, password: string) {
   return { success: res.ok, data };
 }
 
-// Upload image function
+// Upload image function with presigned URL (2 steps process)
 export async function uploadImage(file: File): Promise<string> {
   const token = localStorage.getItem('token');
   if (!token) throw new Error('No token');
 
-  // Kiểm tra token có hợp lệ không
-  if (!token.startsWith('eyJ')) {
-    throw new Error('Token không hợp lệ. Vui lòng đăng nhập lại.');
-  }
-
-  const formData = new FormData();
-
-  // Chỉ gửi field 'image' như trong Postman
-  formData.append('image', file);
-
-  console.log('FormData contents:', {
-    fieldName: 'image',
-    fileName: file.name,
-    fileSize: file.size,
-    fileType: file.type
-  });
-
-  // Log FormData entries để debug
-  for (let [key, value] of formData.entries()) {
-    console.log('FormData entry:', key, value instanceof File ? `[File: ${value.name}]` : value);
-  }
-
-  console.log('Uploading file:', {
-    name: file.name,
-    size: file.size,
-    type: file.type,
-    lastModified: new Date(file.lastModified).toISOString(),
-    tokenPrefix: token.substring(0, 20) + '...'
-  });
-
-
+  // Lấy thông tin file
+  const filename = file.name;
+  const filesize = file.size;
+  const filetype = file.type || 'image/jpeg';
 
   try {
-    // Đợi một chút để đảm bảo file được xử lý
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    const res = await fetch('https://2share.icu/medias/upload-image', {
+    // Bước 1: Lấy presigned URL
+    const res1 = await fetch('https://cyperstack.com/media/images/upload/presigned-url', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
-        // Thử thêm Accept header
+        'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: formData,
+      body: JSON.stringify({ filename, filesize }),
     });
 
-    const result = await res.json();
-    console.log('Upload response:', {
-      status: res.status,
-      ok: res.ok,
-      result: result
+    const data1 = await res1.json();
+    if (!res1.ok) {
+      throw new Error(data1.message || 'Không lấy được presigned URL');
+    }
+    const presignedUrl = data1.presignedUrl;
+    const finalUrl = data1.url;
+    if (!presignedUrl || !finalUrl) {
+      throw new Error('Thiếu presignedUrl hoặc url trong response');
+    }
+
+    // Bước 2: Upload file lên S3
+    const res2 = await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': filetype,
+      },
+      body: file,
     });
-
-    if (!res.ok) {
-      console.error('Upload failed:', {
-        status: res.status,
-        statusText: res.statusText,
-        result: result
-      });
-
-      // Xử lý các lỗi cụ thể
-      if (res.status === 413) {
-        throw new Error('File quá lớn. Vui lòng chọn file nhỏ hơn 5MB.');
-      } else if (res.status === 415) {
-        throw new Error('Định dạng file không được hỗ trợ. Vui lòng chọn file hình ảnh.');
-      } else if (res.status === 401) {
-        throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-      } else {
-        throw new Error(result.message || `Lỗi server: ${res.status}`);
-      }
+    if (!res2.ok) {
+      throw new Error('Lỗi upload file lên S3: ' + res2.status + ' ' + res2.statusText);
     }
 
-    // Kiểm tra response structure
-    const imageUrl = result.result?.url || result.url || result.image_url;
-    if (!imageUrl) {
-      console.error('Invalid response structure:', result);
-      throw new Error('Phản hồi từ server không hợp lệ');
-    }
-
-    console.log('Upload successful, image URL:', imageUrl);
-    return imageUrl;
-
+    // Trả về url cuối cùng
+    return finalUrl;
   } catch (error) {
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      console.error('Network error:', error);
-      throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.');
-    }
+    console.error('Upload error:', error);
     throw error;
   }
+}
+
+// =========================
+// Admin - Users CRUD APIs
+// =========================
+export type AdminUser = {
+  _id: string;
+  name?: string;
+  email: string;
+  role?: string;
+  is_verified?: boolean;
+  status?: string;
+  created_at?: string;
+};
+
+const ADMIN_BASE = 'https://2share.icu/admins';
+
+function getAuthHeaders() {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('No token');
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  } as Record<string, string>;
+}
+
+function unwrap<T = any>(res: Response, data: any): T {
+  if (!res.ok) {
+    const msg = data?.message || `HTTP_${res.status}`;
+    throw new Error(msg);
+  }
+  // backend may wrap in {result} or return raw
+  return (data?.result ?? data) as T;
+}
+
+export async function adminGetAllUsers(): Promise<AdminUser[]> {
+  const res = await fetch(`${ADMIN_BASE}/users`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  const unwrapped = unwrap<any>(res, data);
+  // Try common shapes
+  if (Array.isArray(unwrapped)) return unwrapped as AdminUser[];
+  if (Array.isArray(unwrapped?.users)) return unwrapped.users as AdminUser[];
+  if (Array.isArray(data?.users)) return data.users as AdminUser[];
+  return [];
+}
+
+export async function adminCreateUser(payload: {
+  name?: string;
+  email: string;
+  password: string;
+  role?: string;
+}): Promise<AdminUser> {
+  const res = await fetch(`${ADMIN_BASE}/users`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  return unwrap<AdminUser>(res, data);
+}
+
+export async function adminUpdateUser(
+  id: string,
+  payload: Partial<{ name: string; email: string; password: string; role: string; is_verified: boolean; status: string }>
+): Promise<AdminUser> {
+  const res = await fetch(`${ADMIN_BASE}/users/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  return unwrap<AdminUser>(res, data);
+}
+
+export async function adminDeleteUser(id: string): Promise<{ deleted: boolean } | any> {
+  const res = await fetch(`${ADMIN_BASE}/users/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  return unwrap(res, data);
 }

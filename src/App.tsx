@@ -144,7 +144,7 @@ function App() {
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/email-verify-action" element={<EmailVerifyActionPage />} />
             {/* Public portfolio route - không cần authentication */}
-            <Route path="/portfolio/:username" element={<PublicPortfolioPage />} />
+            <Route path="/portfolio/:slug" element={<PublicPortfolioPage />} />
             {/* Route xử lý callback OAuth Google */}
             <Route path="/oauth/google" element={<OAuthCallbackHandler />} />
           </Routes>

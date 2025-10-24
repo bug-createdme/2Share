@@ -1,4 +1,4 @@
-import { PlusIcon, Camera, Share2, Check } from "lucide-react";
+import { PlusIcon, Camera } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, Routes, Route } from "react-router-dom";
 import SocialModalPage from "./SocialModalPage";
@@ -14,9 +14,13 @@ import type { SocialLink } from "./sections/SocialLinksSection/SocialLinksSectio
 import { ProfilePictureSection } from "./sections/ProfilePictureSection/ProfilePictureSection";
 import { SocialLinksSection } from "./sections/SocialLinksSection/SocialLinksSection";
 
-import { getMyProfile, updateMyProfile, updatePortfolio } from "../../lib/api";
+import { getMyProfile, getMyPortfolio, updateMyProfile, updatePortfolio, createPortfolio, getCurrentPlan } from "../../lib/api";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
+import { useRef } from 'react';
+
+import ShareDialog from "../../components/ShareDialog";
+import { showToast } from "../../lib/toast";
 
 
 export const MyLinksPage = (): JSX.Element => {
@@ -33,70 +37,76 @@ export const MyLinksPage = (): JSX.Element => {
   const [tmpUsername, setTmpUsername] = useState("");
   const [tmpBio, setTmpBio] = useState("");
   const [savingTitleBio, setSavingTitleBio] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const shareBtnRef = useRef<HTMLButtonElement>(null);
+  const [portfolioExists, setPortfolioExists] = useState(false);
+  const [portfolioSlug, setPortfolioSlug] = useState<string | null>(null);
+  const [planActive, setPlanActive] = useState<boolean | null>(null);
+  const [maxSocialLinks, setMaxSocialLinks] = useState<number | null>(null);
 
   useEffect(() => {
-    // Load from backend first (source of truth), then overlay per-user drafts from localStorage
+    // Load from backend (source of truth)
     async function fetchProfile() {
       try {
+        // Get user profile
         const profile = await getMyProfile();
         setUser(profile);
         if (typeof profile.bio === 'string') setBio(profile.bio);
-        if (profile.social_links) {
-          const links: SocialLink[] = Object.entries(profile.social_links).map(([key, value]: any) => {
-            // Nếu value đã có id thì giữ nguyên, nếu không thì tạo mới
-            if (typeof value === 'object' && value !== null && value.id) {
-              return {
-                ...value,
-                name: key.charAt(0).toUpperCase() + key.slice(1),
-              };
-            }
-            return {
-              id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              name: key.charAt(0).toUpperCase() + key.slice(1),
-              url: String(value || ""),
-              clicks: 0,
-              isEnabled: Boolean(value),
-              color: "#6e6e6e",
-              icon: "🔗",
-            };
-          });
-          if (links.length) setSocialLinks(links);
-        }
-        // After we know the user, overlay any local draft for THIS user
+
+        // Get portfolio data (which contains social_links)
         try {
-          const kBio = `mylinks_${profile._id}_bio`;
-          const kLinks = `mylinks_${profile._id}_socialLinks`;
-          const kUsername = `mylinks_${profile._id}_username`;
-          const localBio = localStorage.getItem(kBio);
-          const localLinks = localStorage.getItem(kLinks);
-          const localUsername = localStorage.getItem(kUsername);
-          if (localBio !== null) setBio(localBio);
-          if (localLinks) {
-            // Parse và chỉ gán id nếu chưa có, giữ nguyên id cũ nếu đã tồn tại
-            let parsedLinks = JSON.parse(localLinks);
-            let changed = false;
-            parsedLinks = parsedLinks.map((link: any) => {
-              if (!link.id) {
-                changed = true;
+          const portfolio = await getMyPortfolio();
+          setPortfolioExists(true);
+          if (portfolio?.slug) {
+            setPortfolioSlug(portfolio.slug);
+          }
+          if (portfolio && portfolio.social_links) {
+            const links: SocialLink[] = Object.entries(portfolio.social_links).map(([key, value]: any) => {
+              // Nếu value đã có id thì giữ nguyên, nếu không thì tạo mới
+              if (typeof value === 'object' && value !== null && value.id) {
                 return {
-                  ...link,
-                  id: `${link.name || 'link'}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  ...value,
+                  name: key.charAt(0).toUpperCase() + key.slice(1),
                 };
               }
-              return link;
+              return {
+                id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                name: key.charAt(0).toUpperCase() + key.slice(1),
+                url: String(value?.url || value || ""),
+                clicks: value?.clicks || 0,
+                isEnabled: Boolean(value?.url || value),
+                color: value?.color || "#6e6e6e",
+                icon: value?.icon || "🔗",
+                displayName: value?.displayName,
+              };
             });
-            if (changed) {
-              setSocialLinks(parsedLinks);
-              localStorage.setItem(kLinks, JSON.stringify(parsedLinks));
-            } else {
-              setSocialLinks(parsedLinks);
-            }
+            if (links.length) setSocialLinks(links);
           }
-          if (localUsername) {
-            setUser((prev: any) => ({ ...prev, username: localUsername }));
+        } catch (portfolioErr) {
+          console.log('Portfolio not found or error loading it, using profile social_links');
+          setPortfolioExists(false);
+          // Fallback to profile social_links if portfolio doesn't exist
+          if (profile.social_links) {
+            const links: SocialLink[] = Object.entries(profile.social_links).map(([key, value]: any) => {
+              if (typeof value === 'object' && value !== null && value.id) {
+                return {
+                  ...value,
+                  name: key.charAt(0).toUpperCase() + key.slice(1),
+                };
+              }
+              return {
+                id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                name: key.charAt(0).toUpperCase() + key.slice(1),
+                url: String(value || ""),
+                clicks: 0,
+                isEnabled: Boolean(value),
+                color: "#6e6e6e",
+                icon: "🔗",
+              };
+            });
+            if (links.length) setSocialLinks(links);
           }
-        } catch {}
+        }
       } catch (err: any) {
         setError(err.message || "Lỗi lấy thông tin người dùng");
       } finally {
@@ -106,14 +116,99 @@ export const MyLinksPage = (): JSX.Element => {
     fetchProfile();
   }, []);
 
-  // 3) Auto-persist to localStorage on change (per-user keys)
+  // Fetch current plan once
   useEffect(() => {
-    if (!user?._id) return;
-    try {
-      localStorage.setItem(`mylinks_${user._id}_bio`, bio || "");
-      localStorage.setItem(`mylinks_${user._id}_socialLinks`, JSON.stringify(socialLinks));
-    } catch {}
-  }, [bio, socialLinks, user?._id]);
+    (async () => {
+      try {
+        const plan = await getCurrentPlan();
+        const status = plan?.status || plan?.result?.status;
+        const info = (plan?.planInfo?.[0]) || (plan?.result?.planInfo?.[0]);
+        setPlanActive(status === 'active');
+        if (typeof info?.maxSocialLinks === 'number') setMaxSocialLinks(info.maxSocialLinks);
+        
+        // Nếu không có gói active, hiển thị cảnh báo
+        if (status !== 'active') {
+          showToast.warning('Bạn chưa có gói nào đang hoạt động. Vui lòng đăng ký gói để cập nhật portfolio.');
+        }
+      } catch (e) {
+        // If cannot read plan, assume inactive so we avoid repeated 403
+        setPlanActive(false);
+        showToast.error('Không thể kiểm tra gói của bạn. Vui lòng thử lại sau.');
+      }
+    })();
+  }, []);
+
+  // Auto-save social links to backend when they change
+  useEffect(() => {
+    if (!user?._id || socialLinks.length === 0) return;
+
+    // Debounce the save to avoid too many API calls
+    const timer = setTimeout(async () => {
+      try {
+        // Check plan before saving to avoid 403 loop
+        if (planActive === false) {
+          console.warn('Skip save: no active plan');
+          showToast.warning('Không thể lưu: bạn chưa có gói nào đang hoạt động');
+          return;
+        }
+        // Convert socialLinks array back to object format for backend
+        const socialLinksObj: Record<string, any> = {};
+        socialLinks.forEach(link => {
+          const key = link.name.toLowerCase();
+          socialLinksObj[key] = {
+            url: link.url,
+            clicks: link.clicks,
+            isEnabled: link.isEnabled,
+            color: link.color,
+            icon: link.icon,
+            displayName: link.displayName,
+            id: link.id,
+          };
+        });
+
+        // Optional: enforce maxSocialLinks if known
+        if (typeof maxSocialLinks === 'number') {
+          const enabledCount = Object.values(socialLinksObj).filter((v: any) => v?.isEnabled && v?.url).length;
+          if (enabledCount > maxSocialLinks) {
+            console.warn(`Vượt quá số link cho phép (${enabledCount}/${maxSocialLinks}), bỏ qua lưu.`);
+            showToast.warning(`Bạn chỉ được phép tối đa ${maxSocialLinks} link trong gói hiện tại`);
+            return;
+          }
+        }
+
+        // If portfolio doesn't exist, create it first
+        if (!portfolioExists) {
+          console.log('Portfolio does not exist, creating new portfolio...');
+          const newPortfolio = await createPortfolio({
+            title: user?.name || 'My Portfolio',
+            blocks: [
+              {
+                type: 'text',
+                content: user?.bio || 'Hello, this is my portfolio',
+                order: 1,
+              }
+            ],
+            social_links: socialLinksObj,
+          });
+          setPortfolioExists(true);
+          if (newPortfolio?.slug) {
+            setPortfolioSlug(newPortfolio.slug);
+          }
+          console.log('Portfolio created successfully');
+        } else {
+          // Save to backend
+          if (portfolioSlug) {
+            await updatePortfolio(portfolioSlug, { social_links: socialLinksObj });
+            console.log('Social links saved to backend');
+          }
+        }
+      } catch (error) {
+        console.error('Error saving social links:', error);
+      }
+    }, 1000); // Wait 1 second after last change before saving
+
+    return () => clearTimeout(timer);
+  }, [socialLinks, user?._id, portfolioExists, planActive, maxSocialLinks]);
 
   // 4) Handle click tracking for social links
   useEffect(() => {
@@ -138,16 +233,15 @@ export const MyLinksPage = (): JSX.Element => {
     setSavingTitleBio(true);
     try {
       console.log('Saving username:', tmpUsername, 'bio:', tmpBio);
+      // Save to user profile
       const result = await updateMyProfile({ username: tmpUsername, bio: tmpBio });
       console.log('Update result:', result);
       setUser({ ...user, username: tmpUsername });
       setBio(tmpBio);
-      // Also persist to localStorage for this user
-      if (user._id) {
-        localStorage.setItem(`mylinks_${user._id}_username`, tmpUsername);
-      }
+
+      // Also save to portfolio
       const blocks = [{ type: "text", content: tmpBio || "", order: 1 }];
-      try { await updatePortfolio({ blocks }); } catch {}
+      try { if (portfolioSlug) await updatePortfolio(portfolioSlug, { blocks }); } catch {}
       setShowTitleBioModal(false);
     } catch (error) {
       console.error('Error saving title/bio:', error);
@@ -156,28 +250,13 @@ export const MyLinksPage = (): JSX.Element => {
     }
   }
 
-  // Function để copy portfolio link
-  const handleCopyPortfolioLink = async () => {
-    if (!user?.username) return;
-
-    const portfolioUrl = `${window.location.origin}/portfolio/${user.username}`;
-
-    try {
-      await navigator.clipboard.writeText(portfolioUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000); // Reset copied state sau 2 giây
-    } catch (error) {
-      console.error('Failed to copy:', error);
-      // Fallback cho trường hợp clipboard API không hoạt động
-      const textArea = document.createElement('textarea');
-      textArea.value = portfolioUrl;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+  // Hàm mở dialog chia sẻ
+  const handleOpenShareDialog = () => {
+    setShowShareDialog(true);
+  };
+  // Hàm đóng dialog chia sẻ
+  const handleCloseShareDialog = () => {
+    setShowShareDialog(false);
   };
 
   if (loading) {
@@ -198,9 +277,44 @@ export const MyLinksPage = (): JSX.Element => {
       <div className="ml-[265px] mr-[395px] bg-[#f7f7f7] min-h-screen flex flex-col items-center">
         <main className="flex-1 w-full flex flex-col items-center pt-20">
           {/* Header */}
-          <Header />
+          <Header onShare={handleOpenShareDialog} shareBtnRef={shareBtnRef} />
+      {/* Share Dialog */}
+      {showShareDialog && (
+        <ShareDialog
+          open={showShareDialog}
+          onClose={handleCloseShareDialog}
+          portfolioLink={portfolioSlug ? `${window.location.origin}/portfolio/${portfolioSlug}` : ''}
+          anchorRef={shareBtnRef}
+          username={user?.username}
+          avatarUrl={user?.avatar_url}
+        />
+      )}
           {/* Content Section */}
           <div className="w-full flex flex-col items-center flex-1">
+            {/* Banner cảnh báo nếu không có gói active */}
+            {planActive === false && (
+              <div className="w-full max-w-[700px] px-9 pt-6">
+                <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-4 shadow-md">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">!</div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-orange-800 mb-1">Chưa có gói đang hoạt động</h3>
+                      <p className="text-sm text-orange-700">Bạn cần đăng ký gói để có thể cập nhật và lưu portfolio. Các thay đổi sẽ không được lưu.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Hiển thị quota nếu có maxSocialLinks */}
+            {planActive === true && typeof maxSocialLinks === 'number' && (
+              <div className="w-full max-w-[700px] px-9 pt-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                  📊 Gói của bạn: tối đa <strong>{maxSocialLinks}</strong> social links
+                </div>
+              </div>
+            )}
+            
             <section className="w-full max-w-[700px] flex flex-col items-center px-9 pt-12">
               <div className="flex flex-col items-center gap-4 mb-8 w-full">
                 <div className="flex flex-col items-center gap-4">
@@ -268,7 +382,7 @@ export const MyLinksPage = (): JSX.Element => {
               </div>
 
 
-              {/* Share Portfolio Button */}
+              {/* Add Social Button */}
               <div className="flex gap-3 w-full max-w-[400px] mb-8">
                 <Button
                   className="flex-1 h-auto bg-[#639fff] hover:bg-[#5a8fee] rounded-[35px] py-4 flex items-center justify-center gap-2 shadow-lg"
@@ -278,32 +392,6 @@ export const MyLinksPage = (): JSX.Element => {
                   <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-xl tracking-[2.00px]">
                     Thêm
                   </span>
-                </Button>
-
-                <Button
-                  className={`h-auto px-6 py-4 rounded-[35px] flex items-center justify-center gap-2 shadow-lg transition-all duration-200 ${
-                    copied
-                      ? 'bg-green-500 hover:bg-green-600'
-                      : 'bg-gray-600 hover:bg-gray-700'
-                  }`}
-                  onClick={handleCopyPortfolioLink}
-                  title="Chia sẻ portfolio của bạn"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-6 h-6 text-white" />
-                      <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-sm">
-                        Đã copy!
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="w-6 h-6 text-white" />
-                      <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-sm">
-                        Chia sẻ
-                      </span>
-                    </>
-                  )}
                 </Button>
               </div>
               {/* Modal as a route */}

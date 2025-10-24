@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
-import { getPortfolioByUsername } from "../lib/api";
+import { getPortfolioBySlug } from "../lib/api";
 import type { SocialLink } from "./MyLinksPage/sections/SocialLinksSection/SocialLinksSection";
 
 // Component để lấy và hiển thị avatar từ social link
@@ -107,7 +107,7 @@ const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: st
 };
 
 const PublicPortfolioPage = (): JSX.Element => {
-  const { username } = useParams<{ username: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [portfolio, setPortfolio] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -115,14 +115,14 @@ const PublicPortfolioPage = (): JSX.Element => {
 
   useEffect(() => {
     async function fetchPortfolio() {
-      if (!username) {
-        setError("Không tìm thấy username");
+      if (!slug) {
+        setError("Không tìm thấy slug");
         setLoading(false);
         return;
       }
 
       try {
-        const portfolioData = await getPortfolioByUsername(username);
+        const portfolioData = await getPortfolioBySlug(slug);
         setPortfolio(portfolioData);
       } catch (err: any) {
         setError(err.message || "Lỗi lấy thông tin portfolio");
@@ -132,7 +132,7 @@ const PublicPortfolioPage = (): JSX.Element => {
     }
 
     fetchPortfolio();
-  }, [username]);
+  }, [slug]);
 
   if (loading) {
     return (
@@ -204,7 +204,7 @@ const PublicPortfolioPage = (): JSX.Element => {
               ← Về trang chủ
             </Button>
             <div className="text-sm text-gray-600">
-              Portfolio của @{username}
+              Portfolio của @{portfolio?.username || portfolio?.title || slug}
             </div>
           </div>
         </div>
@@ -225,7 +225,7 @@ const PublicPortfolioPage = (): JSX.Element => {
                   />
                 </div>
                 <div className="font-bold text-xl text-gray-800 tracking-wide text-center">
-                  @{portfolio.username || username}
+                  @{portfolio.username || slug}
                 </div>
 
                 {/* Bio section */}

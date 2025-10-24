@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
-import { NavigationMenuSection } from './MyLinksPage/sections/NavigationMenuSection/NavigationMenuSection';
-import { SettingsIcon } from 'lucide-react';
-import { updateMyProfile } from '../lib/api';
+import React, { useEffect, useState } from 'react';
+import { User, Mail, Phone, Calendar, Shield, CreditCard, Camera, Save, AlertCircle } from 'lucide-react';
+import { updateMyProfile, getMyPortfolio } from '../lib/api';
+import { showToast } from '../lib/toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import Sidebar from '../components/Sidebar';
+import Header from '../components/Header';
+import { useRef } from 'react';
+import ShareDialog from '../components/ShareDialog';
 
 interface UserProfileProps {
   user: {
@@ -14,6 +22,7 @@ interface UserProfileProps {
     plan?: string;
     verify?: number;
     date_of_birth?: string | null;
+    created_at?: string | null;
     refresh_token?: string;
     email_verify_token?: string;
   };
@@ -25,6 +34,10 @@ const UserProfilePage: React.FC<UserProfileProps> = ({ user }) => {
   if (emailVerified && user.verify !== 1) {
     user.verify = 1;
   }
+
+  // Debug: Log user object để kiểm tra các field có sẵn
+  console.log('UserProfilePage - User data:', user);
+  console.log('Available user fields:', Object.keys(user));
   const [form, setForm] = useState({
     name: user.name || '',
     phone: user.phone || '',
@@ -33,9 +46,19 @@ const UserProfilePage: React.FC<UserProfileProps> = ({ user }) => {
     date_of_birth: user.date_of_birth ? String(user.date_of_birth).slice(0, 10) : '',
   });
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState('');
-  const [error, setError] = useState('');
-  
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const shareBtnRef = useRef<HTMLButtonElement>(null);
+  const [portfolioSlug, setPortfolioSlug] = useState<string | null>(null);
+
+  // Fetch my portfolio to get slug for share link
+  useEffect(() => {
+    (async () => {
+      try {
+        const p = await getMyPortfolio();
+        if (p?.slug) setPortfolioSlug(p.slug);
+      } catch {}
+    })();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -44,111 +67,271 @@ const UserProfilePage: React.FC<UserProfileProps> = ({ user }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setSuccess('');
-    setError('');
     try {
       await updateMyProfile(form);
-      setSuccess('Cập nhật thành công!');
+      showToast.success('Cập nhật thành công!');
     } catch (err: any) {
-      setError(err.message || 'Lỗi cập nhật');
+      showToast.error(err.message || 'Lỗi cập nhật');
     } finally {
       setLoading(false);
     }
   };
 
-  // Nút "Xác thực ngay" sẽ điều hướng sang trang hành động xác thực
+  // Display username from user object (backend is source of truth)
+  const displayUsername = user.username;
 
-  // Overlay username from localStorage if present (keeps UI in sync after change)
-  const displayUsername = (() => {
+  // Hàm mở dialog chia sẻ
+  const handleOpenShareDialog = () => {
+    setShowShareDialog(true);
+  };
+  // Hàm đóng dialog chia sẻ
+  const handleCloseShareDialog = () => {
+    setShowShareDialog(false);
+  };
+
+  // Hàm format ngày thành viên
+  const formatMemberSince = (createdAt?: string | null) => {
+    if (!createdAt) return 'Từ 2024';
+
     try {
-      const cached = localStorage.getItem(`mylinks_${user._id}_username`);
-      return cached || user.username;
+      const date = new Date(createdAt);
+      const year = date.getFullYear();
+      return `Từ ${year}`;
     } catch {
-      return user.username;
+      return 'Từ 2024';
     }
-  })();
+  };
 
   return (
-    <div className="w-full min-h-screen flex bg-[#F5F5F5]">
-      {/* Sidebar */}
-      <aside className="hidden md:block pt-12 pr-8">
-        <NavigationMenuSection user={user} />
-      </aside>
+    <div>
+      {/* Sidebar trái */}
+      <div className="fixed top-0 left-0 h-full min-h-screen w-[265px] bg-white border-r border-[#d9d9d9] flex-shrink-0 flex flex-col z-20">
+        <Sidebar user={user} />
+      </div>
+
       {/* Main content */}
-      <main className="flex-1 flex flex-col pt-12">
-        {/* Header */}
-        <div className="flex items-center justify-between w-full px-8 pb-6 border-b border-[#ececec]">
-          <h1 className="text-3xl font-bold text-[#222]">Tài khoản</h1>
-          <button className="w-10 h-10 flex items-center justify-center rounded-[12px] border border-[#ececec] bg-white hover:bg-gray-100 transition-colors">
-            <SettingsIcon className="w-6 h-6 text-[#222]" />
-          </button>
-        </div>
-        {/* Profile Info Card */}
-        <section className="flex justify-center items-start py-12">
-          <form className="w-full max-w-xl bg-white rounded-[32px] border border-[#ececec] px-10 py-8 flex flex-col gap-6 shadow-[0_2px_8px_#0001]" onSubmit={handleSubmit}>
-            <h2 className="text-xl font-bold mb-4 text-[#222]">Thông tin của tôi</h2>
-            <div className="flex flex-col gap-4">
-              <div>
-                <span className="block text-sm text-[#888] mb-1">Họ và tên</span>
-                <input type="text" name="name" value={form.name} onChange={handleChange} className="text-lg font-semibold text-[#222] w-full bg-transparent border-b border-[#ececec] focus:outline-none" />
-              </div>
-              <div>
-                <span className="block text-sm text-[#888] mb-1">Email</span>
-                <div className="text-lg text-[#222]">{user.email}</div>
-              </div>
-              <div>
-                <span className="block text-sm text-[#888] mb-1">Username</span>
-                <div className="text-lg text-[#222]">{displayUsername}</div>
-              </div>
-              <div>
-                <span className="block text-sm text-[#888] mb-1">Số điện thoại</span>
-                <input type="text" name="phone" value={form.phone} onChange={handleChange} className="text-lg text-[#222] w-full bg-transparent border-b border-[#ececec] focus:outline-none" />
-              </div>
-              <div>
-                <span className="block text-sm text-[#888] mb-1">Avatar URL</span>
-                <input type="text" name="avatar_url" value={form.avatar_url} onChange={handleChange} className="text-lg text-[#222] w-full bg-transparent border-b border-[#ececec] focus:outline-none" />
-              </div>
-              <div>
-                <span className="block text-sm text-[#888] mb-1">Ngày sinh</span>
-                <input type="date" name="date_of_birth" value={form.date_of_birth || ''} onChange={handleChange} className="text-lg text-[#222] w-full bg-transparent border-b border-[#ececec] focus:outline-none" />
-              </div>
-              <div>
-                <span className="block text-sm text-[#888] mb-1">Gói tài khoản</span>
-                <div className="text-lg text-[#222]">{user.plan || 'free'}</div>
-              </div>
-              <div>
-                <span className="block text-sm text-[#888] mb-1">Xác thực</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg text-[#222]">{user.verify ? 'Đã xác thực' : 'Chưa xác thực'}</span>
-                  {!user.verify && (
-                    <button
-                      type="button"
-                      className="px-4 py-2 rounded-[10px] bg-[#222] text-white font-semibold text-sm disabled:opacity-60"
-                      onClick={() => {
-                        // Chuyển hướng sang trang xác thực email, truyền đủ param
-                        const refreshToken = user.refresh_token || localStorage.getItem('refresh_token') || '';
-                        window.location.href = `/email-verify-action?email=${encodeURIComponent(user.email)}&token=${encodeURIComponent(user.email_verify_token || '')}&refresh_token=${encodeURIComponent(refreshToken)}`;
-                      }}
+      <div className="ml-[265px] bg-[#f7f7f7] min-h-screen flex flex-col">
+        <main className="flex-1 w-full flex flex-col items-center pt-20">
+          {/* Header */}
+          <Header onShare={handleOpenShareDialog} shareBtnRef={shareBtnRef} />
+          {/* Share Dialog */}
+          {showShareDialog && (
+            <ShareDialog
+              open={showShareDialog}
+              onClose={handleCloseShareDialog}
+              portfolioLink={portfolioSlug ? `${window.location.origin}/portfolio/${portfolioSlug}` : ''}
+              anchorRef={shareBtnRef}
+              username={user?.username}
+              avatarUrl={user?.avatar_url || undefined}
+            />
+          )}
+
+          {/* Content Section */}
+          <div className="w-full flex flex-col items-center flex-1 px-6">
+            <div className="w-full max-w-4xl flex flex-col items-center pt-12">
+              {/* Profile Header Card */}
+              <Card className="mb-8 shadow-lg border-0 bg-gradient-to-r from-white to-gray-50">
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row items-start gap-6">
+                {/* Avatar Section */}
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative">
+                    <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
+                      <AvatarImage src={form.avatar_url || user.avatar_url || ''} alt={form.name || user.name} />
+                      <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-2xl font-bold">
+                        {(form.name || user.name || 'U').charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-2 border-white shadow-lg"
                     >
-                      Xác thực ngay
-                    </button>
-                  )}
+                      <Camera className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-gray-900">{form.name || user.name}</h2>
+                    <p className="text-sm text-gray-600">@{displayUsername}</p>
+                  </div>
                 </div>
-                
+
+                {/* Quick Stats */}
+                <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CreditCard className="w-4 h-4 text-blue-500" />
+                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Gói</span>
+                    </div>
+                    <p className="text-lg font-bold text-gray-900 capitalize">{user.plan || 'Free'}</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield className={`w-4 h-4 ${user.verify ? 'text-green-500' : 'text-orange-500'}`} />
+                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Trạng thái</span>
+                    </div>
+                    <p className={`text-lg font-bold ${user.verify ? 'text-green-600' : 'text-orange-600'}`}>
+                      {user.verify ? 'Đã xác thực' : 'Chưa xác thực'}
+                    </p>
+                  </div>
+
+                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="w-4 h-4 text-indigo-500" />
+                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Thành viên</span>
+                    </div>
+                    <p className="text-sm font-medium text-gray-900">{formatMemberSince(user.created_at)}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <span className="block text-sm text-[#888] mb-1">ID</span>
-                <div className="text-lg text-[#222]">{user._id}</div>
-              </div>
+            </CardContent>
+          </Card>
+
+          {/* Profile Form */}
+          <Card className="shadow-lg border-0">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <User className="w-5 h-5 text-blue-500" />
+                Thông tin cá nhân
+              </CardTitle>
+              <CardDescription className="text-gray-600">
+                Cập nhật thông tin cá nhân của bạn. Những thay đổi sẽ được lưu tự động.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Name Field */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Họ và tên
+                  </label>
+                  <Input
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    placeholder="Nhập họ và tên của bạn"
+                    className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Email
+                  </label>
+                  <div className="h-12 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md flex items-center">
+                    <Mail className="w-4 h-4 text-gray-400 mr-2" />
+                    <span className="text-gray-900">{user.email}</span>
+                  </div>
+                </div>
+
+                {/* Username Field */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Username</label>
+                  <div className="h-12 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md flex items-center">
+                    <span className="text-gray-900 font-mono">@{displayUsername}</span>
+                  </div>
+                </div>
+
+                {/* Phone Field */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Phone className="w-4 h-4" />
+                    Số điện thoại
+                  </label>
+                  <Input
+                    name="phone"
+                    value={form.phone}
+                    onChange={handleChange}
+                    placeholder="Nhập số điện thoại"
+                    className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Avatar URL Field */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Camera className="w-4 h-4" />
+                    Avatar URL
+                  </label>
+                  <Input
+                    name="avatar_url"
+                    value={form.avatar_url}
+                    onChange={handleChange}
+                    placeholder="https://example.com/avatar.jpg"
+                    className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Date of Birth Field */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Ngày sinh
+                  </label>
+                  <Input
+                    type="date"
+                    name="date_of_birth"
+                    value={form.date_of_birth || ''}
+                    onChange={handleChange}
+                    className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Verification Section */}
+                {!user.verify && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <AlertCircle className="w-5 h-5 text-orange-500" />
+                      <div className="flex-1">
+                        <h3 className="font-medium text-orange-800">Xác thực tài khoản</h3>
+                        <p className="text-sm text-orange-700">Vui lòng xác thực email để bảo mật tài khoản</p>
+                      </div>
+                      <Button
+                        type="button"
+                        className="bg-orange-500 hover:bg-orange-600 text-white"
+                        onClick={() => {
+                          const refreshToken = user.refresh_token || localStorage.getItem('refresh_token') || '';
+                          window.location.href = `/email-verify-action?email=${encodeURIComponent(user.email)}&token=${encodeURIComponent(user.email_verify_token || '')}&refresh_token=${encodeURIComponent(refreshToken)}`;
+                        }}
+                      >
+                        Xác thực ngay
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+
+
+                {/* Submit Button */}
+                <div className="pt-4">
+                  <Button
+                    type="submit"
+                    className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Đang lưu...
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Save className="w-5 h-5" />
+                        Lưu thông tin
+                      </div>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
             </div>
-            {success && <div className="text-green-600 font-semibold text-center">{success}</div>}
-            {error && <div className="text-red-500 font-semibold text-center">{error}</div>}
-            <button type="submit" className="w-full h-12 mt-6 rounded-[16px] bg-[#222] text-white font-semibold text-lg disabled:opacity-60" disabled={loading}>
-              {loading ? 'Đang lưu...' : 'Lưu thông tin'}
-            </button>
-          </form>
-        </section>
-      </main>
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

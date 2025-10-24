@@ -11,7 +11,7 @@ import {
   TbBorderCornerRounded,
   TbBorderCornerPill,
 } from "react-icons/tb";
-import { getMyProfile } from "../lib/api";
+import { getMyProfile, getMyPortfolio } from "../lib/api";
 import { ImageUpload } from "../components/ui/image-upload";
 
 const PortfolioDesignPage: React.FC = () => {
@@ -23,6 +23,8 @@ const PortfolioDesignPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"text" | "button">("text");
   const [buttonFill, setButtonFill] = useState(0); // 0 = solid, 1 = outline
   const [buttonCorner, setButtonCorner] = useState(1); // 0 = hard, 1 = soft, 2 = round
+  const [bio, setBio] = useState("");
+  const [socialLinks, setSocialLinks] = useState<any[]>([]);
 
 const avatarColors: Record<string, string> = {
   coral: "bg-[#E7A5A5]",
@@ -53,6 +55,60 @@ const textColors: Record<string, string> = {
       try {
         const profile = await getMyProfile();
         setUser(profile);
+
+        // Load bio
+        if (typeof profile.bio === 'string') {
+          setBio(profile.bio);
+        }
+
+        // Load portfolio data (which contains social_links)
+        try {
+          const portfolio = await getMyPortfolio();
+          if (portfolio && portfolio.social_links) {
+            const links = Object.entries(portfolio.social_links).map(([key, value]: any) => {
+              if (typeof value === 'object' && value !== null && value.id) {
+                return {
+                  ...value,
+                  name: key.charAt(0).toUpperCase() + key.slice(1),
+                };
+              }
+              return {
+                id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                name: key.charAt(0).toUpperCase() + key.slice(1),
+                url: String(value?.url || value || ""),
+                clicks: value?.clicks || 0,
+                isEnabled: Boolean(value?.url || value),
+                color: value?.color || "#6e6e6e",
+                icon: value?.icon || "🔗",
+                displayName: value?.displayName,
+              };
+            });
+            setSocialLinks(links);
+          }
+        } catch (portfolioErr) {
+          console.log('Portfolio not found or error loading it, using profile social_links');
+          // Fallback to profile social_links if portfolio doesn't exist
+          if (profile.social_links) {
+            const links = Object.entries(profile.social_links).map(([key, value]: any) => {
+              if (typeof value === 'object' && value !== null && value.id) {
+                return {
+                  ...value,
+                  name: key.charAt(0).toUpperCase() + key.slice(1),
+                };
+              }
+              return {
+                id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                name: key.charAt(0).toUpperCase() + key.slice(1),
+                url: String(value || ""),
+                clicks: 0,
+                isEnabled: Boolean(value),
+                color: "#6e6e6e",
+                icon: "🔗",
+              };
+            });
+            setSocialLinks(links);
+          }
+        }
       } catch (err: any) {
         setError(err.message || "Lỗi lấy thông tin người dùng");
       } finally {
@@ -486,10 +542,12 @@ const textColors: Record<string, string> = {
         {/* Mobile Preview */}
         <PhonePreview
           themeClasses={themeClasses}
-          avatarColors={avatarColors}
           textColors={textColors}
           selectedTheme={selectedTheme}
           selectedLayout={selectedProfile + 1} // 🔑 map 0–3 → 1–4
+          user={user}
+          bio={bio}
+          socialLinks={socialLinks}
         />
       </div>
 

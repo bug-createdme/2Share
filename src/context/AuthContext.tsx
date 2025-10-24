@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import showToast from '@/lib/toast';
 
 interface User {
   id: string;
@@ -93,6 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               };
               setUser(userData);
               localStorage.setItem('user', JSON.stringify(userData));
+              showToast.success('Đăng nhập thành công! Chào mừng Admin.');
               navigate('/admin');
             } else {
               // User is regular user - redirect to my-links
@@ -104,6 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               };
               setUser(userData);
               localStorage.setItem('user', JSON.stringify(userData));
+              showToast.success('Đăng nhập thành công! Chào mừng bạn.');
               navigate('/my-links');
             }
           } catch (adminError) {
@@ -117,6 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             };
             setUser(userData);
             localStorage.setItem('user', JSON.stringify(userData));
+            showToast.success('Đăng nhập thành công! Chào mừng bạn.');
             navigate('/my-links');
           }
         } else {
@@ -124,10 +128,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } else {
         const errorData = await loginResponse.json();
-        throw new Error(errorData.message || 'Login failed');
+        const errorMessage = errorData.message || 'Đăng nhập thất bại';
+        showToast.error(errorMessage);
+        throw new Error(errorMessage);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
+      if (error.message && error.message !== 'Đăng nhập thất bại') {
+        showToast.error(error.message);
+      }
       throw error;
     } finally {
       setIsLoading(false);
@@ -138,7 +147,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
-    navigate('/');
+    showToast.info('Đã đăng xuất thành công!');
+
+    // Also log to console to verify the function is being called
+    console.log('Logout function called, toast should appear');
+
+    // Delay navigation để toast có thời gian hiển thị
+    setTimeout(() => {
+      navigate('/');
+    }, 100);
   };
 
   const value: AuthContextType = {

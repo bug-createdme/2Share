@@ -31,9 +31,16 @@ const OAuthCallbackHandler = () => {
       localStorage.setItem('token', accessToken);
       localStorage.setItem('refresh_token', refreshToken);
       localStorage.setItem('profile', JSON.stringify(profile));
-  // Đánh dấu email đã xác thực khi login bằng Google
-  localStorage.setItem('email_verified', 'true');
-  navigate('/my-links');
+      localStorage.setItem('email_verified', 'true');
+      // Thêm lưu user cho AuthContext
+      const userData = {
+        id: 'user-1',
+        email: email || '',
+        role: 'user',
+        name: (firstName || '') + (lastName ? ' ' + lastName : '')
+      };
+      localStorage.setItem('user', JSON.stringify(userData));
+      navigate('/my-links');
     } else {
       // Xử lý trường hợp không có 'code' hoặc 'access_token' trong URL
       const errorDescription = searchParams.get('error');

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { getOauthGoogleUrl } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import showToast from '@/lib/toast';
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -59,6 +60,7 @@ const LoginPage: React.FC = () => {
     setPasswordError(pErr);
     if (eErr || pErr) {
       setFormError('Vui lòng kiểm tra lại các trường bên dưới.');
+      showToast.warning('Vui lòng kiểm tra lại thông tin đăng nhập');
       return;
     }
     setLoading(true);
