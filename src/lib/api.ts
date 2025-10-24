@@ -23,8 +23,18 @@ export async function createPortfolio(data: {
   avatar_url?: string;
   banner_url?: string;
 }) {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Creating portfolio with token:', token ? 'Yes' : 'No');
+
   const res = await fetch('https://2share.icu/portfolios/create-portfolio', {
     method: 'POST',
     headers: {
@@ -33,8 +43,11 @@ export async function createPortfolio(data: {
     },
     body: JSON.stringify(data),
   });
+
   const result = await res.json();
-  if (!res.ok) throw new Error(result.message || 'Lỗi tạo portfolio');
+  console.log('📡 Create portfolio response status:', res.status, 'data:', result);
+
+  if (!res.ok) throw new Error(result.message || `HTTP ${res.status}: Lỗi tạo portfolio`);
   return result;
 }
 // Cập nhật portfolio hiện tại
@@ -45,11 +58,18 @@ export async function updatePortfolio(slug: string, data: {
   avatar_url?: string;
   banner_url?: string;
 }) {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
 
-  console.log('updatePortfolio - Sending request with slug:', slug, 'data:', data);
-  console.log('updatePortfolio - Token:', token?.substring(0, 20) + '...');
+  if (!token) throw new Error('No token found');
+
+  console.log('📤 updatePortfolio - Sending request with slug:', slug, 'data:', data);
+  console.log('🔑 updatePortfolio - Token:', token?.substring(0, 20) + '...');
 
   const res = await fetch(`https://2share.icu/portfolios/update-portfolio/${slug}`, {
     method: 'PATCH',
@@ -60,8 +80,8 @@ export async function updatePortfolio(slug: string, data: {
     body: JSON.stringify(data),
   });
 
-  console.log('updatePortfolio - Response status:', res.status);
-  console.log('updatePortfolio - Response headers:', res.headers);
+  console.log('📡 updatePortfolio - Response status:', res.status);
+  console.log('📡 updatePortfolio - Response headers:', res.headers);
 
   const contentType = res.headers.get('content-type');
   let result;
@@ -70,7 +90,7 @@ export async function updatePortfolio(slug: string, data: {
     result = await res.json();
   } else {
     const text = await res.text();
-    console.log('updatePortfolio - Response text:', text.substring(0, 200));
+    console.log('📡 updatePortfolio - Response text:', text.substring(0, 200));
     throw new Error(`Expected JSON but got ${contentType}: ${text.substring(0, 200)}`);
   }
 
@@ -79,13 +99,25 @@ export async function updatePortfolio(slug: string, data: {
     const error = new Error(`HTTP_${res.status}:${message}`);
     throw error;
   }
+
+  console.log('✅ updatePortfolio - Success:', result);
   return result;
 }
 
 // Lấy portfolio của chính mình (cần authentication)
 export async function getMyPortfolio() {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Getting my portfolio with token:', token ? 'Yes' : 'No');
+
   const res = await fetch('https://2share.icu/portfolios/get-my-portfolio', {
     method: 'GET',
     headers: {
@@ -93,8 +125,17 @@ export async function getMyPortfolio() {
       'Content-Type': 'application/json',
     },
   });
+
   const result = await res.json();
-  if (!res.ok) throw new Error(result.message || 'Lỗi lấy portfolio');
+  console.log('📡 Get my portfolio response status:', res.status, 'data:', result);
+
+  if (!res.ok) throw new Error(result.message || `HTTP ${res.status}: Lỗi lấy portfolio`);
+
+  // If result is null, portfolio doesn't exist yet - throw error to trigger creation
+  if (result.result === null) {
+    throw new Error('Portfolio does not exist yet');
+  }
+
   return result.result;
 }
 
@@ -125,16 +166,29 @@ export async function getPortfolioByUsername(username: string) {
 }
 // src/lib/api.ts
 export async function getMyProfile() {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Getting my profile with token:', token ? 'Yes' : 'No');
+
   const res = await fetch('https://2share.icu/users/me', {
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   });
+
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Lỗi lấy thông tin người dùng');
+  console.log('📡 Get my profile response status:', res.status);
+
+  if (!res.ok) throw new Error(data.message || `HTTP ${res.status}: Lỗi lấy thông tin người dùng`);
   return data.result;
 }
 
@@ -147,8 +201,18 @@ export async function updateMyProfile(data: {
   social_links?: Record<string, any>;
   username?: string;
 }) {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Updating my profile with token:', token ? 'Yes' : 'No');
+
   const res = await fetch('https://2share.icu/users/me', {
     method: 'PATCH',
     headers: {
@@ -157,8 +221,11 @@ export async function updateMyProfile(data: {
     },
     body: JSON.stringify(data),
   });
+
   const result = await res.json();
-  if (!res.ok) throw new Error(result.message || 'Lỗi cập nhật thông tin');
+  console.log('📡 Update my profile response status:', res.status);
+
+  if (!res.ok) throw new Error(result.message || `HTTP ${res.status}: Lỗi cập nhật thông tin`);
   return result;
 }
 
@@ -215,8 +282,18 @@ export async function refreshAccessToken(refresh_token: string) {
 
 // Kiểm tra gói hiện tại của người dùng (yêu cầu đăng nhập)
 export async function getCurrentPlan() {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Getting current plan with token:', token ? 'Yes' : 'No');
+
   const res = await fetch('https://2share.icu/users/get-current-plan', {
     method: 'GET',
     headers: {
@@ -224,8 +301,11 @@ export async function getCurrentPlan() {
       'Content-Type': 'application/json',
     },
   });
+
   const result = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(result?.message || 'Lỗi lấy gói hiện tại');
+  console.log('📡 Get current plan response status:', res.status, 'data:', result);
+
+  if (!res.ok) throw new Error(result?.message || `HTTP ${res.status}: Lỗi lấy gói hiện tại`);
   return result; // backend đang trả thẳng object gói
 }
 

@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const RegisterPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -17,7 +18,62 @@ const RegisterPage: React.FC = () => {
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [formError, setFormError] = useState('');
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const navigate = useNavigate();
+
+  // Prefill username from ?username= in URL (from homepage)
+  useEffect(() => {
+    const u = (searchParams.get('username') || '').trim();
+    if (u) {
+      setUsername(u);
+      setUsernameError('');
+    }
+  }, [searchParams]);
+
+  // Check username availability by trying to fetch portfolio with that slug
+  // If portfolio exists, username is taken. If 404 or null, username is available.
+  useEffect(() => {
+    if (!username || username.length < 4) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    const basicError = validateUsername(username);
+    if (basicError) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    setIsCheckingUsername(true);
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(`https://2share.icu/portfolios/get-portfolio/${encodeURIComponent(username)}`);
+        
+        // 404 means portfolio doesn't exist -> username available
+        if (response.status === 404) {
+          setUsernameAvailable(true);
+          setIsCheckingUsername(false);
+          return;
+        }
+        
+        const data = await response.json();
+        
+        // If 200 OK and result exists, username is taken
+        // If result is null/undefined, username is available
+        const portfolioExists = response.ok && data.result !== null && data.result !== undefined;
+        setUsernameAvailable(!portfolioExists);
+      } catch (error) {
+        console.error('Username check error:', error);
+        // On network error, assume available (will be validated on backend anyway)
+        setUsernameAvailable(true);
+      } finally {
+        setIsCheckingUsername(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [username]);
 
   // Xử lý submit đăng ký
   // Validate nâng cao
@@ -36,7 +92,7 @@ const RegisterPage: React.FC = () => {
   };
   const validateUsername = (username: string) => {
     if (!username) return 'Vui lòng nhập tên người dùng';
-    if (!/^[a-zA-Z0-9_]{4,20}$/.test(username)) return 'Tên người dùng chỉ gồm chữ, số, dấu _ và từ 4-20 ký tự';
+    if (!/^[a-zA-Z0-9_-]{4,20}$/.test(username)) return 'Tên người dùng chỉ gồm chữ, số, dấu _ hoặc - và từ 4-20 ký tự';
     if (/^\d+$/.test(username)) return 'Tên người dùng không được chỉ gồm số';
     return '';
   };
@@ -82,6 +138,20 @@ const RegisterPage: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
+    
+    // Check if username is still being validated
+    if (isCheckingUsername) {
+      setFormError('Đang kiểm tra tên người dùng. Vui lòng đợi...');
+      return;
+    }
+    
+    // Check if username is taken
+    if (usernameAvailable === false) {
+      setFormError('Tên người dùng đã có người sử dụng. Vui lòng chọn tên khác.');
+      setUsernameError('Tên này đã được sử dụng');
+      return;
+    }
+    
     // Validate tất cả trường trước khi submit
     const nErr = validateName(name);
     const eErr = validateEmail(email);
@@ -196,17 +266,47 @@ const RegisterPage: React.FC = () => {
               {emailError && <span className="text-red-500 text-xs font-semibold mt-1">{emailError}</span>}
             </div>
             {/* Tên người dùng */}
-            <div className="w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
-              <input
-                type="text"
-                placeholder="Tên người dùng"
-                value={username}
-                onChange={handleUsernameChange}
-                className="w-full bg-transparent text-[14px] font-bold leading-[12.88px] text-[#CAC1C1] placeholder-[#CAC1C1] outline-none font-['League_Spartan']"
-                required
-                autoComplete="off"
-              />
+            <div className="w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center relative">
+              <div className="flex items-center">
+                <input
+                  type="text"
+                  placeholder="Tên người dùng"
+                  value={username}
+                  onChange={handleUsernameChange}
+                  className="w-full bg-transparent text-[14px] font-bold leading-[12.88px] text-[#CAC1C1] placeholder-[#CAC1C1] outline-none font-['League_Spartan']"
+                  required
+                  autoComplete="off"
+                />
+                {/* Checking spinner */}
+                {isCheckingUsername && username.length >= 4 && (
+                  <div className="ml-2">
+                    <div className="w-4 h-4 border-2 border-[#CAC1C1] border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+                {/* Available checkmark */}
+                {!isCheckingUsername && usernameAvailable === true && username.length >= 4 && (
+                  <div className="ml-2 text-green-600">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                )}
+                {/* Unavailable X */}
+                {!isCheckingUsername && usernameAvailable === false && username.length >= 4 && (
+                  <div className="ml-2 text-red-600">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                )}
+              </div>
               {usernameError && <span className="text-red-500 text-xs font-semibold mt-1">{usernameError}</span>}
+              {!usernameError && !isCheckingUsername && usernameAvailable === false && username.length >= 4 && (
+                <span className="text-red-500 text-xs font-semibold mt-1">Tên này đã có người sử dụng</span>
+              )}
+              {!usernameError && !isCheckingUsername && usernameAvailable === true && username.length >= 4 && (
+                <span className="text-green-600 text-xs font-semibold mt-1">Tên này có sẵn!</span>
+              )}
             </div>
             {/* Mật khẩu */}
             <div className="w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">

@@ -1,8 +1,7 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { Check, ArrowLeft, Loader2 } from "lucide-react";
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { getCurrentPlan } from '../lib/api';
 
 // Types
 interface Plan {
@@ -17,15 +16,7 @@ interface Plan {
   priority_support: boolean;
 }
 
-// SỬA PaymentResponse theo API thực tế
-interface PaymentResponse {
-  result: {
-    success: boolean;
-    orderId: string;
-    subscriptionId: string;
-    trial: boolean;
-  };
-}
+
 
 const SubscriptionUpgradePage: React.FC = () => {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
@@ -36,50 +27,14 @@ const SubscriptionUpgradePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [debugInfo, setDebugInfo] = useState<string>("");
-  
+  const [setCurrentUserPlan] = useState<any>(null);
+  const [isNewUser, setIsNewUser] = useState(false);
+
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const planIdFromUrl = searchParams?.get('plan') || null;
 
   const API_BASE_URL = "https://2share.icu";
-
-  // Fallback plans
-  const fallbackPlans: Plan[] = [
-    {
-      _id: "plan_standard",
-      name: "Gói Tiêu Chuẩn",
-      price: 39000,
-      duration_in_days: 30,
-      description: "Gói cơ bản dành cho người mới bắt đầu",
-      features: ["4 danh thiếp", "3 templates", "1 domain", "5GB lưu trữ", "50 share links"],
-      max_storage: 5368709120,
-      max_share_links: 50,
-      priority_support: false
-    },
-    {
-      _id: "plan_premium",
-      name: "Gói Đặc Biệt",
-      price: 59000,
-      duration_in_days: 30,
-      description: "Gói nâng cao với nhiều tính năng",
-      features: ["4 danh thiếp", "6 templates", "3 domains", "10GB lưu trữ", "100 share links", "Hỗ trợ ưu tiên"],
-      max_storage: 10737418240,
-      max_share_links: 100,
-      priority_support: true
-    },
-    {
-      _id: "plan_member", 
-      name: "Gói Thành Viên",
-      price: 139000,
-      duration_in_days: 120,
-      description: "Gói đặc biệt dành cho thành viên",
-      features: ["4 danh thiếp", "12 templates", "5 domains", "15GB lưu trữ", "200 share links", "Hỗ trợ ưu tiên", "Tính năng cao cấp"],
-      max_storage: 16106127360,
-      max_share_links: 200,
-      priority_support: true
-    }
-  ];
-
-  const displayPlans = plans.length > 0 ? plans : fallbackPlans;
 
   const getAuthToken = (): string | null => {
     if (typeof window !== 'undefined') {
@@ -98,10 +53,10 @@ const SubscriptionUpgradePage: React.FC = () => {
 
   // SỬA LỖI CORS Ở ĐÂY - REMOVE credentials: 'include'
   useEffect(() => {
-    const fetchPlans = async () => {
+    const fetchPlansAndUserPlan = async () => {
       try {
         setLoading(true);
-        setDebugInfo("Bắt đầu fetch plans...");
+        setDebugInfo("Bắt đầu fetch plans và kiểm tra gói hiện tại...");
         
         const authToken = getAuthToken();
         console.log("🔄 Fetching plans from:", `${API_BASE_URL}/plans/get-plans`);
@@ -112,6 +67,25 @@ const SubscriptionUpgradePage: React.FC = () => {
 
         if (authToken) {
           headers['Authorization'] = `Bearer ${authToken}`;
+        }
+
+        // Kiểm tra gói hiện tại của user
+        try {
+          const userPlan = await getCurrentPlan();
+          console.log("📦 Current user plan:", userPlan);
+          setCurrentUserPlan(userPlan);
+          
+          // Nếu không có plan hoặc plan là null, đánh dấu là new user
+          if (!userPlan || userPlan === null || Object.keys(userPlan).length === 0) {
+            setIsNewUser(true);
+            console.log("✨ New user detected - will offer trial");
+          } else {
+            setIsNewUser(false);
+            console.log("👤 Existing user - will use upgrade endpoint");
+          }
+        } catch (planError) {
+          console.warn("⚠️ Could not fetch current plan, treating as new user:", planError);
+          setIsNewUser(true);
         }
 
         setDebugInfo("Đang gọi API...");
@@ -127,10 +101,9 @@ const SubscriptionUpgradePage: React.FC = () => {
         setDebugInfo(`API trả về status: ${response.status}`);
 
         if (response.status === 401 || response.status === 403) {
-          setDebugInfo(`Lỗi auth: ${response.status}. Dùng fallback plans.`);
-          setPlans(fallbackPlans);
-          autoSelectPlan(fallbackPlans);
-          setError(`Lỗi xác thực (${response.status}). Đang dùng dữ liệu mẫu.`);
+          setDebugInfo(`Lỗi auth: ${response.status}`);
+          setPlans([]);
+          setError(`Lỗi xác thực (${response.status}). Vui lòng đăng nhập lại.`);
           return;
         }
         
@@ -161,7 +134,7 @@ const SubscriptionUpgradePage: React.FC = () => {
               price: apiPlan.price || 0,
               duration_in_days: apiPlan.duration_in_days || 30,
               description: apiPlan.description || "Gói dịch vụ",
-              features: features.length > 0 ? features : fallbackPlans[index]?.features || ["Tính năng cơ bản"],
+              features: features.length > 0 ? features : ["Tính năng cơ bản"],
               max_storage: 5368709120,
               max_share_links: apiPlan.maskedallinks || 50,
               priority_support: apiPlan.customDomain || false
@@ -179,9 +152,8 @@ const SubscriptionUpgradePage: React.FC = () => {
       } catch (error: any) {
         console.error("❌ Lỗi fetch plans:", error);
         setDebugInfo(`Lỗi: ${error.message}`);
-        setPlans(fallbackPlans);
-        autoSelectPlan(fallbackPlans);
-        setError(`Không thể kết nối đến server: ${error.message}. Đang dùng dữ liệu mẫu.`);
+        setPlans([]);
+        setError(`Không thể kết nối đến server: ${error.message}. Vui lòng kiểm tra kết nối internet.`);
       } finally {
         setLoading(false);
       }
@@ -208,10 +180,10 @@ const SubscriptionUpgradePage: React.FC = () => {
       }
     };
 
-    fetchPlans();
+    fetchPlansAndUserPlan();
   }, [planIdFromUrl]);
 
-  const currentPlan = displayPlans.find(plan => plan._id === selectedPlan);
+  const currentPlan = plans.find((plan: Plan) => plan._id === selectedPlan);
   const monthlyPrice = currentPlan?.price || 0;
   const yearlyPrice = monthlyPrice * 12 * 0.9;
 
@@ -233,126 +205,130 @@ const SubscriptionUpgradePage: React.FC = () => {
     }
   };
 
-  // Payment handler - Cũng sửa credentials
+
   const handlePayment = async () => {
-    // Thêm vào đầu hàm handlePayment
-console.log('🔍 Debug info:');
-console.log('- Current Plan:', currentPlan);
-console.log('- Selected Plan ID:', selectedPlan);
-console.log('- Auth Token:', getAuthToken() ? 'Exists' : 'Missing');
-console.log('- API URL:', `${API_BASE_URL}/subscriptions/create-payment`);
-  if (!currentPlan) {
-    setPaymentResult({
-      success: false,
-      message: "Vui lòng chọn gói đăng ký"
-    });
-    return;
-  }
-
-  setIsProcessing(true);
-  setPaymentResult(null);
-  setDebugInfo("Bắt đầu xử lý thanh toán...");
-
-  try {
-    // Lấy token - GIỮ NGUYÊN
-    const authToken = getAuthToken();
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
+    if (!currentPlan) {
+      setPaymentResult({
+        success: false,
+        message: "Vui long chon goi dang ky"
+      });
+      return;
     }
 
-    // SỬA paymentData theo API thực tế
-    const paymentData = {
-      plan_id: selectedPlan, // Dùng _id của plan
-      amount: currentPlan.price, // Dùng price thực tế
-      description: `Thanh toán gói ${currentPlan.name}`,
-      items: [
-        {
-          name: `Gói ${currentPlan.name}`,
-          quantity: 1,
-          price: currentPlan.price
-        }
-      ]
-    };
+    setIsProcessing(true);
+    setPaymentResult(null);
 
-    console.log("🔄 Gửi dữ liệu thanh toán:", paymentData);
-    setDebugInfo(`Gửi thanh toán: ${paymentData.amount}đ cho ${currentPlan.name}`);
-
-    // Gọi API thanh toán - GIỮ NGUYÊN
-    const response = await fetch(`${API_BASE_URL}/subscriptions/create-payment`, {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify(paymentData)
-    });
-
-    console.log("💰 Payment response status:", response.status);
-    setDebugInfo(`Payment API status: ${response.status}`);
-
-    // Đọc response text trước để debug
-    const responseText = await response.text();
-    console.log("💰 Payment response body:", responseText);
-
-    if (response.status === 401) {
-      throw new Error("Token không hợp lệ. Vui lòng đăng nhập lại.");
-    }
-
-    if (response.status === 403) {
-      throw new Error("Bạn không có quyền thực hiện thanh toán.");
-    }
-
-    if (!response.ok) {
-      throw new Error(`Lỗi server: ${response.status} - ${responseText}`);
-    }
-
-    // SỬA: Parse response theo API thực tế
-    let result: PaymentResponse;
     try {
-      result = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error('Lỗi parse JSON:', parseError);
-      throw new Error("Lỗi xử lý dữ liệu từ server");
-    }
+      const authToken = getAuthToken();
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
 
-    console.log("✅ Kết quả thanh toán:", result);
-    setDebugInfo(`Kết quả: ${JSON.stringify(result)}`);
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
 
-    // SỬA: Xử lý kết quả theo API thực tế
-    if (result.result && result.result.success) {
-      // THANH TOÁN THÀNH CÔNG
-      const successMessage = `🎉 Thanh toán thành công!\nOrder ID: ${result.result.orderId}\nSubscription ID: ${result.result.subscriptionId}`;
+      // Xác định endpoint dựa trên isNewUser
+      // New user: create-payment (backend sẽ auto trial)
+      // Existing user: create-payment-upgrade
+      const endpoint = isNewUser 
+        ? `${API_BASE_URL}/subscriptions/create-payment`
+        : `${API_BASE_URL}/subscriptions/create-payment-upgrade`;
+
+      const paymentPayload = {
+        plan_id: selectedPlan,
+        amount: currentPlan.price,
+          description: `Goi ${currentPlan.name}`,
+        items: [
+          {
+            name: currentPlan.name,
+            quantity: 1,
+            price: currentPlan.price
+          }
+        ]
+      };
+
+      console.log("🎯 Payment endpoint:", endpoint);
+      console.log("📦 Payment payload:", paymentPayload);
+      console.log("👤 User type:", isNewUser ? "New User (Trial)" : "Existing User (Upgrade)");
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(paymentPayload)
+      });
+
+      const responseText = await response.text();
+      console.log("Payment response:", responseText);
+
+      if (!response.ok) {
+        // Kiểm tra nếu là lỗi người dùng mới chưa có gói
+        if (response.status === 400 || response.status === 404) {
+          try {
+            const errorData = JSON.parse(responseText);
+            // Nếu message cho biết người dùng chưa có gói hoặc cần trial
+            if (errorData.message && (
+              errorData.message.includes('trial') ||
+              errorData.message.includes('new user') ||
+              errorData.message.includes('no plan') ||
+              errorData.message.includes('first time')
+            )) {
+              // Chuyển đến trang trial offer
+              navigate('/trial-offer');
+              return;
+            }
+          } catch (e) {
+            // Nếu không parse được JSON, tiếp tục xử lý lỗi bình thường
+          }
+        }
+        
+        throw new Error(`Loi server: ${response.status} - ${responseText}`);
+      }
+
+      const result = JSON.parse(responseText);
+
+      // Chấp nhận nhiều key khác nhau mà backend có thể trả về
+      const payUrl =
+        result?.result?.checkoutUrl ||
+        result?.result?.paymentUrl ||
+        result?.checkoutUrl ||
+        result?.paymentUrl ||
+        null;
+
+      if (payUrl) {
+        console.log("Redirect den PayOS:", payUrl);
+        window.location.href = payUrl as string;
+        return;
+      }
+
+      // Không có URL thanh toán: nếu là user mới thì đưa tới trial-offer, ngược lại báo lỗi rõ ràng
+      if (isNewUser) {
+        navigate('/trial-offer');
+      } else {
+        setPaymentResult({
+          success: false,
+          message: 'Không tìm thấy link thanh toán. Vui lòng thử lại hoặc liên hệ hỗ trợ.'
+        });
+      }
+    } catch (error: any) {
+      console.error("Loi thanh toan:", error);
       
-      setPaymentResult({
-        success: true,
-        message: successMessage
-      });
-
-      // Có thể redirect hoặc hiển thị thông tin thành công
-      setTimeout(() => {
-        // Redirect đến trang cảm ơn hoặc trang xác nhận
-        window.location.href = `/payment-success?orderId=${result.result.orderId}`;
-      }, 3000);
-
-    } else {
-      setPaymentResult({
-        success: false, 
-        message: "Thanh toán không thành công. Vui lòng thử lại."
-      });
+      // Kiểm tra nếu lỗi liên quan đến người dùng mới
+      const errorMessage = error.message || "";
+      if (errorMessage.includes('trial') || 
+          errorMessage.includes('new user') || 
+          errorMessage.includes('no plan')) {
+        navigate('/trial-offer');
+      } else {
+        setPaymentResult({
+          success: false,
+          message: "Loi: " + (error.message || "Khong the ket noi den server.")
+        });
+      }
+    } finally {
+      setIsProcessing(false);
     }
-
-  } catch (error: any) {
-    console.error("❌ Lỗi thanh toán:", error);
-    setDebugInfo(`Lỗi thanh toán: ${error.message}`);
-    setPaymentResult({
-      success: false,
-      message: "❌ " + (error.message || "Không thể kết nối đến server.")
-    });
-  } finally {
-    setIsProcessing(false);
-  }
-};
+  };
 
   const formatStorage = (bytes: number) => {
     return (bytes / 1024 / 1024 / 1024).toFixed(1) + " GB";
@@ -464,7 +440,7 @@ console.log('- API URL:', `${API_BASE_URL}/subscriptions/create-payment`);
           <div className="mb-8">
             <label className="block text-sm font-semibold mb-3">Chọn gói</label>
             <div className="space-y-3">
-              {displayPlans.map((plan) => (
+              {plans.map((plan: Plan) => (
                 <label
                   key={plan._id}
                   className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
@@ -498,69 +474,7 @@ console.log('- API URL:', `${API_BASE_URL}/subscriptions/create-payment`);
             </div>
           </div>
 
-          {/* PAYMENT FORM - giữ nguyên */}
-          <h2 className="mt-10 text-2xl font-semibold mb-6">Thanh toán</h2>
-          <div className="space-y-6">
-            {/* Card number */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">Số thẻ ngân hàng</label>
-              <input
-                type="text"
-                placeholder="1234 1234 1234 1234"
-                className="w-full bg-gray-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8A2EA5] border border-gray-200"
-              />
-            </div>
 
-            {/* Expiry + CVC */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2">Ngày hết hạn</label>
-                <input
-                  type="text"
-                  placeholder="MM/YY"
-                  className="w-full bg-gray-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8A2EA5] border border-gray-200"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Mã xác minh thẻ</label>
-                <input
-                  type="text"
-                  placeholder="CVC"
-                  className="w-full bg-gray-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8A2EA5] border border-gray-200"
-                />
-              </div>
-            </div>
-
-            {/* Billing Info */}
-            <h3 className="text-2xl font-semibold mt-10 mb-6">Chi tiết thanh toán</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2">Họ và tên</label>
-                <input
-                  type="text"
-                  placeholder="Nguyễn Văn A"
-                  className="w-full bg-gray-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8A2EA5] border border-gray-200"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Số điện thoại</label>
-                <input
-                  type="tel"
-                  placeholder="0912 345 678"
-                  className="w-full bg-gray-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8A2EA5] border border-gray-200"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold mb-2">Email</label>
-              <input
-                type="email"
-                placeholder="email@example.com"
-                className="w-full bg-gray-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#8A2EA5] border border-gray-200"
-              />
-            </div>
-          </div>
         </div>
 
         {/* RIGHT SECTION - giữ nguyên */}

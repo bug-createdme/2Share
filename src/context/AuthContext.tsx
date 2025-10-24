@@ -71,8 +71,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const loginData = await loginResponse.json();
 
         if (loginData.result?.access_token) {
-          // Store token for API calls (needed for all users)
+          // Store access token (for API calls)
           localStorage.setItem('token', loginData.result.access_token);
+
+          // Also store refresh token if backend returns it (needed for email verification resend)
+          const refreshToken =
+            loginData.result?.refresh_token ||
+            loginData.result?.refreshToken ||
+            loginData.refresh_token ||
+            loginData.refreshToken ||
+            null;
+          if (refreshToken) {
+            localStorage.setItem('refresh_token', String(refreshToken));
+          }
 
           // Test if user has admin access by calling admin API with token
           try {
@@ -147,6 +158,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
     showToast.info('Đã đăng xuất thành công!');
 
     // Also log to console to verify the function is being called

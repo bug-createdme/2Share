@@ -22,7 +22,6 @@ import { useRef } from 'react';
 import ShareDialog from "../../components/ShareDialog";
 import { showToast } from "../../lib/toast";
 
-
 export const MyLinksPage = (): JSX.Element => {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,15 +49,23 @@ export const MyLinksPage = (): JSX.Element => {
       try {
         // Get user profile
         const profile = await getMyProfile();
+      console.log(profile);
+      console.log("hello");
+      
+      
         setUser(profile);
         if (typeof profile.bio === 'string') setBio(profile.bio);
 
         // Get portfolio data (which contains social_links)
         try {
           const portfolio = await getMyPortfolio();
+          console.log('📋 Portfolio loaded:', portfolio);
           setPortfolioExists(true);
           if (portfolio?.slug) {
             setPortfolioSlug(portfolio.slug);
+            console.log('✅ Portfolio slug set:', portfolio.slug);
+          } else {
+            console.warn('⚠️ Portfolio loaded but no slug:', portfolio);
           }
           if (portfolio && portfolio.social_links) {
             const links: SocialLink[] = Object.entries(portfolio.social_links).map(([key, value]: any) => {
@@ -82,29 +89,57 @@ export const MyLinksPage = (): JSX.Element => {
             });
             if (links.length) setSocialLinks(links);
           }
-        } catch (portfolioErr) {
-          console.log('Portfolio not found or error loading it, using profile social_links');
-          setPortfolioExists(false);
-          // Fallback to profile social_links if portfolio doesn't exist
-          if (profile.social_links) {
-            const links: SocialLink[] = Object.entries(profile.social_links).map(([key, value]: any) => {
-              if (typeof value === 'object' && value !== null && value.id) {
-                return {
-                  ...value,
-                  name: key.charAt(0).toUpperCase() + key.slice(1),
-                };
-              }
-              return {
-                id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                name: key.charAt(0).toUpperCase() + key.slice(1),
-                url: String(value || ""),
-                clicks: 0,
-                isEnabled: Boolean(value),
-                color: "#6e6e6e",
-                icon: "🔗",
-              };
+        } catch (portfolioErr: any) {
+          console.log('⚠️ Portfolio not found:', portfolioErr.message);
+          console.log('📝 Creating new portfolio for new user...');
+
+          // Portfolio doesn't exist, create one for new user
+          try {
+            const newPortfolio = await createPortfolio({
+              title: profile?.name || 'My Portfolio',
+              blocks: [
+                {
+                  type: 'text',
+                  content: profile?.bio || 'Hello, this is my portfolio',
+                  order: 1,
+                }
+              ],
+              social_links: {},
             });
-            if (links.length) setSocialLinks(links);
+
+            console.log('✅ New portfolio created:', newPortfolio);
+            setPortfolioExists(true);
+
+            if (newPortfolio?.slug) {
+              setPortfolioSlug(newPortfolio.slug);
+              console.log('✅ Portfolio slug saved:', newPortfolio.slug);
+            } else {
+              console.warn('⚠️ Portfolio created but no slug returned:', newPortfolio);
+            }
+          } catch (createErr: any) {
+            console.error('❌ Error creating portfolio:', createErr.message);
+            setPortfolioExists(false);
+            // Fallback to profile social_links if portfolio creation fails
+            if (profile.social_links) {
+              const links: SocialLink[] = Object.entries(profile.social_links).map(([key, value]: any) => {
+                if (typeof value === 'object' && value !== null && value.id) {
+                  return {
+                    ...value,
+                    name: key.charAt(0).toUpperCase() + key.slice(1),
+                  };
+                }
+                return {
+                  id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  name: key.charAt(0).toUpperCase() + key.slice(1),
+                  url: String(value || ""),
+                  clicks: 0,
+                  isEnabled: Boolean(value),
+                  color: "#6e6e6e",
+                  icon: "🔗",
+                };
+              });
+              if (links.length) setSocialLinks(links);
+            }
           }
         }
       } catch (err: any) {
@@ -120,18 +155,40 @@ export const MyLinksPage = (): JSX.Element => {
   useEffect(() => {
     (async () => {
       try {
-        const plan = await getCurrentPlan();
+        const planResponse = await getCurrentPlan();
+        console.log('📋 Current plan response:', planResponse);
+
+        // API trả về object hoặc array
+        const plan = Array.isArray(planResponse) ? planResponse[0] : planResponse;
+        console.log('📋 Current plan (after unwrap):', plan);
+
+        // API trả về status trực tiếp hoặc trong result
         const status = plan?.status || plan?.result?.status;
-        const info = (plan?.planInfo?.[0]) || (plan?.result?.planInfo?.[0]);
-        setPlanActive(status === 'active');
-        if (typeof info?.maxSocialLinks === 'number') setMaxSocialLinks(info.maxSocialLinks);
-        
-        // Nếu không có gói active, hiển thị cảnh báo
-        if (status !== 'active') {
-          showToast.warning('Bạn chưa có gói nào đang hoạt động. Vui lòng đăng ký gói để cập nhật portfolio.');
+        console.log('Current plan status:', status);
+        const planInfo = (plan?.planInfo?.[0]) || (plan?.result?.planInfo?.[0]) || plan;
+
+        console.log('📊 Plan status:', status, 'Plan info:', planInfo);
+
+        // Kiểm tra status (có thể là 'active', 'Active', 'trial', hoặc các giá trị khác)
+        const isActive = status?.toLowerCase() === 'active' || status?.toLowerCase() === 'trial';
+        console.log('isActive:', isActive, 'status:', status);
+        setPlanActive(isActive);
+
+        if (typeof planInfo?.maxSocialLinks === 'number') {
+          setMaxSocialLinks(planInfo.maxSocialLinks);
+          console.log('✅ Max social links:', planInfo.maxSocialLinks);
         }
-      } catch (e) {
+
+        // Nếu không có gói active, hiển thị cảnh báo
+        if (!isActive) {
+          console.warn('⚠️ No active plan found');
+          showToast.warning('Bạn chưa có gói nào đang hoạt động. Vui lòng đăng ký gói để cập nhật portfolio.');
+        } else {
+          console.log('✅ Active plan found:', planInfo?.name);
+        }
+      } catch (e: any) {
         // If cannot read plan, assume inactive so we avoid repeated 403
+        console.error('❌ Error fetching current plan:', e);
         setPlanActive(false);
         showToast.error('Không thể kiểm tra gói của bạn. Vui lòng thử lại sau.');
       }
@@ -146,10 +203,17 @@ export const MyLinksPage = (): JSX.Element => {
     const timer = setTimeout(async () => {
       try {
         // Check plan before saving to avoid 403 loop
+        // Only skip if we KNOW plan is inactive (planActive === false)
+        // Don't skip if planActive is null (still loading)
         if (planActive === false) {
-          console.warn('Skip save: no active plan');
+          console.warn('⚠️ Skip save: no active plan');
           showToast.warning('Không thể lưu: bạn chưa có gói nào đang hoạt động');
           return;
+        }
+
+        if (planActive === null) {
+          console.log('⏳ Plan status still loading, will retry...');
+          // Don't return, let it try to save - backend will return 403 if needed
         }
         // Convert socialLinks array back to object format for backend
         const socialLinksObj: Record<string, any> = {};
@@ -175,35 +239,22 @@ export const MyLinksPage = (): JSX.Element => {
             return;
           }
         }
+        console.log('📊 Auto-save state - portfolioExists:', portfolioExists, 'portfolioSlug:', portfolioSlug);
 
-        // If portfolio doesn't exist, create it first
-        if (!portfolioExists) {
-          console.log('Portfolio does not exist, creating new portfolio...');
-          const newPortfolio = await createPortfolio({
-            title: user?.name || 'My Portfolio',
-            blocks: [
-              {
-                type: 'text',
-                content: user?.bio || 'Hello, this is my portfolio',
-                order: 1,
-              }
-            ],
-            social_links: socialLinksObj,
-          });
-          setPortfolioExists(true);
-          if (newPortfolio?.slug) {
-            setPortfolioSlug(newPortfolio.slug);
-          }
-          console.log('Portfolio created successfully');
-        } else {
-          // Save to backend
-          if (portfolioSlug) {
-            await updatePortfolio(portfolioSlug, { social_links: socialLinksObj });
-            console.log('Social links saved to backend');
-          }
+        // Must have slug to update portfolio
+        if (!portfolioSlug) {
+          console.warn('⚠️ Cannot save: no portfolio slug available');
+          console.log('📝 Waiting for portfolio to be created...');
+          return;
         }
-      } catch (error) {
+
+        // Save to backend
+        console.log('📤 Updating portfolio with slug:', portfolioSlug);
+        await updatePortfolio(portfolioSlug, { social_links: socialLinksObj });
+        console.log('✅ Social links saved to backend');
+      } catch (error: any) {
         console.error('Error saving social links:', error);
+        showToast.error('Lỗi lưu social links: ' + (error?.message || 'Không xác định'));
       }
     }, 1000); // Wait 1 second after last change before saving
 
@@ -232,19 +283,31 @@ export const MyLinksPage = (): JSX.Element => {
     if (!user) return;
     setSavingTitleBio(true);
     try {
-      console.log('Saving username:', tmpUsername, 'bio:', tmpBio);
+      console.log('💾 Saving username:', tmpUsername, 'bio:', tmpBio);
+
       // Save to user profile
       const result = await updateMyProfile({ username: tmpUsername, bio: tmpBio });
-      console.log('Update result:', result);
+      console.log('✅ User profile updated:', result);
       setUser({ ...user, username: tmpUsername });
       setBio(tmpBio);
 
       // Also save to portfolio
       const blocks = [{ type: "text", content: tmpBio || "", order: 1 }];
-      try { if (portfolioSlug) await updatePortfolio(portfolioSlug, { blocks }); } catch {}
+
+      if (portfolioSlug) {
+        console.log('📤 Updating portfolio with slug:', portfolioSlug);
+        await updatePortfolio(portfolioSlug, { blocks });
+        console.log('✅ Portfolio bio updated');
+      } else {
+        console.warn('⚠️ Cannot update portfolio: no slug available');
+        console.log('📊 Portfolio state - exists:', portfolioExists, 'slug:', portfolioSlug);
+      }
+
       setShowTitleBioModal(false);
-    } catch (error) {
-      console.error('Error saving title/bio:', error);
+      showToast.success('Đã lưu thông tin');
+    } catch (error: any) {
+      console.error('❌ Error saving title/bio:', error);
+      showToast.error('Lỗi lưu thông tin: ' + error.message);
     } finally {
       setSavingTitleBio(false);
     }
