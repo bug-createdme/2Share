@@ -103,7 +103,7 @@ const UserProfilePage: React.FC<UserProfileProps> = ({ user }) => {
   };
 
   return (
-    <div>
+    <div className="font-spartan">
       {/* Sidebar trái */}
       <div className="fixed top-0 left-0 h-full min-h-screen w-[265px] bg-white border-r border-[#d9d9d9] flex-shrink-0 flex flex-col z-20">
         <Sidebar user={user} />

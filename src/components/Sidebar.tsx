@@ -11,7 +11,6 @@ import {
   HelpCircle,
   User,
   LogOut,
-  Send,
   Crown // THÊM ICON MỚI
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -85,13 +84,6 @@ export default function Sidebar({ user }: SidebarProps) {
               >
                 <Crown className="w-5 h-5 mr-3 text-[#a259ff]" />
                 <span className="text-sm flex-1 text-left">Nâng cấp gói</span>
-              </button>
-
-              <button
-                className="w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
-              >
-                <Send className="w-5 h-5 mr-3 text-gray-700" />
-                <span className="text-sm flex-1 text-left">Để phản hồi</span>
               </button>
               <button
                 className="w-full flex items-center px-4 py-2 text-red-500 hover:bg-gray-50 rounded-b-lg border-t border-gray-200"
