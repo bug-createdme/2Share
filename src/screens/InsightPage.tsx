@@ -1,6 +1,6 @@
 import React from "react";
 import { Eye, Link2, Percent } from "lucide-react";
-import { FaInstagram, FaTiktok, FaBehance, FaLinkedin, FaFacebook } from "react-icons/fa";
+import { FaInstagram, FaBehance, FaLinkedin} from "react-icons/fa";
 import InsightsHeader from "../components/InsightHeader";
 import Sidebar from "../components/Sidebar";
 

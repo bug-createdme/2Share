@@ -12,7 +12,6 @@ import {
   User,
   LogOut,
   Send,
-  Zap,
   Crown // THÊM ICON MỚI
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";

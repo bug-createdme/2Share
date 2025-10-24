@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Check, ArrowLeft, Star, Zap, Crown, Loader2 } from "lucide-react";
+import { Check, Star, Zap, Crown, Loader2 } from "lucide-react";
 
 interface Plan {
   _id: string;
@@ -164,8 +164,8 @@ const SubscriptionPlansPage: React.FC = () => {
     return features;
   };
 
-  // Get plan styling
-  const getPlanStyle = (plan: Plan, index: number) => {
+  // Get plan styling - ĐÃ SỬA: chỉ dùng index
+  const getPlanStyle = (index: number) => {
     const styles = [
       {
         icon: Zap,
@@ -310,7 +310,7 @@ const SubscriptionPlansPage: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {plans.map((plan, index) => {
-              const style = getPlanStyle(plan, index);
+              const style = getPlanStyle(index); // ĐÃ SỬA: chỉ truyền index
               const IconComponent = style.icon;
               const features = getPlanFeatures(plan);
               

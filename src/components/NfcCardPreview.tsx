@@ -15,10 +15,7 @@ const NFCCardPreview: React.FC<NFCCardPreviewProps> = ({
   selectedTheme,
   userName,
   userCategory,
-  user,
 }) => {
-  const displayUsername = user?.username || "username_123";
-  const displayField = user?.bio || "Thiết kế đồ họa";
   return (
     <div className="w-70 py-24 px-14 mx-auto bg-white border-l border-gray-200 fixed top-0 right-0 h-screen overflow-hidden z-40">
       <div className="flex flex-col items-center gap-6">

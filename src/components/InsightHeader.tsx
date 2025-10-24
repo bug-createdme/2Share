@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Settings, Upload, Calendar } from "lucide-react";
+import { Settings, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
