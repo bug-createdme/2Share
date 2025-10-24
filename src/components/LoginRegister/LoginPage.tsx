@@ -215,11 +215,11 @@ const LoginPage: React.FC = () => {
         </div>
       </div>
       {/* Right side - Image, ẩn trên mobile */}
-      <div className="hidden lg:flex flex-1 h-full">
+      <div className="hidden lg:flex flex-1 h-full bg-[#121416]">
         <img
           src="/images/login.jpg"
           alt="Login background"
-          className="w-full h-full object-cover"
+          className="w-auto h-full m-auto items-center object-cover"
         />
       </div>
     </div>

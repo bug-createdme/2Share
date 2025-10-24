@@ -59,9 +59,21 @@ function App() {
             <Route
               path="/"
               element={
-                <div className="bg-[#225C29]">
-                  <Header />
-                  <Hero />
+                <div className="relative overflow-hidden bg-white">
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-[#fef5f8] to-[#fce8ef]"></div>
+                  
+                  <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/40 to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-white/30 to-transparent"></div>
+                  
+                  <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#f7bfcf] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+                  <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[#f7bfcf] rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-pulse delay-100"></div>
+                  
+                  <div className="absolute top-3/4 left-1/3 w-96 h-96 bg-[#fce8ef] rounded-full mix-blend-multiply filter blur-3xl opacity-10"></div>
+
+                  <div className="relative z-10">
+                    <Header />
+                    <Hero />
+                  </div>
                 </div>
               }
             />

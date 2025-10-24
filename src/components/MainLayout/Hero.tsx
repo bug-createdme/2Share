@@ -5,19 +5,19 @@ const Hero: React.FC = () => {
     <main className="max-w-7xl mx-auto px-4 py-16">
       <div className="flex items-center justify-between">
         <div className="flex-1 max-w-3xl">
-          <h1 className="text-[#D48A8A] font-['Goblin_One'] text-6xl leading-[80px] mb-8">
+          <h1 className="text-[#D48A8A] font-['Unbounded'] text-6xl leading-[80px] mb-8 font-semibold">
             Không còn hỏi<br />
-            'Link ở đâu?<br />
-            ' – chỉ cần 2Share!
+            'Link ở đâu?'<br />
+            chỉ cần 2Share!
           </h1>
           
-          <p className="text-[#FAF2F2] font-['Goblin_One'] text-2xl leading-[30px] mb-12 max-w-2xl">
+          <p className="text-[#440808] font-spartan text-2xl leading-[30px] mb-12 max-w-2xl">
             Tạo hồ sơ cá nhân siêu tốc, gom mọi liên kết quan trọng về một nơi.<br />
             Chia sẻ profile của bạn qua link, QR hoặc NFC – cực tiện lợi, cực chuyên nghiệp.
           </p>
           
           <div className="flex items-center space-x-4">
-            <div className="bg-[#D9D9D9] rounded-[10px] py-4 pl-6 pr-2 flex items-center w-[270px]">
+            <div className="bg-[#ece6e6] rounded-[10px] py-4 pl-6 pr-2 flex items-center w-[270px]">
               <span className="text-[#A18686] font-['League_Spartan'] font-bold text-xl mr-2 select-none">
                 2sha.re/
               </span>
@@ -28,7 +28,7 @@ const Hero: React.FC = () => {
                 style={{ paddingLeft: 0 }}
               />
             </div>
-            <button className="bg-[#CD9494] text-black font-['League_Spartan'] font-bold text-xl px-8 py-4 rounded-[20px] hover:bg-[#B88484] transition-colors">
+            <button className="bg-[#dea2a2] text-black font-['League_Spartan'] font-bold text-xl px-8 py-4 rounded-[20px] hover:bg-[#B88484] transition-colors">
               Nhận tên của bạn
             </button>
           </div>

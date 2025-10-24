@@ -352,9 +352,9 @@ const RegisterPage: React.FC = () => {
       {/* Right side - Image, ẩn trên mobile */}
       <div className="hidden lg:flex flex-1 h-full">
         <img 
-          src="/images/register.jpg"
+          src="/images/image.png"
           alt="Login background"
-          className="w-full h-full object-cover"
+          className="w-auto h-full object-cover"
         />
       </div>
     </div>
