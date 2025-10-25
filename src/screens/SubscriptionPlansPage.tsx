@@ -182,19 +182,12 @@ const SubscriptionPlansPage: React.FC = () => {
     return price === 0 ? 'Miễn phí' : `${price.toLocaleString('vi-VN')}đ`;
   };
 
-  // Debug: Hiển thị token info
-  const token = getAuthToken();
-  const userEmail = localStorage.getItem('userEmail');
-
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-600" />
           <p className="mt-4 text-gray-600">Đang tải gói dịch vụ...</p>
-          <p className="text-sm text-gray-500 mt-2">
-            Token: {token ? '✅ Found' : '❌ Not found'} | User: {userEmail || 'Not logged in'}
-          </p>
         </div>
       </div>
     );
@@ -213,25 +206,9 @@ const SubscriptionPlansPage: React.FC = () => {
                 className="h-8 object-contain"
               />
             </div>
-            {userEmail && (
-              <div className="flex items-center gap-4">
-                <span className="text-gray-600">Xin chào, {userEmail}</span>
-              </div>
-            )}
           </div>
         </div>
       </div>
-
-      {/* Debug Info */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-blue-50 border-b border-blue-200">
-          <div className="max-w-7xl mx-auto px-8 py-2">
-            <div className="text-sm text-blue-800">
-              🔍 Debug: Token: {token ? '✅' : '❌'} | User: {userEmail || 'Not set'} | Plans: {plans.length}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Error Banner */}
       {error && (

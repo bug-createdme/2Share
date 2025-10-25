@@ -25,6 +25,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import PaymentSuccessPage from './screens/PaymentSuccessPage';
 import PaymentCancelPage from './screens/PaymentCancelPage';
+import PaymentSuccessDemoPage from './screens/PaymentSuccessDemoPage';
 import TrialOfferPage from './screens/TrialOfferPage';
 
 // Wrapper để lấy user từ API và truyền vào UserProfilePage
@@ -147,6 +148,10 @@ function App() {
             <Route path="/payment-cancel" element={<PaymentCancelPage />} />
             <Route path="/success" element={<PaymentSuccessPage />} />
             <Route path="/cancel" element={<PaymentCancelPage />} />
+            
+            {/* Demo page for screenshot */}
+            <Route path="/payment-success-demo" element={<PaymentSuccessDemoPage />} />
+            
             <Route path="/trial-offer" element={<TrialOfferPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/email-verify-action" element={<EmailVerifyActionPage />} />
