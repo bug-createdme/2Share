@@ -139,6 +139,55 @@ export async function getMyPortfolio() {
   return result.result;
 }
 
+// Lấy danh sách tất cả portfolio của user (cần authentication)
+export async function getMyPortfolios() {
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Getting my portfolios with token:', token ? 'Yes' : 'No');
+
+  const res = await fetch('https://2share.icu/portfolios/get-my-portfolio', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const result = await res.json();
+  console.log('📡 Get my portfolios response status:', res.status, 'data:', result);
+
+  if (!res.ok) throw new Error(result.message || `HTTP ${res.status}: Lỗi lấy danh sách portfolio`);
+
+  // Handle different response formats
+  // If result is null, return empty array
+  if (result.result === null) {
+    return [];
+  }
+
+  // If result is already an array, return it
+  if (Array.isArray(result.result)) {
+    return result.result;
+  }
+
+  // If result is an object (single portfolio), wrap it in an array
+  if (typeof result.result === 'object' && result.result !== null) {
+    return [result.result];
+  }
+
+  // Fallback to empty array
+  return [];
+}
+
+
+
 // Lấy portfolio public theo slug (không cần authentication)
 export async function getPortfolioBySlug(slug: string) {
   const res = await fetch(`https://2share.icu/portfolios/get-portfolio/${encodeURIComponent(slug)}`, {

@@ -14,7 +14,7 @@ import type { SocialLink } from "./sections/SocialLinksSection/SocialLinksSectio
 import { ProfilePictureSection } from "./sections/ProfilePictureSection/ProfilePictureSection";
 import { SocialLinksSection } from "./sections/SocialLinksSection/SocialLinksSection";
 
-import { getMyProfile, getMyPortfolio, updateMyProfile, updatePortfolio, createPortfolio, getCurrentPlan } from "../../lib/api";
+import { getMyProfile, getMyPortfolio, getMyPortfolios, updateMyProfile, updatePortfolio, getCurrentPlan } from "../../lib/api";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import { useRef } from 'react';
@@ -42,6 +42,76 @@ export const MyLinksPage = (): JSX.Element => {
   const [portfolioSlug, setPortfolioSlug] = useState<string | null>(null);
   const [planActive, setPlanActive] = useState<boolean | null>(null);
   const [maxSocialLinks, setMaxSocialLinks] = useState<number | null>(null);
+  const [portfoliosList, setPortfoliosList] = useState<any[]>([]);
+  const [showPortfoliosModal, setShowPortfoliosModal] = useState(false);
+
+  // Function to load portfolio data and update UI
+  const loadPortfolioData = (portfolioSlug: string) => {
+    try {
+      console.log('📥 Loading portfolio:', portfolioSlug);
+      console.log('📋 Available portfolios:', portfoliosList);
+      console.log('🔍 Looking for slug:', portfolioSlug, 'in', portfoliosList.map((p: any) => ({ slug: p.slug, _id: p._id })));
+
+      // Find portfolio from list by slug or _id (fallback)
+      let portfolio = portfoliosList.find((p: any) => p.slug === portfolioSlug);
+
+      // If not found by slug, try by _id (in case slug is not set)
+      if (!portfolio) {
+        console.warn('⚠️ Portfolio not found by slug, trying by _id:', portfolioSlug);
+        portfolio = portfoliosList.find((p: any) => p._id === portfolioSlug);
+      }
+
+      if (!portfolio) {
+        console.error('❌ Portfolio not found:', portfolioSlug);
+        console.error('❌ Available portfolios:', portfoliosList.map((p: any) => ({ slug: p.slug, _id: p._id })));
+        showToast.error('Portfolio không tìm thấy');
+        return;
+      }
+
+      console.log('✅ Portfolio found:', portfolio);
+
+      // Set portfolio slug
+      const finalSlug = portfolio.slug || portfolio._id;
+      if (finalSlug) {
+        setPortfolioSlug(finalSlug);
+        // Save to localStorage to remember current portfolio (use slug or _id)
+        localStorage.setItem('currentPortfolioSlug', finalSlug);
+        console.log('✅ Portfolio slug/id saved to localStorage:', finalSlug);
+        console.log('✅ Verify localStorage:', localStorage.getItem('currentPortfolioSlug'));
+      }
+
+      // Load social links from portfolio
+      if (portfolio && portfolio.social_links) {
+        const links: SocialLink[] = Object.entries(portfolio.social_links).map(([key, value]: any) => {
+          if (typeof value === 'object' && value !== null && value.id) {
+            return {
+              ...value,
+              name: key.charAt(0).toUpperCase() + key.slice(1),
+            };
+          }
+          return {
+            id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: key.charAt(0).toUpperCase() + key.slice(1),
+            url: String(value?.url || value || ""),
+            clicks: value?.clicks || 0,
+            isEnabled: Boolean(value?.url || value),
+            color: value?.color || "#6e6e6e",
+            icon: value?.icon || "🔗",
+            displayName: value?.displayName,
+          };
+        });
+        setSocialLinks(links);
+        console.log('✅ Social links loaded:', links.length);
+      } else {
+        setSocialLinks([]);
+      }
+
+      setPortfolioExists(true);
+    } catch (err: any) {
+      console.error('❌ Error loading portfolio:', err);
+      showToast.error('Lỗi tải portfolio');
+    }
+  };
 
   useEffect(() => {
     // Load from backend (source of truth)
@@ -61,11 +131,14 @@ export const MyLinksPage = (): JSX.Element => {
           const portfolio = await getMyPortfolio();
           console.log('📋 Portfolio loaded:', portfolio);
           setPortfolioExists(true);
-          if (portfolio?.slug) {
-            setPortfolioSlug(portfolio.slug);
-            console.log('✅ Portfolio slug set:', portfolio.slug);
+
+          // Try to get slug from portfolio object
+          const slug = portfolio?.slug || portfolio?._id;
+          if (slug) {
+            setPortfolioSlug(slug);
+            console.log('✅ Portfolio slug set:', slug);
           } else {
-            console.warn('⚠️ Portfolio loaded but no slug:', portfolio);
+            console.warn('⚠️ Portfolio loaded but no slug or _id:', portfolio);
           }
           if (portfolio && portfolio.social_links) {
             const links: SocialLink[] = Object.entries(portfolio.social_links).map(([key, value]: any) => {
@@ -91,55 +164,28 @@ export const MyLinksPage = (): JSX.Element => {
           }
         } catch (portfolioErr: any) {
           console.log('⚠️ Portfolio not found:', portfolioErr.message);
-          console.log('📝 Creating new portfolio for new user...');
+          setPortfolioExists(false);
 
-          // Portfolio doesn't exist, create one for new user
-          try {
-            const newPortfolio = await createPortfolio({
-              title: profile?.name || 'My Portfolio',
-              blocks: [
-                {
-                  type: 'text',
-                  content: profile?.bio || 'Hello, this is my portfolio',
-                  order: 1,
-                }
-              ],
-              social_links: {},
-            });
-
-            console.log('✅ New portfolio created:', newPortfolio);
-            setPortfolioExists(true);
-
-            if (newPortfolio?.slug) {
-              setPortfolioSlug(newPortfolio.slug);
-              console.log('✅ Portfolio slug saved:', newPortfolio.slug);
-            } else {
-              console.warn('⚠️ Portfolio created but no slug returned:', newPortfolio);
-            }
-          } catch (createErr: any) {
-            console.error('❌ Error creating portfolio:', createErr.message);
-            setPortfolioExists(false);
-            // Fallback to profile social_links if portfolio creation fails
-            if (profile.social_links) {
-              const links: SocialLink[] = Object.entries(profile.social_links).map(([key, value]: any) => {
-                if (typeof value === 'object' && value !== null && value.id) {
-                  return {
-                    ...value,
-                    name: key.charAt(0).toUpperCase() + key.slice(1),
-                  };
-                }
+          // Fallback to profile social_links if portfolio doesn't exist
+          if (profile.social_links) {
+            const links: SocialLink[] = Object.entries(profile.social_links).map(([key, value]: any) => {
+              if (typeof value === 'object' && value !== null && value.id) {
                 return {
-                  id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  ...value,
                   name: key.charAt(0).toUpperCase() + key.slice(1),
-                  url: String(value || ""),
-                  clicks: 0,
-                  isEnabled: Boolean(value),
-                  color: "#6e6e6e",
-                  icon: "🔗",
                 };
-              });
-              if (links.length) setSocialLinks(links);
-            }
+              }
+              return {
+                id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                name: key.charAt(0).toUpperCase() + key.slice(1),
+                url: String(value || ""),
+                clicks: 0,
+                isEnabled: Boolean(value),
+                color: "#6e6e6e",
+                icon: "🔗",
+              };
+            });
+            if (links.length) setSocialLinks(links);
           }
         }
       } catch (err: any) {
@@ -150,6 +196,31 @@ export const MyLinksPage = (): JSX.Element => {
     }
     fetchProfile();
   }, []);
+
+  // Fetch portfolios list
+  useEffect(() => {
+    (async () => {
+      try {
+        const portfolios = await getMyPortfolios();
+        console.log('📋 Portfolios list:', portfolios);
+        setPortfoliosList(portfolios);
+      } catch (e: any) {
+        console.error('❌ Error fetching portfolios:', e);
+        setPortfoliosList([]);
+      }
+    })();
+  }, []);
+
+  // Load saved portfolio after portfoliosList is loaded
+  useEffect(() => {
+    if (portfoliosList.length > 0) {
+      const savedPortfolioSlug = localStorage.getItem('currentPortfolioSlug');
+      if (savedPortfolioSlug) {
+        console.log('📥 Attempting to load saved portfolio:', savedPortfolioSlug);
+        loadPortfolioData(savedPortfolioSlug);
+      }
+    }
+  }, [portfoliosList]);
 
   // Fetch current plan once
   useEffect(() => {
@@ -456,6 +527,14 @@ export const MyLinksPage = (): JSX.Element => {
                     Thêm
                   </span>
                 </Button>
+                <Button
+                  className="flex-1 h-auto bg-[#6e6e6e] hover:bg-[#5a5a5a] rounded-[35px] py-4 flex items-center justify-center gap-2 shadow-lg"
+                  onClick={() => setShowPortfoliosModal(true)}
+                >
+                  <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-xl tracking-[2.00px]">
+                    Portfolio ({portfoliosList.length})
+                  </span>
+                </Button>
               </div>
               {/* Modal as a route */}
               <Routes>
@@ -528,6 +607,71 @@ export const MyLinksPage = (): JSX.Element => {
             <Button className="w-full" onClick={handleSaveTitleBio} disabled={savingTitleBio}>
               {savingTitleBio ? 'Saving...' : 'Save'}
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Portfolios Modal */}
+      {showPortfoliosModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[500px] p-6 relative max-h-[80vh] overflow-y-auto">
+            <button
+              onClick={() => setShowPortfoliosModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <span className="text-gray-500 text-xl leading-none">×</span>
+            </button>
+            <h3 className="text-lg font-bold mb-4 text-center">Danh sách Portfolio ({portfoliosList.length})</h3>
+
+            {portfoliosList.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>Bạn chưa tạo portfolio nào</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {portfoliosList.map((portfolio: any, index: number) => (
+                  <div
+                    key={portfolio._id || index}
+                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => {
+                      const portfolioIdentifier = portfolio.slug || portfolio._id;
+                      console.log('🖱️ Clicked portfolio:', portfolioIdentifier, 'Full portfolio:', portfolio);
+                      loadPortfolioData(portfolioIdentifier);
+                      setShowPortfoliosModal(false);
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-800">{portfolio.title || 'Untitled'}</h4>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Slug: <code className="bg-gray-100 px-2 py-1 rounded">{portfolio.slug || portfolio._id}</code>
+                        </p>
+                        {portfolio.blocks && portfolio.blocks.length > 0 && (
+                          <p className="text-sm text-gray-500 mt-2">
+                            Blocks: {portfolio.blocks.length}
+                          </p>
+                        )}
+                        {portfolio.social_links && Object.keys(portfolio.social_links).length > 0 && (
+                          <p className="text-sm text-gray-500">
+                            Social links: {Object.keys(portfolio.social_links).length}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <a
+                          href={`${window.location.origin}/portfolio/${portfolio.slug || portfolio._id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:text-blue-700 text-sm font-medium"
+                        >
+                          View →
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
