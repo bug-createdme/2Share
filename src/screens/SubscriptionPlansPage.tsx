@@ -255,7 +255,7 @@ const SubscriptionPlansPage: React.FC = () => {
       </div>
 
       {/* Debug Info */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* {process.env.NODE_ENV === 'development' && (
         <div className="bg-blue-50 border-b border-blue-200">
           <div className="max-w-7xl mx-auto px-8 py-2">
             <div className="text-sm text-blue-800">
@@ -263,10 +263,10 @@ const SubscriptionPlansPage: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Error Banner */}
-      {error && (
+      {/* {error && (
         <div className="bg-yellow-50 border border-yellow-200">
           <div className="max-w-7xl mx-auto px-8 py-4">
             <div className="flex items-center gap-2 text-yellow-800">
@@ -282,7 +282,7 @@ const SubscriptionPlansPage: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-purple-50 to-blue-50 py-16">

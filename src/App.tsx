@@ -24,6 +24,13 @@ import InsightsPage from './screens/InsightPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import PaymentSuccessPage from './screens/PaymentSuccessPage';
+import MockPortfolioPage from './screens/MockPages/MockPortfolio';
+import { MockMyLinksPage } from './screens/MockPages/MockMyLinksPage';
+import MockPortfolioDesignPage from './screens/MockPages/MockPortfolioDesignPage';
+import MockNfcDesignPage from './screens/MockPages/MockNfcDesignPage';
+import MockInsightsPage from './screens/MockPages/MockInsightsPage';
+import MockRegisterPage from './screens/MockPages/MockRegisterPage';
+
 
 // Wrapper để lấy user từ API và truyền vào UserProfilePage
 function UserProfilePageWrapper() {
@@ -141,12 +148,19 @@ function App() {
             />
 
           <Route path="/payment-success" element={<PaymentSuccessPage />} />
+          <Route path="/portfolio/mock" element={<MockPortfolioPage/>} />
+          <Route path="/demo/nfc" element={<MockNfcDesignPage />} />
+          <Route path="/demo/insights" element={<MockInsightsPage />} />
+          <Route path="/demo/register" element={<MockRegisterPage />} />
+
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/email-verify-action" element={<EmailVerifyActionPage />} />
             {/* Public portfolio route - không cần authentication */}
             <Route path="/portfolio/:slug" element={<PublicPortfolioPage />} />
             {/* Route xử lý callback OAuth Google */}
             <Route path="/oauth/google" element={<OAuthCallbackHandler />} />
+            <Route path="/demo/my-links" element={<MockMyLinksPage />} />
+            <Route path="/demo/portfolio-design" element={<MockPortfolioDesignPage />} />
           </Routes>
         </div>
       </AuthProvider>

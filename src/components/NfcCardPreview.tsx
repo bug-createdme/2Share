@@ -18,6 +18,7 @@ interface NFCCardPreviewProps {
   userCategory: string;
   selectedMbtiTemplate?: MbtiTemplate | null;
   user?: any;
+  logoUrl?: string | null; 
 }
 
 const NFCCardPreview: React.FC<NFCCardPreviewProps> = ({
@@ -26,6 +27,7 @@ const NFCCardPreview: React.FC<NFCCardPreviewProps> = ({
   userName,
   userCategory,
   selectedMbtiTemplate,
+  logoUrl
 }) => {
   const isMbtiCard = !!selectedMbtiTemplate;
 
@@ -57,13 +59,25 @@ const NFCCardPreview: React.FC<NFCCardPreviewProps> = ({
               <div
                 className={`w-72 h-44 rounded-2xl bg-gradient-to-br ${themeClasses[selectedTheme]} relative shadow-lg flex flex-col justify-between p-4 text-white`}
               >
-                <div className="absolute top-4 left-4 flex items-center justify-center w-14 h-14">
-                  <img 
-                    src="/images/2share01_logo.PNG" 
-                    alt="2SHARE Logo" 
-                    className="w-full h-full object-contain"
-                  />
-                </div>
+                {/* Logo của bạn - hiển thị nếu có logoUrl */}
+                {logoUrl ? (
+                  <div className="absolute top-4 left-4 flex items-center justify-center w-14 h-14">
+                    <img 
+                      src={logoUrl} 
+                      alt="Your Logo" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  /* Logo mặc định 2SHARE nếu không có logoUrl */
+                  <div className="absolute top-4 left-4 flex items-center justify-center w-14 h-14">
+                    <img 
+                      src="/images/2share01_logo.PNG" 
+                      alt="2SHARE Logo" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                )}
 
                 <div className="absolute top-4 right-4 text-white/90 text-lg">
                   <FaSignal />
@@ -132,13 +146,15 @@ const NFCCardPreview: React.FC<NFCCardPreviewProps> = ({
               <div
                 className={`w-72 h-44 rounded-2xl bg-gradient-to-br ${themeClasses[selectedTheme]} relative shadow-lg flex items-center justify-center`}
               >
-                <div className="flex items-center justify-center w-20 h-20">
-                  <img 
-                    src="/images/2share01_logo.PNG" 
-                    alt="2SHARE Logo" 
-                    className="w-full h-full object-contain"
-                  />
-                </div>
+                
+                  <div className="flex items-center justify-center w-20 h-20">
+                    <img 
+                      src="/images/2share01_logo.PNG" 
+                      alt="2SHARE Logo" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+              
               </div>
               <p className="text-gray-500 text-sm">Mặt sau</p>
             </>
@@ -153,6 +169,8 @@ const NFCCardPreview: React.FC<NFCCardPreviewProps> = ({
             <p className="text-xs text-gray-500 mt-1">Thiết kế MBTI độc quyền</p>
           </div>
         )}
+
+        
       </div>
     </div>
   );

@@ -25,7 +25,7 @@ const Header: React.FC = () => {
             </button>
             <button
               className="bg-[#161515] text-[#FCF1F1] font-bold text-xl font-spartan px-6 py-2 rounded-[30px] hover:bg-gray-800 transition-colors"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/demo/register')}
             >
               Đăng ký miễn phí
             </button>

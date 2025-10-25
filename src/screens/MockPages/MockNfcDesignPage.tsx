@@ -1,12 +1,10 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar";
-import Header from "../components/Header";
-import NFCCardPreview from "../components/NfcCardPreview";
-import { Zap, Lock, Unlock, ChevronDown, Sparkles, Search } from "lucide-react";
-import { getMyProfile } from "../lib/api";
-import { ImageUpload } from "../components/ui/image-upload";
+// src/screens/MockPages/MockNfcDesignPage.tsx
+import React, { useState, useEffect, useRef } from "react";
+import MockSidebar from "../../components/MockSidebar";
+import Header from "../../components/Header";
+import NFCCardPreview from "../../components/NfcCardPreview";
+import { Zap, Lock, Unlock, ChevronDown, Sparkles, Search, Camera } from "lucide-react";
+import { ImageUpload } from "../../components/ui/image-upload";
 
 interface MbtiTemplate {
   id: string;
@@ -17,17 +15,25 @@ interface MbtiTemplate {
   isLocked: boolean;
 }
 
-const NfcDesignPage: React.FC = () => {
-  const [user, setUser] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+const MockNfcDesignPage: React.FC = () => {
   const [selectedTheme, setSelectedTheme] = useState("coral");
-  const [userName, setUserName] = useState("username_123");
-  const [userCategory, setUserCategory] = useState("Thiết kế đồ họa");
+  const [userName, setUserName] = useState("Bobby");
+  const [userCategory, setUserCategory] = useState("...");
   const [selectedMbtiTemplate, setSelectedMbtiTemplate] = useState<MbtiTemplate | null>(null);
   const [showMbtiDropdown, setShowMbtiDropdown] = useState(false);
   const [userMbti, setUserMbti] = useState("");
   const [searchMbti, setSearchMbti] = useState("");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Mock user data
+  const mockUser = {
+    _id: "1",
+    username: "Bobby",
+    name: "User Name",
+    avatar_url: "/images/profile-pictures/pfp.jpg",
+    email: "user@example.com"
+  };
 
   // Danh sách đầy đủ 16 MBTI templates với đường dẫn đúng
   const [mbtiTemplates, setMbtiTemplates] = useState<MbtiTemplate[]>([
@@ -72,33 +78,46 @@ const NfcDesignPage: React.FC = () => {
     orange: "from-blue-400 to-orange-400",
   };
 
+  // Xử lý upload logo
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Kiểm tra loại file
+      if (!file.type.startsWith('image/')) {
+        alert('Vui lòng chọn file ảnh!');
+        return;
+      }
+
+      // Kiểm tra kích thước file (tối đa 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Kích thước ảnh không được vượt quá 5MB!');
+        return;
+      }
+
+      // Tạo URL tạm thời cho ảnh
+      const imageUrl = URL.createObjectURL(file);
+      setLogoUrl(imageUrl);
+    }
+  };
+
+  const handleLogoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Cleanup URL khi component unmount
+  useEffect(() => {
+    return () => {
+      if (logoUrl) {
+        URL.revokeObjectURL(logoUrl);
+      }
+    };
+  }, [logoUrl]);
+
   // Lọc MBTI templates theo search
   const filteredMbtiTemplates = mbtiTemplates.filter(template =>
     template.id.toLowerCase().includes(searchMbti.toLowerCase()) ||
     template.groupVi.toLowerCase().includes(searchMbti.toLowerCase())
   );
-
-  useEffect(() => {
-    async function fetchProfile() {
-      try {
-        const profile = await getMyProfile();
-        setUser(profile);
-        
-        // Mở khóa tất cả MBTI templates để test
-        const updatedTemplates = mbtiTemplates.map(template => ({
-          ...template,
-          isLocked: false
-        }));
-        setMbtiTemplates(updatedTemplates);
-
-      } catch (err: any) {
-        setError(err.message || "Lỗi lấy thông tin người dùng");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProfile();
-  }, []);
 
   const handleSelectMbti = (mbtiType: string) => {
     const template = mbtiTemplates.find(t => t.id === mbtiType);
@@ -127,25 +146,21 @@ const NfcDesignPage: React.FC = () => {
 
   const activeGroupRepresentative = getActiveGroupRepresentative();
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Đang tải thông tin...</div>;
-  }
-  if (error || !user) {
-    return <div className="flex items-center justify-center h-screen text-red-500">{error || "Không có thông tin người dùng"}</div>;
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 font-spartan">
       <Header />
 
       <div className="flex pt-20">
-        <Sidebar user={user} />
+        {/* Sử dụng MockSidebar thay vì Sidebar gốc */}
+        <div className="fixed top-0 left-0 h-full min-h-screen w-[265px] bg-white border-r border-[#d9d9d9] flex-shrink-0 flex flex-col z-20">
+          <MockSidebar user={mockUser} />
+        </div>
 
-        <main className="flex-1 ml-72 p-8 overflow-y-auto">
+        <main className="flex-1 ml-[265px] p-8 overflow-y-auto">
           <div className="flex w-full gap-8 max-w-7xl mx-auto">
             <div className="flex-1 space-y-8 max-w-2xl">
               
-              {/* SECTION 1: CARD INFO - GIỮ NGUYÊN */}
+              {/* SECTION 1: CARD INFO */}
               <section>
                 <h2 className="text-2xl font-bold mb-6">Thông tin thẻ</h2>
                 <div className="bg-white rounded-3xl border border-gray-400 p-8 ml-14">
@@ -172,23 +187,51 @@ const NfcDesignPage: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium mb-2">Logo của bạn</label>
+                      {/* Hidden file input cho logo upload */}
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleLogoUpload}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      
                       <div className="w-full">
-                        <ImageUpload
-                          onImageUploaded={(imageUrl) => {
-                            console.log('Logo uploaded:', imageUrl);
-                          }}
-                          className="w-full"
-                          size="md"
-                          placeholder="Chọn logo hoặc hình ảnh"
-                          maxSize={3}
-                        />
+                        <div 
+                          onClick={handleLogoClick}
+                          className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center cursor-pointer hover:border-blue-400 transition-colors bg-white"
+                        >
+                          {logoUrl ? (
+                            <div className="flex flex-col items-center">
+                              <div className="w-20 h-20 rounded-xl bg-gray-100 flex items-center justify-center mb-3 relative">
+                                <img
+                                  src={logoUrl}
+                                  alt="Logo đã chọn"
+                                  className="w-16 h-16 object-contain rounded-lg"
+                                />
+                                <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                                  <Camera className="w-3 h-3" />
+                                </div>
+                              </div>
+                              <p className="text-sm text-gray-600">Nhấn để thay đổi logo</p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center">
+                              <div className="w-20 h-20 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
+                                <Camera className="w-8 h-8 text-gray-400" />
+                              </div>
+                              <p className="text-sm text-gray-600">Nhấn để chọn logo từ máy tính</p>
+                              <p className="text-xs text-gray-500 mt-1">PNG, JPG, SVG (tối đa 5MB)</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </section>
 
-              {/* SECTION 2: THEME - GIỮ NGUYÊN */}
+              {/* SECTION 2: THEME */}
               <section>
                 <h2 className="text-2xl font-bold mb-6">Chủ đề</h2>
                 <div className="bg-white rounded-3xl border border-gray-400 p-8 ml-14">
@@ -220,7 +263,7 @@ const NfcDesignPage: React.FC = () => {
                 </div>
               </section>
 
-              {/* SECTION 3: MBTI TEMPLATES - ĐƠN GIẢN & GỌN GÀNG */}
+              {/* SECTION 3: MBTI TEMPLATES */}
               <section>
                 <div className="flex items-center gap-3 mb-6">
                   <Sparkles className="w-6 h-6 text-[#a259ff]" />
@@ -253,7 +296,7 @@ const NfcDesignPage: React.FC = () => {
                           </button>
                         </div>
                         
-                      {/* Dropdown MBTI - Z-INDEX CAO ĐỂ NẰM TRÊN CÁC THẺ */}
+                      {/* Dropdown MBTI */}
                       {showMbtiDropdown && (
                         <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-2xl shadow-xl z-50 max-h-60 overflow-y-auto">
                           <div className="p-2">
@@ -288,7 +331,7 @@ const NfcDesignPage: React.FC = () => {
                                         onClick={() => handleSelectMbti(template.id)}
                                         className={`p-2 rounded-xl text-sm font-medium transition-all ${
                                           selectedMbtiTemplate?.id === template.id
-                                            ? 'bg-[#a259ff] text-white shadow-md ring-2 ring-[#a259ff] ring-opacity-50' // Highlight khi đang chọn
+                                            ? 'bg-[#a259ff] text-white shadow-md ring-2 ring-[#a259ff] ring-opacity-50'
                                             : 'bg-gray-50 text-gray-700 hover:bg-[#a259ff] hover:text-white'
                                         }`}
                                       >
@@ -305,13 +348,11 @@ const NfcDesignPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Preview MBTI Templates (Xếp chồng - CẢ NHÓM CĂN GIỮA) */}
+                    {/* Preview MBTI Templates */}
                     <div>
                       <label className="block text-sm font-medium mb-3">Đại diện 4 nhóm tính cách</label>
                       <div className="relative h-32 flex justify-center">
-                        {/* Container cho cả nhóm 4 thẻ - CĂN GIỮA TOÀN BỘ NHÓM */}
-                        <div className="relative" style={{ width: '140px' }}> {/* Width = (4 thẻ * 28px khoảng cách) */}
-                          {/* 4 thẻ đại diện cho 4 nhóm - CẢ NHÓM CĂN GIỮA */}
+                        <div className="relative" style={{ width: '140px' }}>
                           {groupRepresentatives.map((template, index) => (
                             <div
                               key={template.id}
@@ -321,22 +362,19 @@ const NfcDesignPage: React.FC = () => {
                                   : 'border-white z-10 hover:z-30 hover:scale-105'
                               }`}
                               style={{
-                                left: `${index * 28}px`, // Mỗi thẻ cách nhau 28px
+                                left: `${index * 28}px`,
                                 transform: `rotate(${index % 2 === 0 ? '-3' : '3'}deg) ${activeGroupRepresentative?.id === template.id ? 'scale(1.1)' : ''}`,
                               }}
                               onClick={() => handleSelectMbti(template.id)}
                             >
-                              {/* Hiển thị hình ảnh thực tế */}
                               <img
                                 src={template.previewUrl}
                                 alt={`MBTI ${template.name}`}
                                 className="w-full h-full object-cover rounded-xl"
                                 onError={(e) => {
-                                  // Fallback nếu hình ảnh không load được
                                   (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='150' viewBox='0 0 100 150'%3E%3Crect width='100' height='150' fill='%23f0f0f0'/%3E%3Ctext x='50' y='75' text-anchor='middle' fill='%23999' font-family='Arial' font-size='14'%3E" + template.id + "%3C/text%3E%3C/svg%3E";
                                 }}
                               />
-                              {/* MBTI Badge */}
                               <div className="absolute bottom-2 left-2 right-2 text-center">
                                 <span className="text-white text-xs font-bold bg-black bg-opacity-70 px-2 py-1 rounded-full backdrop-blur-sm">
                                   {template.id}
@@ -365,7 +403,7 @@ const NfcDesignPage: React.FC = () => {
               </section>
             </div>
 
-            {/* RIGHT SECTION: NFC PREVIEW - GIỮ NGUYÊN */}
+            {/* RIGHT SECTION: NFC PREVIEW */}
             <div className="flex-shrink-0">
               <NFCCardPreview
                 themeClasses={themeClasses}
@@ -373,6 +411,7 @@ const NfcDesignPage: React.FC = () => {
                 userName={userName}
                 userCategory={userCategory}
                 selectedMbtiTemplate={selectedMbtiTemplate}
+                logoUrl={logoUrl} // Truyền logoUrl xuống preview
               />
             </div>
           </div>
@@ -391,4 +430,4 @@ const NfcDesignPage: React.FC = () => {
   );
 };
 
-export default NfcDesignPage;
+export default MockNfcDesignPage;
