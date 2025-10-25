@@ -358,6 +358,34 @@ export async function getCurrentPlan() {
   return result; // backend đang trả thẳng object gói
 }
 
+// Hủy subscription hiện tại
+export async function cancelSubscription() {
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Cancelling subscription with token:', token ? 'Yes' : 'No');
+
+  const res = await fetch('https://2share.icu/subscriptions/cancel', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const result = await res.json().catch(() => ({}));
+  console.log('📡 Cancel subscription response status:', res.status, 'data:', result);
+
+  if (!res.ok) throw new Error(result?.message || `HTTP ${res.status}: Lỗi hủy subscription`);
+  return result;
+}
+
 // Quên mật khẩu: gửi email chứa liên kết đặt lại mật khẩu
 export async function forgotPassword(email: string) {
   // Gợi ý URL reset password để backend render link click-được trong email
