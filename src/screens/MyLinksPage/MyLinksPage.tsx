@@ -33,7 +33,7 @@ export const MyLinksPage = (): JSX.Element => {
   const [showTitleBioModal, setShowTitleBioModal] = useState(false);
   const [bio, setBio] = useState("");
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
-  const [tmpUsername, setTmpUsername] = useState("");
+  const [tmpPortfolioTitle, setTmpPortfolioTitle] = useState("");
   const [tmpBio, setTmpBio] = useState("");
   const [savingTitleBio, setSavingTitleBio] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -44,6 +44,7 @@ export const MyLinksPage = (): JSX.Element => {
   const [maxSocialLinks, setMaxSocialLinks] = useState<number | null>(null);
   const [portfoliosList, setPortfoliosList] = useState<any[]>([]);
   const [showPortfoliosModal, setShowPortfoliosModal] = useState(false);
+  const [portfolioTitle, setPortfolioTitle] = useState("My Portfolio");
 
   // Function to load portfolio data and update UI
   const loadPortfolioData = (portfolioSlug: string) => {
@@ -78,6 +79,21 @@ export const MyLinksPage = (): JSX.Element => {
         localStorage.setItem('currentPortfolioSlug', finalSlug);
         console.log('✅ Portfolio slug/id saved to localStorage:', finalSlug);
         console.log('✅ Verify localStorage:', localStorage.getItem('currentPortfolioSlug'));
+      }
+
+      // Load portfolio title
+      if (portfolio?.title) {
+        setPortfolioTitle(portfolio.title);
+        console.log('✅ Portfolio title loaded:', portfolio.title);
+      }
+
+      // Load bio from portfolio blocks
+      if (portfolio?.blocks && Array.isArray(portfolio.blocks)) {
+        const textBlock = portfolio.blocks.find((b: any) => b.type === 'text');
+        if (textBlock && textBlock.content) {
+          setBio(textBlock.content);
+          console.log('✅ Bio loaded from portfolio blocks:', textBlock.content);
+        }
       }
 
       // Load social links from portfolio
@@ -140,6 +156,22 @@ export const MyLinksPage = (): JSX.Element => {
           } else {
             console.warn('⚠️ Portfolio loaded but no slug or _id:', portfolio);
           }
+          
+          // Load portfolio title
+          if (portfolio?.title) {
+            setPortfolioTitle(portfolio.title);
+            console.log('✅ Portfolio title loaded:', portfolio.title);
+          }
+          
+          // Load bio from portfolio blocks (portfolio is source of truth)
+          if (portfolio?.blocks && Array.isArray(portfolio.blocks)) {
+            const textBlock = portfolio.blocks.find((b: any) => b.type === 'text');
+            if (textBlock && textBlock.content) {
+              setBio(textBlock.content);
+              console.log('✅ Bio loaded from portfolio blocks:', textBlock.content);
+            }
+          }
+          
           if (portfolio && portfolio.social_links) {
             const links: SocialLink[] = Object.entries(portfolio.social_links).map(([key, value]: any) => {
               // Nếu value đã có id thì giữ nguyên, nếu không thì tạo mới
@@ -312,14 +344,44 @@ export const MyLinksPage = (): JSX.Element => {
         }
         console.log('📊 Auto-save state - portfolioExists:', portfolioExists, 'portfolioSlug:', portfolioSlug);
 
-        // Must have slug to update portfolio
+        // Check if portfolio exists, if not create it first
         if (!portfolioSlug) {
-          console.warn('⚠️ Cannot save: no portfolio slug available');
-          console.log('📝 Waiting for portfolio to be created...');
-          return;
+          console.log('📝 No portfolio found, creating new portfolio...');
+          try {
+            const { createPortfolio } = await import('../../lib/api');
+            const newPortfolio = await createPortfolio({
+              title: user.username || 'My Portfolio',
+              blocks: [{ type: 'text', content: bio || 'Welcome to my portfolio', order: 1 }],
+              social_links: socialLinksObj,
+              avatar_url: user.avatar_url,
+            });
+            
+            console.log('✅ New portfolio created:', newPortfolio);
+            
+            // Get slug from created portfolio
+            const newSlug = newPortfolio?.result?.slug || newPortfolio?.slug || newPortfolio?.result?._id || newPortfolio?._id;
+            if (newSlug) {
+              setPortfolioSlug(newSlug);
+              setPortfolioExists(true);
+              localStorage.setItem('currentPortfolioSlug', newSlug);
+              console.log('✅ Portfolio created with slug:', newSlug);
+              showToast.success('Đã tạo portfolio mới');
+              
+              // Reload portfolios list
+              const portfolios = await import('../../lib/api').then(m => m.getMyPortfolios());
+              setPortfoliosList(portfolios);
+            } else {
+              console.error('❌ No slug returned from created portfolio:', newPortfolio);
+            }
+            return;
+          } catch (createError: any) {
+            console.error('❌ Error creating portfolio:', createError);
+            showToast.error('Lỗi tạo portfolio: ' + (createError?.message || 'Không xác định'));
+            return;
+          }
         }
 
-        // Save to backend
+        // Save to backend using update
         console.log('📤 Updating portfolio with slug:', portfolioSlug);
         await updatePortfolio(portfolioSlug, { social_links: socialLinksObj });
         console.log('✅ Social links saved to backend');
@@ -330,7 +392,7 @@ export const MyLinksPage = (): JSX.Element => {
     }, 1000); // Wait 1 second after last change before saving
 
     return () => clearTimeout(timer);
-  }, [socialLinks, user?._id, portfolioExists, planActive, maxSocialLinks]);
+  }, [socialLinks, user?._id, portfolioExists, portfolioSlug, planActive, maxSocialLinks, user?.username, user?.avatar_url, bio]);
 
   // 4) Handle click tracking for social links
   useEffect(() => {
@@ -354,24 +416,69 @@ export const MyLinksPage = (): JSX.Element => {
     if (!user) return;
     setSavingTitleBio(true);
     try {
-      console.log('💾 Saving username:', tmpUsername, 'bio:', tmpBio);
+      console.log('💾 Saving portfolio title:', tmpPortfolioTitle, 'bio:', tmpBio);
 
-      // Save to user profile
-      const result = await updateMyProfile({ username: tmpUsername, bio: tmpBio });
-      console.log('✅ User profile updated:', result);
-      setUser({ ...user, username: tmpUsername });
+      // KHÔNG update username - chỉ update bio vào user profile
+      const result = await updateMyProfile({ bio: tmpBio });
+      console.log('✅ User profile bio updated:', result);
       setBio(tmpBio);
+      setPortfolioTitle(tmpPortfolioTitle);
 
       // Also save to portfolio
-      const blocks = [{ type: "text", content: tmpBio || "", order: 1 }];
+      const blocks = [{ type: "text", content: tmpBio || "Welcome to my portfolio", order: 1 }];
 
-      if (portfolioSlug) {
-        console.log('📤 Updating portfolio with slug:', portfolioSlug);
-        await updatePortfolio(portfolioSlug, { blocks });
-        console.log('✅ Portfolio bio updated');
+      // Check if portfolio exists, if not create it first
+      if (!portfolioSlug) {
+        console.log('📝 No portfolio found, creating new portfolio...');
+        try {
+          const { createPortfolio } = await import('../../lib/api');
+          const socialLinksObj: Record<string, any> = {};
+          socialLinks.forEach(link => {
+            const key = link.name.toLowerCase();
+            socialLinksObj[key] = {
+              url: link.url,
+              clicks: link.clicks,
+              isEnabled: link.isEnabled,
+              color: link.color,
+              icon: link.icon,
+              displayName: link.displayName,
+              id: link.id,
+            };
+          });
+          
+          const newPortfolio = await createPortfolio({
+            title: tmpPortfolioTitle || 'My Portfolio',
+            blocks,
+            social_links: socialLinksObj,
+            avatar_url: user.avatar_url,
+          });
+          
+          console.log('✅ New portfolio created:', newPortfolio);
+          
+          // Get slug from created portfolio
+          const newSlug = newPortfolio?.result?.slug || newPortfolio?.slug || newPortfolio?.result?._id || newPortfolio?._id;
+          if (newSlug) {
+            setPortfolioSlug(newSlug);
+            setPortfolioExists(true);
+            localStorage.setItem('currentPortfolioSlug', newSlug);
+            console.log('✅ Portfolio created with slug:', newSlug);
+            
+            // Reload portfolios list
+            const portfolios = await import('../../lib/api').then(m => m.getMyPortfolios());
+            setPortfoliosList(portfolios);
+          }
+        } catch (createError: any) {
+          console.error('❌ Error creating portfolio:', createError);
+          showToast.error('Lỗi tạo portfolio: ' + (createError?.message || 'Không xác định'));
+        }
       } else {
-        console.warn('⚠️ Cannot update portfolio: no slug available');
-        console.log('📊 Portfolio state - exists:', portfolioExists, 'slug:', portfolioSlug);
+        // Update existing portfolio
+        console.log('📤 Updating portfolio with slug:', portfolioSlug);
+        await updatePortfolio(portfolioSlug, { 
+          title: tmpPortfolioTitle || 'My Portfolio',
+          blocks 
+        });
+        console.log('✅ Portfolio bio and title updated');
       }
 
       setShowTitleBioModal(false);
@@ -492,20 +599,20 @@ export const MyLinksPage = (): JSX.Element => {
                       type="button"
                       className="[font-family:'Carlito',Helvetica] font-normal text-black text-2xl tracking-[2.40px] leading-[normal] hover:underline"
                       onClick={() => {
-                        setTmpUsername(user.username || "");
+                        setTmpPortfolioTitle(portfolioTitle || "");
                         setTmpBio(bio || "");
                         setShowTitleBioModal(true);
                       }}
                       aria-label="Chỉnh sửa title và bio"
                     >
-                      @{user.username}
+                      {portfolioTitle || "My Portfolio"}
                     </button>
                   </div>
                   <button
                     type="button"
                     className="text-[#6e6e6e] text-sm hover:underline"
                     onClick={() => {
-                      setTmpUsername(user.username || "");
+                      setTmpPortfolioTitle(portfolioTitle || "");
                       setTmpBio(bio || "");
                       setShowTitleBioModal(true);
                     }}
@@ -569,7 +676,7 @@ export const MyLinksPage = (): JSX.Element => {
 
       {/* Sidebar phải */}
       <div className="fixed top-0 right-0 h-full min-h-screen w-[395px] bg-white border-l border-[#d9d9d9] flex-shrink-0 flex flex-col items-center justify-center z-20">
-        <ProfilePictureSection user={user} bio={bio} socialLinks={socialLinks.filter(link => link.isEnabled)} />
+        <ProfilePictureSection user={user} bio={bio} socialLinks={socialLinks.filter(link => link.isEnabled)} portfolioTitle={portfolioTitle} />
       </div>
 
       {/* Modal chỉnh sửa title/bio */}
@@ -582,16 +689,17 @@ export const MyLinksPage = (): JSX.Element => {
             >
               <span className="text-gray-500 text-xl leading-none">×</span>
             </button>
-            <h3 className="text-lg font-bold mb-4 text-center">Title and bio</h3>
+            <h3 className="text-lg font-bold mb-4 text-center">Portfolio Title and Bio</h3>
             <div className="mb-3">
-              <div className="text-sm text-gray-600 mb-1">Title</div>
+              <div className="text-sm text-gray-600 mb-1">Portfolio Title</div>
               <input
                 className="w-full border rounded-md px-3 py-2"
-                value={tmpUsername}
-                onChange={e => setTmpUsername(e.target.value)}
-                maxLength={30}
+                value={tmpPortfolioTitle}
+                onChange={e => setTmpPortfolioTitle(e.target.value)}
+                maxLength={50}
+                placeholder="My Portfolio"
               />
-              <div className="text-right text-xs text-gray-500 mt-1">{tmpUsername.length} / 30</div>
+              <div className="text-right text-xs text-gray-500 mt-1">{tmpPortfolioTitle.length} / 50</div>
             </div>
             <div className="mb-4">
               <div className="text-sm text-gray-600 mb-1">Bio</div>
@@ -601,6 +709,7 @@ export const MyLinksPage = (): JSX.Element => {
                 value={tmpBio}
                 onChange={e => setTmpBio(e.target.value.slice(0, 160))}
                 maxLength={160}
+                placeholder="Tell people about yourself..."
               />
               <div className="text-right text-xs text-gray-500 mt-1">{tmpBio.length} / 160</div>
             </div>

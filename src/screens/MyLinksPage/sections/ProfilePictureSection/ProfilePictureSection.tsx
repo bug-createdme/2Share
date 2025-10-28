@@ -104,7 +104,7 @@ const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: st
   );
 };
 
-export const ProfilePictureSection = ({ user, bio, socialLinks }: { user: any; bio: string; socialLinks: import("../SocialLinksSection/SocialLinksSection").SocialLink[] }): JSX.Element => {
+export const ProfilePictureSection = ({ user, bio, socialLinks, portfolioTitle }: { user: any; bio: string; socialLinks: import("../SocialLinksSection/SocialLinksSection").SocialLink[]; portfolioTitle?: string }): JSX.Element => {
   return (
     <div className="w-[300px] h-[650px] translate-y-[-1rem] animate-fade-in opacity-0 [--animation-delay:0ms]">
       <Card className="w-full h-full bg-[#e7a5a5] rounded-[25px] border-none shadow-xl overflow-hidden">
@@ -122,7 +122,7 @@ export const ProfilePictureSection = ({ user, bio, socialLinks }: { user: any; b
                 />
               </div>
               <div className="mt-4 font-bold text-lg text-[#222] tracking-wide text-center">
-                @{user.username}
+                {portfolioTitle || "My Portfolio"}
               </div>
             </div>
           </div>
