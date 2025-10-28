@@ -38,10 +38,13 @@ export const MyLinksPage = (): JSX.Element => {
   const [savingTitleBio, setSavingTitleBio] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const shareBtnRef = useRef<HTMLButtonElement>(null);
+  // Giữ tạm slug/id vừa tạo để tránh tạo trùng do state chưa kịp cập nhật
+  const creatingSlugRef = useRef<string | null>(null);
   const [portfolioExists, setPortfolioExists] = useState(false);
   const [portfolioSlug, setPortfolioSlug] = useState<string | null>(null);
   const [planActive, setPlanActive] = useState<boolean | null>(null);
   const [maxSocialLinks, setMaxSocialLinks] = useState<number | null>(null);
+  const [maxBusinessCard, setMaxBusinessCard] = useState<number | null>(null);
   const [portfoliosList, setPortfoliosList] = useState<any[]>([]);
   const [showPortfoliosModal, setShowPortfoliosModal] = useState(false);
   const [portfolioTitle, setPortfolioTitle] = useState("My Portfolio");
@@ -281,6 +284,11 @@ export const MyLinksPage = (): JSX.Element => {
           setMaxSocialLinks(planInfo.maxSocialLinks);
           console.log('✅ Max social links:', planInfo.maxSocialLinks);
         }
+        
+        if (typeof planInfo?.maxBusinessCard === 'number') {
+          setMaxBusinessCard(planInfo.maxBusinessCard);
+          console.log('✅ Max business cards/portfolios:', planInfo.maxBusinessCard);
+        }
 
         // Nếu không có gói active, hiển thị cảnh báo
         if (!isActive) {
@@ -302,6 +310,13 @@ export const MyLinksPage = (): JSX.Element => {
   useEffect(() => {
     if (!user?._id || socialLinks.length === 0) return;
 
+    // QUAN TRỌNG: Chỉ auto-save nếu có ít nhất 1 link có URL
+    const hasValidLinks = socialLinks.some(link => link.url && link.url.trim() !== '');
+    if (!hasValidLinks) {
+      console.log('⏸️ Skip auto-save: no links with URL yet');
+      return;
+    }
+
     // Debounce the save to avoid too many API calls
     const timer = setTimeout(async () => {
       try {
@@ -318,20 +333,31 @@ export const MyLinksPage = (): JSX.Element => {
           console.log('⏳ Plan status still loading, will retry...');
           // Don't return, let it try to save - backend will return 403 if needed
         }
+        
         // Convert socialLinks array back to object format for backend
+        // CHỈ LƯU CÁC LINK CÓ URL
         const socialLinksObj: Record<string, any> = {};
         socialLinks.forEach(link => {
-          const key = link.name.toLowerCase();
-          socialLinksObj[key] = {
-            url: link.url,
-            clicks: link.clicks,
-            isEnabled: link.isEnabled,
-            color: link.color,
-            icon: link.icon,
-            displayName: link.displayName,
-            id: link.id,
-          };
+          // Chỉ lưu link nếu có URL
+          if (link.url && link.url.trim() !== '') {
+            const key = link.name.toLowerCase();
+            socialLinksObj[key] = {
+              url: link.url,
+              clicks: link.clicks,
+              isEnabled: link.isEnabled,
+              color: link.color,
+              icon: link.icon,
+              displayName: link.displayName,
+              id: link.id,
+            };
+          }
         });
+
+        // Nếu không có link nào có URL, không lưu
+        if (Object.keys(socialLinksObj).length === 0) {
+          console.log('⏸️ Skip save: no valid links to save');
+          return;
+        }
 
         // Optional: enforce maxSocialLinks if known
         if (typeof maxSocialLinks === 'number') {
@@ -343,10 +369,56 @@ export const MyLinksPage = (): JSX.Element => {
           }
         }
         console.log('📊 Auto-save state - portfolioExists:', portfolioExists, 'portfolioSlug:', portfolioSlug);
+        console.log('📊 Current portfolios count:', portfoliosList.length, '/', maxBusinessCard);
 
         // Check if portfolio exists, if not create it first
         if (!portfolioSlug) {
-          console.log('📝 No portfolio found, creating new portfolio...');
+          // Nếu vừa tạo xong mà state chưa kịp cập nhật, dùng slug tạm để tránh tạo trùng
+          if (creatingSlugRef.current) {
+            console.log('⏳ Using just-created slug from ref:', creatingSlugRef.current);
+            setPortfolioSlug(creatingSlugRef.current);
+            setPortfolioExists(true);
+          }
+
+          console.log('📝 No portfolio found, checking if can create new portfolio...');
+          
+          // ĐẶC BIỆT: Nếu đã vượt giới hạn, tự động load portfolio đầu tiên thay vì tạo mới
+          if (maxBusinessCard !== null && portfoliosList.length >= maxBusinessCard) {
+            console.warn('⚠️ Already exceeded limit. Auto-loading first portfolio instead of creating new one.');
+            
+            if (portfoliosList.length > 0) {
+              const firstPortfolio = portfoliosList[0];
+              const firstSlug = firstPortfolio.slug || firstPortfolio._id;
+              
+              console.log('📥 Auto-loading first portfolio:', firstSlug);
+              setPortfolioSlug(firstSlug);
+              setPortfolioExists(true);
+              localStorage.setItem('currentPortfolioSlug', firstSlug);
+              
+              // Load portfolio data
+              loadPortfolioData(firstSlug);
+              
+              showToast.warning(`Bạn đã có ${portfoliosList.length} danh thiếp (vượt giới hạn ${maxBusinessCard}). Đang cập nhật danh thiếp đầu tiên.`);
+              
+              // Sau khi load xong, trigger save lại
+              setTimeout(async () => {
+                try {
+                  await updatePortfolio(firstSlug, { social_links: socialLinksObj });
+                  console.log('✅ Social links saved to first portfolio');
+                } catch (err) {
+                  console.error('❌ Error saving to first portfolio:', err);
+                }
+              }, 500);
+              
+              return;
+            } else {
+              showToast.error(`Không thể tạo danh thiếp mới. Giới hạn: ${maxBusinessCard} danh thiếp.`);
+              return;
+            }
+          }
+          
+          console.log('✅ Can create new portfolio:', portfoliosList.length, '<', maxBusinessCard);
+          
           try {
             const { createPortfolio } = await import('../../lib/api');
             const newPortfolio = await createPortfolio({
@@ -355,23 +427,54 @@ export const MyLinksPage = (): JSX.Element => {
               social_links: socialLinksObj,
               avatar_url: user.avatar_url,
             });
-            
+
             console.log('✅ New portfolio created:', newPortfolio);
-            
-            // Get slug from created portfolio
-            const newSlug = newPortfolio?.result?.slug || newPortfolio?.slug || newPortfolio?.result?._id || newPortfolio?._id;
+
+            // Get slug/id from created portfolio (backend may return insertedId)
+            const createdId =
+              newPortfolio?.result?.insertedId ||
+              newPortfolio?.insertedId ||
+              newPortfolio?.result?._id ||
+              newPortfolio?._id;
+
+            const newSlug =
+              newPortfolio?.result?.slug ||
+              newPortfolio?.slug ||
+              createdId;
+
             if (newSlug) {
+              creatingSlugRef.current = newSlug;
+              // Set immediately to prevent subsequent auto-saves from creating again
               setPortfolioSlug(newSlug);
               setPortfolioExists(true);
               localStorage.setItem('currentPortfolioSlug', newSlug);
-              console.log('✅ Portfolio created with slug:', newSlug);
+              console.log('✅ Portfolio created with slug/id:', newSlug);
               showToast.success('Đã tạo portfolio mới');
-              
-              // Reload portfolios list
-              const portfolios = await import('../../lib/api').then(m => m.getMyPortfolios());
-              setPortfoliosList(portfolios);
+
+              // Reload portfolios list in background
+              try {
+                const portfolios = await import('../../lib/api').then(m => m.getMyPortfolios());
+                setPortfoliosList(portfolios);
+              } catch (reloadErr) {
+                console.warn('⚠️ Could not reload portfolios after creation:', reloadErr);
+              }
             } else {
-              console.error('❌ No slug returned from created portfolio:', newPortfolio);
+              console.error('❌ No slug/id returned from created portfolio:', newPortfolio);
+              // Fallback: try to fetch portfolios and pick the latest one
+              try {
+                const portfolios = await import('../../lib/api').then(m => m.getMyPortfolios());
+                setPortfoliosList(portfolios);
+                const latest = portfolios[0];
+                const fallbackSlug = latest?.slug || latest?._id;
+                if (fallbackSlug) {
+                  setPortfolioSlug(fallbackSlug);
+                  setPortfolioExists(true);
+                  localStorage.setItem('currentPortfolioSlug', fallbackSlug);
+                  console.log('✅ Fallback set slug from list:', fallbackSlug);
+                }
+              } catch (fallbackErr) {
+                console.warn('⚠️ Fallback failed to get portfolios:', fallbackErr);
+              }
             }
             return;
           } catch (createError: any) {
@@ -440,6 +543,15 @@ export const MyLinksPage = (): JSX.Element => {
       // Check if portfolio exists, if not create it first
       if (!portfolioSlug) {
         console.log('📝 No portfolio found, creating new portfolio...');
+        
+        // Validate portfolio limit
+        if (maxBusinessCard !== null && portfoliosList.length >= maxBusinessCard) {
+          console.warn('⚠️ Portfolio limit reached:', portfoliosList.length, '/', maxBusinessCard);
+          showToast.warning(`Gói của bạn chỉ cho phép tạo tối đa ${maxBusinessCard} danh thiếp. Vui lòng nâng cấp gói để tạo thêm.`);
+          setSavingTitleBio(false);
+          return;
+        }
+        
         try {
           const { createPortfolio } = await import('../../lib/api');
           const socialLinksObj: Record<string, any> = {};
@@ -464,18 +576,47 @@ export const MyLinksPage = (): JSX.Element => {
           });
           
           console.log('✅ New portfolio created:', newPortfolio);
-          
-          // Get slug from created portfolio
-          const newSlug = newPortfolio?.result?.slug || newPortfolio?.slug || newPortfolio?.result?._id || newPortfolio?._id;
+
+          // Get slug/id from created portfolio (backend may return insertedId)
+          const createdId =
+            newPortfolio?.result?.insertedId ||
+            newPortfolio?.insertedId ||
+            newPortfolio?.result?._id ||
+            newPortfolio?._id;
+          const newSlug = newPortfolio?.result?.slug || newPortfolio?.slug || createdId;
+
           if (newSlug) {
+            creatingSlugRef.current = newSlug;
             setPortfolioSlug(newSlug);
             setPortfolioExists(true);
             localStorage.setItem('currentPortfolioSlug', newSlug);
-            console.log('✅ Portfolio created with slug:', newSlug);
-            
-            // Reload portfolios list
-            const portfolios = await import('../../lib/api').then(m => m.getMyPortfolios());
-            setPortfoliosList(portfolios);
+            console.log('✅ Portfolio created with slug/id:', newSlug);
+
+            // Reload portfolios list in background
+            (async () => {
+              try {
+                const portfolios = await import('../../lib/api').then(m => m.getMyPortfolios());
+                setPortfoliosList(portfolios);
+              } catch (reloadErr) {
+                console.warn('⚠️ Could not reload portfolios after creation:', reloadErr);
+              }
+            })();
+          } else {
+            console.warn('⚠️ No slug/id returned from created portfolio - trying fallback');
+            try {
+              const portfolios = await import('../../lib/api').then(m => m.getMyPortfolios());
+              setPortfoliosList(portfolios);
+              const latest = portfolios[0];
+              const fallbackSlug = latest?.slug || latest?._id;
+              if (fallbackSlug) {
+                setPortfolioSlug(fallbackSlug);
+                setPortfolioExists(true);
+                localStorage.setItem('currentPortfolioSlug', fallbackSlug);
+                console.log('✅ Fallback set slug from list:', fallbackSlug);
+              }
+            } catch (fallbackErr) {
+              console.error('❌ Fallback failed to fetch portfolios:', fallbackErr);
+            }
           }
         } catch (createError: any) {
           console.error('❌ Error creating portfolio:', createError);
@@ -566,6 +707,26 @@ export const MyLinksPage = (): JSX.Element => {
               </div>
             )}
             
+            {/* Cảnh báo vượt quá giới hạn portfolio */}
+            {planActive === true && maxBusinessCard !== null && portfoliosList.length > maxBusinessCard && (
+              <div className="w-full max-w-[700px] px-9 pt-6">
+                <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 shadow-md">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm">!</div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-red-800 mb-1">Vượt quá giới hạn danh thiếp</h3>
+                      <p className="text-sm text-red-700 mb-2">
+                        Bạn hiện có <strong>{portfoliosList.length} danh thiếp</strong> nhưng gói của bạn chỉ cho phép <strong>{maxBusinessCard} danh thiếp</strong>.
+                      </p>
+                      <p className="text-sm text-red-700">
+                        Vui lòng xóa bớt {portfoliosList.length - maxBusinessCard} danh thiếp hoặc nâng cấp gói để tiếp tục sử dụng.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <section className="w-full max-w-[700px] flex flex-col items-center px-9 pt-12">
               <div className="flex flex-col items-center gap-4 mb-8 w-full">
                 <div className="flex flex-col items-center gap-4">
@@ -629,6 +790,35 @@ export const MyLinksPage = (): JSX.Element => {
                   >
                     {bio ? bio : "bio"}
                   </button>
+                  
+                  {/* Nút tạo danh thiếp mới - chỉ hiện khi gói cho phép > 1 portfolio */}
+                  {maxBusinessCard !== null && maxBusinessCard > 1 && (
+                    <button
+                      type="button"
+                      className={`mt-3 text-sm px-4 py-2 rounded-lg transition-all ${
+                        portfoliosList.length < maxBusinessCard
+                          ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-md'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                      onClick={() => {
+                        if (portfoliosList.length >= maxBusinessCard) {
+                          showToast.error(`Bạn đã đạt giới hạn ${maxBusinessCard} danh thiếp của gói hiện tại.`);
+                          return;
+                        }
+                        // Reset về trạng thái tạo mới
+                        setPortfolioSlug(null);
+                        setPortfolioExists(false);
+                        setSocialLinks([]);
+                        setBio('');
+                        setPortfolioTitle('My Portfolio');
+                        localStorage.removeItem('currentPortfolioSlug');
+                        showToast.success('Đã tạo danh thiếp mới. Hãy thêm thông tin của bạn!');
+                      }}
+                      disabled={portfoliosList.length >= maxBusinessCard}
+                    >
+                      ➕ Tạo danh thiếp mới ({portfoliosList.length}/{maxBusinessCard})
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -660,6 +850,19 @@ export const MyLinksPage = (): JSX.Element => {
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
                     onAddSocial={(name, color) => {
+                      // Kiểm tra nếu đã vượt quá giới hạn portfolio
+                      if (maxBusinessCard !== null && portfoliosList.length > maxBusinessCard) {
+                        showToast.error(`Bạn đã vượt quá giới hạn danh thiếp (${portfoliosList.length}/${maxBusinessCard}). Vui lòng xóa bớt danh thiếp hoặc nâng cấp gói.`);
+                        navigate("/my-links");
+                        return;
+                      }
+                      
+                      // Kiểm tra nếu chưa có portfolio và đã đạt giới hạn
+                      if (!portfolioSlug && maxBusinessCard !== null && portfoliosList.length >= maxBusinessCard) {
+                        showToast.error(`Gói của bạn chỉ cho phép tạo tối đa ${maxBusinessCard} danh thiếp. Bạn đã có ${portfoliosList.length} danh thiếp. Vui lòng nâng cấp gói hoặc xóa bớt danh thiếp hiện tại.`);
+                        navigate("/my-links");
+                        return;
+                      }
                       window.dispatchEvent(new CustomEvent("add-social-link", { detail: { name, color } }));
                       navigate("/my-links");
                       setSearchQuery("");

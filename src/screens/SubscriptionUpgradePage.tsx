@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Check, ArrowLeft, Loader2 } from "lucide-react";
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getCurrentPlan } from '../lib/api';
 
 // Types
@@ -26,9 +26,12 @@ const SubscriptionUpgradePage: React.FC = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [debugInfo, setDebugInfo] = useState<string>("");
+  const [setCurrentUserPlan] = useState<any>(null);
   const [isNewUser, setIsNewUser] = useState(false);
 
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const planIdFromUrl = searchParams?.get('plan') || null;
 
   const API_BASE_URL = "https://2share.icu";
@@ -53,6 +56,7 @@ const SubscriptionUpgradePage: React.FC = () => {
     const fetchPlansAndUserPlan = async () => {
       try {
         setLoading(true);
+        setDebugInfo("Bắt đầu fetch plans và kiểm tra gói hiện tại...");
         
         const authToken = getAuthToken();
         console.log("🔄 Fetching plans from:", `${API_BASE_URL}/plans/get-plans`);
@@ -69,6 +73,7 @@ const SubscriptionUpgradePage: React.FC = () => {
         try {
           const userPlan = await getCurrentPlan();
           console.log("📦 Current user plan:", userPlan);
+          setCurrentUserPlan(userPlan);
           
           // Nếu không có plan hoặc plan là null, đánh dấu là new user
           if (!userPlan || userPlan === null || Object.keys(userPlan).length === 0) {
@@ -82,6 +87,8 @@ const SubscriptionUpgradePage: React.FC = () => {
           console.warn("⚠️ Could not fetch current plan, treating as new user:", planError);
           setIsNewUser(true);
         }
+
+        setDebugInfo("Đang gọi API...");
         
         // SỬA QUAN TRỌNG: XÓA credentials: 'include'
         const response = await fetch(`${API_BASE_URL}/plans/get-plans`, {
@@ -91,8 +98,10 @@ const SubscriptionUpgradePage: React.FC = () => {
         });
 
         console.log("📡 Response status:", response.status);
+        setDebugInfo(`API trả về status: ${response.status}`);
 
         if (response.status === 401 || response.status === 403) {
+          setDebugInfo(`Lỗi auth: ${response.status}`);
           setPlans([]);
           setError(`Lỗi xác thực (${response.status}). Vui lòng đăng nhập lại.`);
           return;
@@ -104,6 +113,7 @@ const SubscriptionUpgradePage: React.FC = () => {
         
         const data = await response.json();
         console.log("✅ API Response data:", data);
+        setDebugInfo(`API trả về: ${data.message || 'No message'}`);
 
         if (data && data.result && Array.isArray(data.result)) {
           console.log("📊 Plans data received:", data.result);
@@ -134,12 +144,14 @@ const SubscriptionUpgradePage: React.FC = () => {
           setPlans(transformedPlans);
           autoSelectPlan(transformedPlans);
           setError("");
+          setDebugInfo(`Đã tải ${transformedPlans.length} gói từ server`);
         } else {
           throw new Error("Data structure không hợp lệ");
         }
         
       } catch (error: any) {
         console.error("❌ Lỗi fetch plans:", error);
+        setDebugInfo(`Lỗi: ${error.message}`);
         setPlans([]);
         setError(`Không thể kết nối đến server: ${error.message}. Vui lòng kiểm tra kết nối internet.`);
       } finally {
@@ -175,6 +187,25 @@ const SubscriptionUpgradePage: React.FC = () => {
   const monthlyPrice = currentPlan?.price || 0;
   const yearlyPrice = monthlyPrice * 12 * 0.9;
 
+  // TEST API - Cũng sửa credentials
+  const testAPI = async () => {
+    try {
+      setDebugInfo("Đang test API...");
+      const response = await fetch(`${API_BASE_URL}/plans/get-plans`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+        // XÓA credentials: 'include'
+      });
+      setDebugInfo(`Test API: Status ${response.status}`);
+      console.log("Test API response:", response);
+    } catch (error) {
+      setDebugInfo(`Test API lỗi: ${error}`);
+    }
+  };
+
+
   const handlePayment = async () => {
     if (!currentPlan) {
       setPaymentResult({
@@ -197,14 +228,17 @@ const SubscriptionUpgradePage: React.FC = () => {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
 
-      // Tất cả user (kể cả có Trial) đều dùng create-payment-upgrade
-      const endpoint = `${API_BASE_URL}/subscriptions/create-payment-upgrade`;
+      // Xác định endpoint dựa trên isNewUser
+      // New user: create-payment (backend sẽ auto trial)
+      // Existing user: create-payment-upgrade
+      const endpoint = isNewUser 
+        ? `${API_BASE_URL}/subscriptions/create-payment`
+        : `${API_BASE_URL}/subscriptions/create-payment-upgrade`;
 
-      // Backend yêu cầu đầy đủ payload như Postman
       const paymentPayload = {
         plan_id: selectedPlan,
         amount: currentPlan.price,
-        description: `Goi ${currentPlan.name}`.substring(0, 25), // Max 25 chars
+          description: `Goi ${currentPlan.name}`,
         items: [
           {
             name: currentPlan.name,
@@ -217,7 +251,6 @@ const SubscriptionUpgradePage: React.FC = () => {
       console.log("🎯 Payment endpoint:", endpoint);
       console.log("📦 Payment payload:", paymentPayload);
       console.log("👤 User type:", isNewUser ? "New User (Trial)" : "Existing User (Upgrade)");
-      console.log("🔑 Auth token:", authToken ? authToken.substring(0, 20) + '...' : 'NONE');
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -226,59 +259,72 @@ const SubscriptionUpgradePage: React.FC = () => {
       });
 
       const responseText = await response.text();
-      console.log("📡 Payment response status:", response.status);
-      console.log("📡 Payment response body:", responseText);
+      console.log("Payment response:", responseText);
 
       if (!response.ok) {
-        let errorData: any = {};
-        try {
-          errorData = JSON.parse(responseText);
-        } catch (e) {
-          errorData = { message: responseText };
+        // Kiểm tra nếu là lỗi người dùng mới chưa có gói
+        if (response.status === 400 || response.status === 404) {
+          try {
+            const errorData = JSON.parse(responseText);
+            // Nếu message cho biết người dùng chưa có gói hoặc cần trial
+            if (errorData.message && (
+              errorData.message.includes('trial') ||
+              errorData.message.includes('new user') ||
+              errorData.message.includes('no plan') ||
+              errorData.message.includes('first time')
+            )) {
+              // Chuyển đến trang trial offer
+              navigate('/trial-offer');
+              return;
+            }
+          } catch (e) {
+            // Nếu không parse được JSON, tiếp tục xử lý lỗi bình thường
+          }
         }
-
-        console.error("❌ Payment error:", errorData);
         
-        setPaymentResult({
-          success: false,
-          message: `Lỗi thanh toán: ${errorData.message || responseText}`
-        });
-        return;
+        throw new Error(`Loi server: ${response.status} - ${responseText}`);
       }
 
       const result = JSON.parse(responseText);
-      console.log("✅ Payment result:", result);
 
-      // Tìm PayOS checkout URL trong response
+      // Chấp nhận nhiều key khác nhau mà backend có thể trả về
       const payUrl =
         result?.result?.checkoutUrl ||
         result?.result?.paymentUrl ||
-        result?.result?.paymentLinkRes?.checkoutUrl ||
         result?.checkoutUrl ||
         result?.paymentUrl ||
-        result?.paymentLinkRes?.checkoutUrl ||
         null;
 
-      console.log("🔗 Payment URL found:", payUrl);
-
       if (payUrl) {
-        console.log("✅ Redirecting to PayOS:", payUrl);
+        console.log("Redirect den PayOS:", payUrl);
         window.location.href = payUrl as string;
         return;
       }
 
-      // Không tìm thấy payment URL
-      console.error("❌ No payment URL found in response:", result);
-      setPaymentResult({
-        success: false,
-        message: 'Không tìm thấy link thanh toán. Vui lòng thử lại.'
-      });
+      // Không có URL thanh toán: nếu là user mới thì đưa tới trial-offer, ngược lại báo lỗi rõ ràng
+      if (isNewUser) {
+        navigate('/trial-offer');
+      } else {
+        setPaymentResult({
+          success: false,
+          message: 'Không tìm thấy link thanh toán. Vui lòng thử lại hoặc liên hệ hỗ trợ.'
+        });
+      }
     } catch (error: any) {
-      console.error("❌ Payment error:", error);
-      setPaymentResult({
-        success: false,
-        message: "Lỗi: " + (error.message || "Không thể kết nối đến server.")
-      });
+      console.error("Loi thanh toan:", error);
+      
+      // Kiểm tra nếu lỗi liên quan đến người dùng mới
+      const errorMessage = error.message || "";
+      if (errorMessage.includes('trial') || 
+          errorMessage.includes('new user') || 
+          errorMessage.includes('no plan')) {
+        navigate('/trial-offer');
+      } else {
+        setPaymentResult({
+          success: false,
+          message: "Loi: " + (error.message || "Khong the ket noi den server.")
+        });
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -294,6 +340,12 @@ const SubscriptionUpgradePage: React.FC = () => {
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#8A2EA5]" />
           <p className="mt-4 text-gray-600">Đang tải danh sách gói...</p>
+          <p className="text-sm text-blue-600 mt-2">{debugInfo}</p>
+          {planIdFromUrl && (
+            <p className="text-sm text-gray-500 mt-2">
+              Plan ID từ URL: {planIdFromUrl}
+            </p>
+          )}
         </div>
       </div>
     );
@@ -319,15 +371,59 @@ const SubscriptionUpgradePage: React.FC = () => {
         </div>
       </div>
 
+      {/* Debug Panel */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="max-w-6xl mx-auto mb-4 p-4 bg-gray-100 rounded-lg">
+          <div className="flex justify-between items-center">
+            <div>
+              <strong>Debug Info:</strong> 
+              <span className="ml-2 text-sm">{debugInfo}</span>
+            </div>
+            <button 
+              onClick={testAPI}
+              className="text-sm bg-blue-500 text-white px-3 py-1 rounded"
+            >
+              Test API
+            </button>
+          </div>
+          <div className="text-xs mt-2">
+            Plans: {plans.length} | Selected: {selectedPlan} | Token: {getAuthToken() ? 'Yes' : 'No'} | Plan from URL: {planIdFromUrl || 'None'}
+          </div>
+        </div>
+      )}
+
       {/* Status Banner */}
       <div className="max-w-6xl mx-auto mb-6">
-        {error && (
+        {error ? (
           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-center gap-2 text-yellow-800">
               <span>⚠️</span>
               <div>
                 <div className="font-semibold">Thông báo</div>
                 <div className="text-sm mt-1">{error}</div>
+                <div className="text-xs mt-2">
+                  Bạn vẫn có thể tiếp tục thanh toán với dữ liệu mẫu
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : plans.length > 0 ? (
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center gap-2 text-green-800">
+              <span>✅</span>
+              <div>
+                <div className="font-semibold">Kết nối thành công</div>
+                <div className="text-sm mt-1">Đã tải {plans.length} gói từ server</div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2 text-blue-800">
+              <span>ℹ️</span>
+              <div>
+                <div className="font-semibold">Đang dùng dữ liệu mẫu</div>
+                <div className="text-sm mt-1">Bạn vẫn có thể tiếp tục thanh toán</div>
               </div>
             </div>
           </div>
