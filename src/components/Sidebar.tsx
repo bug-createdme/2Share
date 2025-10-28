@@ -75,6 +75,20 @@ export default function Sidebar({ user }: SidebarProps) {
                 <User className="w-5 h-5 mr-3 text-gray-700" />
                 <span className="text-sm flex-1 text-left">Tài khoản</span>
               </button>
+              <button
+                className="w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
+                onClick={() => {
+                  navigate("/my-links");
+                  setShowUserMenu(false);
+                  // Trigger mở portfolios modal sau khi navigate
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('open-portfolios-modal'));
+                  }, 100);
+                }}
+              >
+                <Figma className="w-5 h-5 mr-3 text-gray-700" />
+                <span className="text-sm flex-1 text-left">Portfolio</span>
+              </button>
               {/* CẬP NHẬT: Chuyển hướng đến trang plans thay vì subscription */}
               <button
                 className="w-full flex items-center px-4 py-2 text-[#a259ff] hover:bg-gray-50"

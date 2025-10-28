@@ -16,6 +16,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose, portfolioLink,
   const popoverRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const [showSocialShare, setShowSocialShare] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
 
   // Rút gọn link hiển thị (chỉ hiển thị domain/username)
   const displayLink = username ? `2share.icu/${username}` : portfolioLink;
@@ -118,10 +119,52 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose, portfolioLink,
       {/* Action rows */}
       <div className="w-full flex flex-col">
         <RowItem icon={<FileText className="w-4 h-4" />} label="Add to bio" onClick={() => {}} />
-        <RowItem icon={<QrCode className="w-4 h-4" />} label="QR code" onClick={() => {}} />
+        <RowItem icon={<QrCode className="w-4 h-4" />} label="QR code" onClick={() => setShowQRCode(true)} />
         <RowItem icon={<Share2 className="w-4 h-4" />} label="Share to..." onClick={handleShareTo} />
         <RowItem icon={<ExternalLink className="w-4 h-4" />} label="Open" onClick={() => window.open(portfolioLink, '_blank')} />
       </div>
+
+      {/* QR Code Modal */}
+      {showQRCode && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50" onClick={() => setShowQRCode(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-[400px] p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-lg">QR Code Portfolio</h3>
+              <button onClick={() => setShowQRCode(false)} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
+            </div>
+            
+            {/* QR Code Image */}
+            <div className="flex flex-col items-center mb-4">
+              <div className="bg-white p-4 rounded-lg border-2 border-gray-200 mb-3">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(portfolioLink)}`}
+                  alt="QR Code"
+                  className="w-[200px] h-[200px]"
+                />
+              </div>
+              <p className="text-sm text-gray-600 text-center mb-2">
+                Quét mã QR để truy cập portfolio
+              </p>
+              <p className="text-xs text-gray-500 text-center font-mono bg-gray-100 px-3 py-1 rounded">
+                {displayLink}
+              </p>
+            </div>
+
+            {/* Download Button */}
+            <Button 
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(portfolioLink)}`;
+                link.download = `qr-code-${username || 'portfolio'}.png`;
+                link.click();
+              }}
+            >
+              Tải xuống QR Code
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Social Share Modal - fallback khi không có Web Share API */}
       {showSocialShare && (

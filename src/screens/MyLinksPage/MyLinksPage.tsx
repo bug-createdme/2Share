@@ -411,6 +411,16 @@ export const MyLinksPage = (): JSX.Element => {
     return () => window.removeEventListener('increase-click', handleIncreaseClick);
   }, []);
 
+  // 5) Handle open portfolios modal from sidebar
+  useEffect(() => {
+    function handleOpenPortfoliosModal() {
+      setShowPortfoliosModal(true);
+    }
+
+    window.addEventListener('open-portfolios-modal', handleOpenPortfoliosModal);
+    return () => window.removeEventListener('open-portfolios-modal', handleOpenPortfoliosModal);
+  }, []);
+
 
   async function handleSaveTitleBio() {
     if (!user) return;
@@ -632,14 +642,6 @@ export const MyLinksPage = (): JSX.Element => {
                   <PlusIcon className="w-6 h-6 text-white" />
                   <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-xl tracking-[2.00px]">
                     Thêm
-                  </span>
-                </Button>
-                <Button
-                  className="flex-1 h-auto bg-[#6e6e6e] hover:bg-[#5a5a5a] rounded-[35px] py-4 flex items-center justify-center gap-2 shadow-lg"
-                  onClick={() => setShowPortfoliosModal(true)}
-                >
-                  <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-xl tracking-[2.00px]">
-                    Portfolio ({portfoliosList.length})
                   </span>
                 </Button>
               </div>
