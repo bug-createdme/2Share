@@ -153,11 +153,30 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose, portfolioLink,
             {/* Download Button */}
             <Button 
               className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-              onClick={() => {
-                const link = document.createElement('a');
-                link.href = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(portfolioLink)}`;
-                link.download = `qr-code-${username || 'portfolio'}.png`;
-                link.click();
+              onClick={async () => {
+                try {
+                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(portfolioLink)}`;
+                  
+                  // Fetch image và convert sang blob
+                  const response = await fetch(qrUrl);
+                  const blob = await response.blob();
+                  
+                  // Tạo object URL từ blob
+                  const blobUrl = URL.createObjectURL(blob);
+                  
+                  // Tạo link và download
+                  const link = document.createElement('a');
+                  link.href = blobUrl;
+                  link.download = `qr-code-${username || 'portfolio'}.png`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  
+                  // Cleanup object URL
+                  setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+                } catch (error) {
+                  console.error('Error downloading QR code:', error);
+                }
               }}
             >
               Tải xuống QR Code

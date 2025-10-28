@@ -123,6 +123,8 @@ const PublicPortfolioPage = (): JSX.Element => {
 
       try {
         const portfolioData = await getPortfolioBySlug(slug);
+        console.log('📋 Portfolio data received:', portfolioData);
+        console.log('📋 Username:', portfolioData?.username);
         setPortfolio(portfolioData);
       } catch (err: any) {
         setError(err.message || "Lỗi lấy thông tin portfolio");
@@ -203,8 +205,8 @@ const PublicPortfolioPage = (): JSX.Element => {
             >
               ← Về trang chủ
             </Button>
-            <div className="text-sm text-gray-600">
-              Portfolio của @{portfolio?.username}
+            <div className="text-sm text-gray-600 truncate max-w-[200px]">
+              {portfolio?.username ? `Portfolio của @${portfolio.username}` : 'Portfolio'}
             </div>
           </div>
         </div>
