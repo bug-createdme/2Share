@@ -343,19 +343,46 @@ export async function getCurrentPlan() {
 
   console.log('🔑 Getting current plan with token:', token ? 'Yes' : 'No');
 
-  const res = await fetch('https://2share.icu/users/get-current-plan', {
+  const url = 'https://2share.icu/users/get-current-plan';
+
+  // Force revalidation to avoid 304 confusing our logic
+  let res = await fetch(url, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
+      // Hint proxies/CDNs to not serve stale cached payloads
+      'Cache-Control': 'no-cache',
     },
-  });
+    cache: 'no-store',
+  } as RequestInit);
 
-  const result = await res.json().catch(() => ({}));
+  // Some environments may still return 304. If so, perform a cache-busted retry.
+  if (res.status === 304) {
+    console.warn('⚠️ getCurrentPlan received 304 Not Modified. Retrying with cache-busting...');
+    res = await fetch(`${url}?t=${Date.now()}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+      },
+      cache: 'reload',
+    } as RequestInit);
+  }
+
+  // Try to parse JSON, but keep raw text for debugging if needed
+  const text = await res.text();
+  let result: any = {};
+  try {
+    result = text ? JSON.parse(text) : {};
+  } catch {
+    console.warn('⚠️ getCurrentPlan response is not valid JSON. Text:', text?.slice(0, 200));
+  }
   console.log('📡 Get current plan response status:', res.status, 'data:', result);
 
   if (!res.ok) throw new Error(result?.message || `HTTP ${res.status}: Lỗi lấy gói hiện tại`);
-  return result; // backend đang trả thẳng object gói
+  return result; // backend có thể trả {result: {...}} hoặc object thẳng
 }
 
 // Hủy subscription hiện tại
@@ -383,6 +410,49 @@ export async function cancelSubscription() {
   console.log('📡 Cancel subscription response status:', res.status, 'data:', result);
 
   if (!res.ok) throw new Error(result?.message || `HTTP ${res.status}: Lỗi hủy subscription`);
+  return result;
+}
+
+// Kích hoạt gói trial cho người dùng mới (gọi create-payment để backend tự động set trial)
+export async function activateTrial(planId: string) {
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🎁 Activating trial for plan:', planId);
+
+  // NOTE: Backend requires minimal validation: amount >= 1000 and items must be non-empty
+  // Even for trial, backend will record a TRIAL gateway and amount 0 internally.
+  const res = await fetch('https://2share.icu/subscriptions/create-payment', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      plan_id: planId,
+      // Send a minimal valid amount to satisfy validation (won't charge for trial)
+      amount: 2000,
+      description: 'Trial activation (first-time purchase)',
+      items: [
+        {
+          name: 'Trial activation',
+          quantity: 1,
+          price: 2000,
+        },
+      ],
+    }),
+  });
+
+  const result = await res.json().catch(() => ({}));
+  console.log('📡 Activate trial response status:', res.status, 'data:', result);
+
+  if (!res.ok) throw new Error(result?.message || `HTTP ${res.status}: Lỗi kích hoạt trial`);
   return result;
 }
 
@@ -590,3 +660,110 @@ export async function adminDeleteUser(id: string): Promise<{ deleted: boolean } 
   const data = await res.json().catch(() => ({}));
   return unwrap(res, data);
 }
+
+// =========================
+// Analytics APIs
+// =========================
+export interface AnalyticsData {
+  totalViews: number;
+  totalClicks: number;
+  clickRate: number;
+  socialStats: Array<{
+    name: string;
+    clicks: number;
+    url: string;
+    displayName?: string;
+    icon?: string;
+    color?: string;
+  }>;
+}
+
+export async function getMyAnalytics(): Promise<AnalyticsData> {
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Getting my analytics with token:', token ? 'Yes' : 'No');
+
+  try {
+    // Get current portfolio to calculate analytics
+    const portfolio = await getMyPortfolio();
+    
+    if (!portfolio || !portfolio.social_links) {
+      return {
+        totalViews: 0,
+        totalClicks: 0,
+        clickRate: 0,
+        socialStats: []
+      };
+    }
+
+    // Calculate total clicks from social links
+    let totalClicks = 0;
+    const socialStats: AnalyticsData['socialStats'] = [];
+
+    Object.entries(portfolio.social_links).forEach(([key, value]: any) => {
+      const clicks = value?.clicks || 0;
+      totalClicks += clicks;
+      
+      if (value && (value.url || value.isEnabled)) {
+        socialStats.push({
+          name: key.charAt(0).toUpperCase() + key.slice(1),
+          clicks: clicks,
+          url: value.url || '',
+          displayName: value.displayName || key.charAt(0).toUpperCase() + key.slice(1),
+          icon: value.icon || '🔗',
+          color: value.color || '#6e6e6e',
+        });
+      }
+    });
+
+    // Sort by clicks descending
+    socialStats.sort((a, b) => b.clicks - a.clicks);
+
+    // For now, we'll use totalClicks as views (can be updated when backend provides views)
+    const totalViews = totalClicks;
+    const clickRate = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
+
+    return {
+      totalViews,
+      totalClicks,
+      clickRate,
+      socialStats
+    };
+  } catch (error) {
+    console.error('❌ Error getting analytics:', error);
+    throw error;
+  }
+}
+
+  // Track click on a social link in public portfolio
+  export async function trackSocialClick(slug: string, socialKey: string): Promise<any> {
+    try {
+      const res = await fetch(`https://2share.icu/portfolios/track-click/${encodeURIComponent(slug)}/${encodeURIComponent(socialKey)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!res.ok) {
+        // Don't throw error, just log it - we don't want to block the user from opening the link
+        console.warn('Failed to track click:', res.status);
+        return null;
+      }
+
+      const result = await res.json();
+      console.log('✅ Click tracked:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Error tracking click:', error);
+      // Don't throw, just return null
+      return null;
+    }
+  }

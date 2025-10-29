@@ -71,14 +71,22 @@ const SubscriptionUpgradePage: React.FC = () => {
           const userPlan = await getCurrentPlan();
           console.log("📦 Current user plan:", userPlan);
           setCurrentUserPlan(userPlan);
-          
-          // Nếu không có plan hoặc plan là null, đánh dấu là new user
-          if (!userPlan || userPlan === null || Object.keys(userPlan).length === 0) {
-            setIsNewUser(true);
-            console.log("✨ New user detected - will offer trial");
-          } else {
+
+          // Unwrap common response shapes
+          const planObj: any = Array.isArray(userPlan)
+            ? userPlan[0]
+            : (userPlan?.result ?? userPlan);
+
+          const status: string = (planObj?.status || planObj?.result?.status || "").toString().toLowerCase();
+          const hasPlanInfo = Array.isArray(planObj?.planInfo) && planObj.planInfo.length > 0;
+          const hasActiveSubscription = status === 'active' || status === 'trial' || hasPlanInfo;
+
+          if (hasActiveSubscription) {
             setIsNewUser(false);
-            console.log("👤 Existing user - will use upgrade endpoint");
+            console.log("👤 Existing user detected (status:", status || 'unknown', ") - will use upgrade endpoint");
+          } else {
+            setIsNewUser(true);
+            console.log("✨ No active plan found (status:", status || 'none', ") - will treat as new user/trial");
           }
         } catch (planError) {
           console.warn("⚠️ Could not fetch current plan, treating as new user:", planError);
@@ -187,6 +195,34 @@ const SubscriptionUpgradePage: React.FC = () => {
     setPaymentResult(null);
 
     try {
+      // ✨ NEW LOGIC: Double-check user status right before proceeding to avoid stale state
+      if (isNewUser) {
+        try {
+          const freshPlan = await getCurrentPlan();
+          const planObj: any = Array.isArray(freshPlan) ? freshPlan[0] : (freshPlan?.result ?? freshPlan);
+          const status: string = (planObj?.status || planObj?.result?.status || "").toString().toLowerCase();
+          const hasPlanInfo = Array.isArray(planObj?.planInfo) && planObj.planInfo.length > 0;
+          const hasActiveSubscription = status === 'active' || status === 'trial' || hasPlanInfo;
+          if (hasActiveSubscription) {
+            console.log('🔁 Fresh check: user has active/trial plan. Proceeding with upgrade payment.');
+          } else {
+            console.log("✨ New user confirmed - redirecting to trial offer page (NO API CALL)");
+            console.log("📦 Selected plan ID:", selectedPlan);
+            localStorage.setItem('selectedPlanForTrial', selectedPlan);
+            navigate(`/trial-offer?plan=${selectedPlan}`);
+            return;
+          }
+        } catch (e) {
+          console.warn('⚠️ Could not verify current plan on click. Treating as new user -> trial offer.', e);
+          localStorage.setItem('selectedPlanForTrial', selectedPlan);
+          navigate(`/trial-offer?plan=${selectedPlan}`);
+          return;
+        }
+      }
+
+      // 🔄 EXISTING USER: Call upgrade API for real payment
+      console.log("👤 Existing user (has active/trial plan) - proceeding with upgrade payment");
+
       const authToken = getAuthToken();
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
@@ -196,12 +232,8 @@ const SubscriptionUpgradePage: React.FC = () => {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
 
-      // Xác định endpoint dựa trên isNewUser
-      // New user: create-payment (backend sẽ auto trial)
-      // Existing user: create-payment-upgrade
-      const endpoint = isNewUser 
-        ? `${API_BASE_URL}/subscriptions/create-payment`
-        : `${API_BASE_URL}/subscriptions/create-payment-upgrade`;
+      // Use upgrade endpoint for existing users
+      const endpoint = `${API_BASE_URL}/subscriptions/create-payment-upgrade`;
 
       const paymentPayload = {
         plan_id: selectedPlan,
@@ -218,38 +250,18 @@ const SubscriptionUpgradePage: React.FC = () => {
 
       console.log("🎯 Payment endpoint:", endpoint);
       console.log("📦 Payment payload:", paymentPayload);
-      console.log("👤 User type:", isNewUser ? "New User (Trial)" : "Existing User (Upgrade)");
 
-      const response = await fetch(endpoint, {
+      let response = await fetch(endpoint, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(paymentPayload)
       });
 
-      const responseText = await response.text();
+      let responseText = await response.text();
       console.log("Payment response:", responseText);
 
       if (!response.ok) {
-        // Kiểm tra nếu là lỗi người dùng mới chưa có gói
-        if (response.status === 400 || response.status === 404) {
-          try {
-            const errorData = JSON.parse(responseText);
-            // Nếu message cho biết người dùng chưa có gói hoặc cần trial
-            if (errorData.message && (
-              errorData.message.includes('trial') ||
-              errorData.message.includes('new user') ||
-              errorData.message.includes('no plan') ||
-              errorData.message.includes('first time')
-            )) {
-              // Chuyển đến trang trial offer
-              navigate('/trial-offer');
-              return;
-            }
-          } catch (e) {
-            // Nếu không parse được JSON, tiếp tục xử lý lỗi bình thường
-          }
-        }
-        
+        // Error handling for upgrade payment
         throw new Error(`Loi server: ${response.status} - ${responseText}`);
       }
 
@@ -264,35 +276,22 @@ const SubscriptionUpgradePage: React.FC = () => {
         null;
 
       if (payUrl) {
-        console.log("Redirect den PayOS:", payUrl);
+        console.log("✅ Redirect to PayOS payment page:", payUrl);
         window.location.href = payUrl as string;
         return;
       }
 
-      // Không có URL thanh toán: nếu là user mới thì đưa tới trial-offer, ngược lại báo lỗi rõ ràng
-      if (isNewUser) {
-        navigate('/trial-offer');
-      } else {
-        setPaymentResult({
-          success: false,
-          message: 'Không tìm thấy link thanh toán. Vui lòng thử lại hoặc liên hệ hỗ trợ.'
-        });
-      }
+      // No payment URL found for existing user - show error
+      setPaymentResult({
+        success: false,
+        message: 'Không tìm thấy link thanh toán. Vui lòng thử lại hoặc liên hệ hỗ trợ.'
+      });
     } catch (error: any) {
-      console.error("Loi thanh toan:", error);
-      
-      // Kiểm tra nếu lỗi liên quan đến người dùng mới
-      const errorMessage = error.message || "";
-      if (errorMessage.includes('trial') || 
-          errorMessage.includes('new user') || 
-          errorMessage.includes('no plan')) {
-        navigate('/trial-offer');
-      } else {
-        setPaymentResult({
-          success: false,
-          message: "Loi: " + (error.message || "Khong the ket noi den server.")
-        });
-      }
+      console.error("❌ Payment error:", error);
+      setPaymentResult({
+        success: false,
+        message: "Loi: " + (error.message || "Khong the ket noi den server.")
+      });
     } finally {
       setIsProcessing(false);
     }

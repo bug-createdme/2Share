@@ -1,19 +1,64 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Gift, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Gift, ArrowLeft, Loader2 } from 'lucide-react';
+import { activateTrial } from '../lib/api';
+import { showToast } from '../lib/toast';
 
 const TrialOfferPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [isActivating, setIsActivating] = useState(false);
+  const [planId, setPlanId] = useState<string | null>(null);
 
-  const handleAcceptTrial = () => {
-    // Backend đã tự động kích hoạt trial khi user mới thanh toán
-    // Chỉ cần chuyển hướng đến my-links
-    navigate('/my-links');
+  // Get plan ID from URL or localStorage
+  useEffect(() => {
+    const planFromUrl = searchParams.get('plan');
+    const planFromStorage = localStorage.getItem('selectedPlanForTrial');
+    const selectedPlan = planFromUrl || planFromStorage;
+    
+    if (selectedPlan) {
+      setPlanId(selectedPlan);
+      // Save to localStorage for future use
+      localStorage.setItem('selectedPlanForTrial', selectedPlan);
+    } else {
+      console.warn('⚠️ No plan ID found for trial activation');
+    }
+  }, [searchParams]);
+
+  const handleAcceptTrial = async () => {
+    if (!planId) {
+      showToast.error('Không tìm thấy thông tin gói. Vui lòng thử lại.');
+      navigate('/subscription-plans');
+      return;
+    }
+
+    setIsActivating(true);
+    try {
+      console.log('🎁 Activating trial for plan:', planId);
+      await activateTrial(planId);
+      console.log('✅ Trial activated successfully');
+      
+      // Clear stored plan ID
+      localStorage.removeItem('selectedPlanForTrial');
+      
+      showToast.success('🎉 Đã kích hoạt gói dùng thử 7 ngày!');
+      
+      // Redirect to my-links after short delay
+      setTimeout(() => {
+        navigate('/my-links');
+      }, 1500);
+    } catch (error: any) {
+      console.error('❌ Error activating trial:', error);
+      showToast.error('Lỗi kích hoạt trial: ' + (error.message || 'Không xác định'));
+      setIsActivating(false);
+    }
   };
 
   const handleCancel = () => {
+    // Clear stored plan ID
+    localStorage.removeItem('selectedPlanForTrial');
     // Quay lại trang subscription hoặc my-links
-    navigate('/subscription-plans');
+    navigate('/plans');
   };
 
   return (
@@ -79,16 +124,27 @@ const TrialOfferPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={handleCancel}
-              className="flex-1 py-4 px-6 rounded-xl border-2 border-gray-300 text-gray-700 font-semibold text-lg hover:bg-gray-50 transition-all duration-300"
+              disabled={isActivating}
+              className="flex-1 py-4 px-6 rounded-xl border-2 border-gray-300 text-gray-700 font-semibold text-lg hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Hủy
             </button>
             <button
               onClick={handleAcceptTrial}
-              className="flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold text-lg hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
+              disabled={isActivating || !planId}
+              className="flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold text-lg hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Gift className="w-5 h-5" />
-              Đồng ý - Dùng thử 7 ngày
+              {isActivating ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Đang kích hoạt...
+                </>
+              ) : (
+                <>
+                  <Gift className="w-5 h-5" />
+                  Đồng ý - Dùng thử 7 ngày
+                </>
+              )}
             </button>
           </div>
 
