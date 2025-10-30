@@ -639,6 +639,7 @@ export type AdminUser = {
   email: string;
   role?: string;
   is_verified?: boolean;
+  verify?: number; // 0 = chưa verify, 1 = đã verify
   status?: string;
   created_at?: string;
 };
