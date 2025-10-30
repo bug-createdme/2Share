@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { getPortfolioBySlug } from "../lib/api";
+import { getSocialAvatarUrl } from "../lib/socialConfig";
 import type { SocialLink } from "./MyLinksPage/sections/SocialLinksSection/SocialLinksSection";
 
 // Component để lấy và hiển thị avatar từ social link
@@ -16,79 +17,15 @@ const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: st
       return;
     }
 
-    const getSocialAvatar = async (socialUrl: string) => {
-      try {
-        // Cách tiếp cận đơn giản và đáng tin cậy hơn: sử dụng unavatar.io cho hầu hết các platform
-        if (socialUrl.includes('youtube.com') || socialUrl.includes('youtu.be')) {
-          // Với YouTube, thử unavatar service trước
-          const videoMatch = socialUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
-          if (videoMatch) {
-            const videoId = videoMatch[1];
-            setAvatarUrl(`https://img.youtube.com/vi/${videoId}/default.jpg`);
-          } else {
-            // Với channel, sử dụng ảnh đại diện chung
-            setAvatarUrl(`https://www.youtube.com/favicon.ico`);
-          }
-        }
-        else if (socialUrl.includes('tiktok.com')) {
-          const usernameMatch = socialUrl.match(/tiktok\.com\/@([^\/\?]+)/);
-          if (usernameMatch) {
-            const username = usernameMatch[1];
-            // Sử dụng unavatar cho TikTok
-            setAvatarUrl(`https://unavatar.io/tiktok/${username}`);
-          }
-        }
-        else if (socialUrl.includes('soundcloud.com')) {
-          const usernameMatch = socialUrl.match(/soundcloud\.com\/([^\/\?]+)/);
-          if (usernameMatch) {
-            const username = usernameMatch[1];
-            setAvatarUrl(`https://unavatar.io/soundcloud/${username}`);
-          }
-        }
-        else if (socialUrl.includes('pinterest.com')) {
-          const usernameMatch = socialUrl.match(/pinterest\.com\/([^\/\?]+)/);
-          if (usernameMatch) {
-            const username = usernameMatch[1];
-            setAvatarUrl(`https://unavatar.io/pinterest/${username}`);
-          }
-        }
-        else if (socialUrl.includes('instagram.com')) {
-          const usernameMatch = socialUrl.match(/instagram\.com\/([^\/\?]+)/);
-          if (usernameMatch) {
-            const username = usernameMatch[1];
-            setAvatarUrl(`https://unavatar.io/instagram/${username}`);
-          }
-        }
-        else if (socialUrl.includes('twitter.com') || socialUrl.includes('x.com')) {
-          const usernameMatch = socialUrl.match(/(?:twitter\.com|x\.com)\/([^\/\?]+)/);
-          if (usernameMatch) {
-            const username = usernameMatch[1];
-            setAvatarUrl(`https://unavatar.io/twitter/${username}`);
-          }
-        }
-        else if (socialUrl.includes('facebook.com')) {
-          const usernameMatch = socialUrl.match(/facebook\.com\/([^\/\?]+)/);
-          if (usernameMatch) {
-            const username = usernameMatch[1];
-            setAvatarUrl(`https://unavatar.io/facebook/${username}`);
-          }
-        }
-        // Nếu không match được platform nào hoặc unavatar không hoạt động
-        else {
-          setAvatarUrl(null);
-        }
-      } catch (error) {
-        console.error('Error getting social avatar:', error);
-        setAvatarUrl(null);
-      }
-    };
-
+    // Use shared configuration for avatar extraction
     const debounceTimer = setTimeout(() => {
-      getSocialAvatar(url);
+      console.log('🔍 Getting avatar for:', name, url);
+      const avatar = getSocialAvatarUrl(name, url);
+      setAvatarUrl(avatar);
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [url]);
+  }, [url, name]);
 
   return (
     <div className="absolute top-[11px] left-[11px] w-[18px] h-[18px] rounded-full overflow-hidden bg-white flex items-center justify-center">
@@ -97,10 +34,13 @@ const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: st
           src={avatarUrl}
           alt={`${name} avatar`}
           className="w-full h-full object-cover"
-          onError={() => setAvatarUrl(null)} // Fallback nếu ảnh lỗi
+          onError={() => {
+            console.log('❌ Failed to load avatar:', avatarUrl);
+            setAvatarUrl(null);
+          }}
         />
       ) : (
-        <span className="text-lg">{icon}</span>
+        <span className="text-[10px]">{icon}</span>
       )}
     </div>
   );
@@ -167,18 +107,19 @@ const PublicPortfolioPage = (): JSX.Element => {
   // Chuyển đổi social_links từ object sang array để hiển thị
   const socialLinks: SocialLink[] = portfolio.social_links
     ? Object.entries(portfolio.social_links).map(([key, value]: any) => {
-        if (typeof value === 'object' && value !== null && value.url) {
+        if (typeof value === 'object' && value !== null) {
           return {
             id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             name: key.charAt(0).toUpperCase() + key.slice(1),
-            url: value.url,
-            clicks: 0,
-            isEnabled: true,
-            color: "#6e6e6e",
-            icon: "🔗",
+            url: value.url || "",
+            clicks: value.clicks || 0,
+            isEnabled: value.isEnabled !== undefined ? value.isEnabled : Boolean(value.url),
+            color: value.color || "#6e6e6e",
+            icon: value.icon || "🔗",
             displayName: value.displayName || key.charAt(0).toUpperCase() + key.slice(1),
           };
         }
+        // Fallback for simple string URLs (legacy format)
         return {
           id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           name: key.charAt(0).toUpperCase() + key.slice(1),
@@ -189,7 +130,7 @@ const PublicPortfolioPage = (): JSX.Element => {
           icon: "🔗",
           displayName: key.charAt(0).toUpperCase() + key.slice(1),
         };
-      }).filter(link => link.isEnabled && link.url)
+      }).filter(link => link.isEnabled === true && link.url)
     : [];
 
   return (
@@ -260,7 +201,7 @@ const PublicPortfolioPage = (): JSX.Element => {
                       <div key={link.id || index} className="w-full max-w-[212px]">
                         <Button
                           variant="outline"
-                          className="w-full h-[45px] rounded-[10px] border-2 border-solid border-pink-200 bg-white/80 hover:bg-white transition-all duration-200 text-gray-700 hover:text-gray-800 font-medium"
+                          className="relative w-full h-[45px] rounded-[10px] border-2 border-solid border-pink-200 bg-white/80 hover:bg-white transition-all duration-200 text-gray-700 hover:text-gray-800 font-medium"
                           onClick={() => {
                             if (link.url) {
                               window.open(link.url, '_blank', 'noopener,noreferrer');

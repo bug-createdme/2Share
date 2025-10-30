@@ -15,8 +15,13 @@ const PaymentSuccessPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const orderId = searchParams.get('orderId');
-  const subscriptionId = searchParams.get('subscriptionId');
+  // Accept multiple possible param names from gateways (PayOS returns orderCode & id)
+  const qp = Object.fromEntries(searchParams.entries());
+  const orderId = (
+    (qp as any).orderId || (qp as any).order_id || (qp as any).orderCode || (qp as any).order_code || (qp as any).id || (qp as any).code || null
+  ) as string | null;
+  const subscriptionId = ((qp as any).subscriptionId || (qp as any).subscription_id || null) as string | null;
+  const statusParam = ((qp as any).status || '').toString().toUpperCase();
 
   const [confirmation, setConfirmation] = useState<PaymentConfirmation | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,71 +31,29 @@ const PaymentSuccessPage = () => {
   const API_BASE_URL = "https://2share.icu";
 
   useEffect(() => {
-    if (!orderId) {
-      setError("Không tìm thấy thông tin đơn hàng");
+    // There is no confirm-payment API. Treat the gateway callback as the source of truth.
+    // PayOS success indicators: status=PAID and/or code=00, cancel=false
+    const codeParam = ((qp as any).code || '').toString();
+    const cancelParam = ((qp as any).cancel || '').toString().toLowerCase();
+    const isPaid = statusParam === 'PAID' || (codeParam === '00' && cancelParam !== 'true');
+
+    if (!isPaid) {
+      setError('Thanh toán không thành công hoặc đã hủy.');
       setLoading(false);
       return;
     }
 
-    const confirmPayment = async () => {
-      try {
-        setLoading(true);
-
-        const authToken =
-          localStorage.getItem('authToken') ||
-          localStorage.getItem('token') ||
-          localStorage.getItem('accessToken') ||
-          sessionStorage.getItem('authToken') ||
-          sessionStorage.getItem('token');
-
-        const headers: HeadersInit = {
-          'Content-Type': 'application/json',
-        };
-
-        if (authToken) {
-          headers['Authorization'] = `Bearer ${authToken}`;
-        }
-
-        // Gọi API xác nhận thanh toán
-        const response = await fetch(`${API_BASE_URL}/subscriptions/confirm-payment/${orderId}`, {
-          method: 'POST',
-          headers: headers
-        });
-
-        if (!response.ok) {
-          throw new Error(`Lỗi xác nhận thanh toán: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.result) {
-          setConfirmation({
-            orderId: orderId,
-            subscriptionId: subscriptionId || data.result.subscriptionId || '',
-            status: 'success',
-            amount: data.result.amount || 0,
-            planName: data.result.planName || 'Gói đăng ký',
-            createdAt: new Date().toLocaleString('vi-VN')
-          });
-        }
-      } catch (error: any) {
-        console.error('Lỗi xác nhận thanh toán:', error);
-        // Vẫn hiển thị trang thành công ngay cả khi API lỗi
-        setConfirmation({
-          orderId: orderId,
-          subscriptionId: subscriptionId || '',
-          status: 'success',
-          amount: 0,
-          planName: 'Gói đăng ký',
-          createdAt: new Date().toLocaleString('vi-VN')
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    confirmPayment();
-  }, [orderId, subscriptionId]);
+    // Build a local confirmation object from query params only
+    setConfirmation({
+      orderId: orderId || (qp as any).orderCode || (qp as any).id || 'unknown',
+      subscriptionId: (qp as any).subscriptionId || (qp as any).subscription_id || '',
+      status: 'success',
+      amount: Number((qp as any).amount) || 0,
+      planName: (qp as any).planName || 'Gói đăng ký',
+      createdAt: new Date().toLocaleString('vi-VN'),
+    });
+    setLoading(false);
+  }, [orderId, subscriptionId, statusParam]);
 
   // Countdown timer
   useEffect(() => {

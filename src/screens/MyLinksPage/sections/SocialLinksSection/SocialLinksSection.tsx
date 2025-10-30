@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BarChart3Icon, EditIcon, Trash2Icon } from "lucide-react";
 import { Card } from "../../../../components/ui/card";
 import { Switch } from "../../../../components/ui/switch";
+import { showToast } from "../../../../lib/toast";
 import {
   DndContext,
   closestCenter,
@@ -165,6 +166,11 @@ const SortableItem = ({ link, index, onUrlChange, onDisplayNameChange, onToggle,
 
 export const SocialLinksSection = ({ socialLinks, setSocialLinks }: { socialLinks: SocialLink[]; setSocialLinks: React.Dispatch<React.SetStateAction<SocialLink[]>> }): JSX.Element => {
   const [editingNameIndex, setEditingNameIndex] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; index: number | null; linkName: string }>({
+    show: false,
+    index: null,
+    linkName: '',
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -233,35 +239,83 @@ export const SocialLinksSection = ({ socialLinks, setSocialLinks }: { socialLink
   };
 
   const handleDelete = (index: number) => {
-    setSocialLinks(links => links.filter((_, i) => i !== index));
+    // Show confirmation dialog
+    const linkToDelete = socialLinks[index];
+    setDeleteConfirm({
+      show: true,
+      index: index,
+      linkName: linkToDelete.displayName || linkToDelete.name,
+    });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirm.index !== null) {
+      const linkName = deleteConfirm.linkName;
+      setSocialLinks(links => links.filter((_, i) => i !== deleteConfirm.index));
+      showToast.success(`Đã xóa "${linkName}" thành công`);
+    }
+    setDeleteConfirm({ show: false, index: null, linkName: '' });
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirm({ show: false, index: null, linkName: '' });
   };
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext
-        items={socialLinks.map(link => link.id)}
-        strategy={verticalListSortingStrategy}
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
       >
-        <section className="w-full max-w-[700px] flex flex-col gap-6">
-          {socialLinks.map((link, index) => (
-            <SortableItem
-              key={link.id}
-              link={link}
-              index={index}
-              onUrlChange={handleUrlChange}
-              onDisplayNameChange={handleDisplayNameChange}
-              onToggle={handleToggle}
-              onDelete={handleDelete}
-              isEditingName={editingNameIndex === index}
-              setEditingName={setEditingNameIndex}
-            />
-          ))}
-        </section>
-      </SortableContext>
-    </DndContext>
+        <SortableContext
+          items={socialLinks.map(link => link.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <section className="w-full max-w-[700px] flex flex-col gap-6">
+            {socialLinks.map((link, index) => (
+              <SortableItem
+                key={link.id}
+                link={link}
+                index={index}
+                onUrlChange={handleUrlChange}
+                onDisplayNameChange={handleDisplayNameChange}
+                onToggle={handleToggle}
+                onDelete={handleDelete}
+                isEditingName={editingNameIndex === index}
+                setEditingName={setEditingNameIndex}
+              />
+            ))}
+          </section>
+        </SortableContext>
+      </DndContext>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 animate-fade-in">
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Xác nhận xóa</h3>
+            <p className="text-gray-600 mb-6">
+              Bạn có chắc chắn muốn xóa liên kết <span className="font-semibold text-gray-800">"{deleteConfirm.linkName}"</span> không? 
+              Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors font-medium"
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

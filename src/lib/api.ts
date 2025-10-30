@@ -745,7 +745,7 @@ export async function getMyAnalytics(): Promise<AnalyticsData> {
 
   try {
     // Call the new analytics API from backend
-    const res = await fetch('https://2share.icu/portfolios/get-portfolio-analytics', {
+    const res = await fetch('https://2share.icu/portfolios/get-portpolio-analytics', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
