@@ -413,8 +413,56 @@ export async function cancelSubscription() {
   return result;
 }
 
-// Kích hoạt gói trial cho người dùng mới (gọi create-payment để backend tự động set trial)
-export async function activateTrial(planId: string) {
+// Get the Trial plan ID from backend
+export async function getTrialPlanId(): Promise<string> {
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  console.log('🔍 Fetching Trial plan ID...');
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch('https://2share.icu/plans/get-plans', {
+    method: 'GET',
+    headers: headers,
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch plans: HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  
+  if (data.message === "Get plan successfully" && data.result) {
+    // Find Trial plan (price = 0 or isTrial = true)
+    const trialPlan = data.result.find((plan: any) => 
+      plan.price === 0 || plan.isTrial === true
+    );
+    
+    if (!trialPlan) {
+      throw new Error('Trial plan not found in database');
+    }
+    
+    const trialPlanId = trialPlan._id || trialPlan.id;
+    console.log('✅ Found Trial plan:', trialPlan.name, 'ID:', trialPlanId);
+    return trialPlanId;
+  }
+  
+  throw new Error('Invalid response format from get-plans API');
+}
+
+// Kích hoạt gói trial cho người dùng mới (ALWAYS use Trial plan from database, ignore passed planId)
+export async function activateTrial(originalPlanId?: string) {
   const token =
     localStorage.getItem('authToken') ||
     localStorage.getItem('token') ||
@@ -424,7 +472,12 @@ export async function activateTrial(planId: string) {
 
   if (!token) throw new Error('No token found');
 
-  console.log('🎁 Activating trial for plan:', planId);
+  console.log('🎁 Activating trial...');
+  
+  // IMPORTANT: Always fetch and use the actual Trial plan ID from database
+  // Do NOT use the planId that user selected in UI
+  const trialPlanId = await getTrialPlanId();
+  console.log(`🔄 Using Trial plan ID from database: ${trialPlanId} (Original plan ID was: ${originalPlanId || 'none'})`);
 
   // NOTE: Backend requires minimal validation: amount >= 1000 and items must be non-empty
   // Even for trial, backend will record a TRIAL gateway and amount 0 internally.
@@ -435,13 +488,13 @@ export async function activateTrial(planId: string) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      plan_id: planId,
+      plan_id: trialPlanId, // Use Trial plan ID from database
       // Send a minimal valid amount to satisfy validation (won't charge for trial)
       amount: 2000,
-      description: 'Trial activation (first-time purchase)',
+      description: 'Trial activation - 7 days free trial',
       items: [
         {
-          name: 'Trial activation',
+          name: 'Trial 7 days',
           quantity: 1,
           price: 2000,
         },
