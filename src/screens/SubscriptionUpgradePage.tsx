@@ -247,7 +247,7 @@ const SubscriptionUpgradePage: React.FC = () => {
       const paymentPayload = {
         plan_id: selectedPlan,
         amount: currentPlan.price,
-        description: `Nâng cấp gói ${currentPlan.name}`,
+        description: `Gói ${currentPlan.name}`,
         items: [
           {
             name: currentPlan.name,
