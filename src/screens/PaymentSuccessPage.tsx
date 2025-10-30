@@ -28,8 +28,6 @@ const PaymentSuccessPage = () => {
   const [error, setError] = useState<string>("");
   const [countdown, setCountdown] = useState(10);
 
-  const API_BASE_URL = "https://2share.icu";
-
   useEffect(() => {
     // There is no confirm-payment API. Treat the gateway callback as the source of truth.
     // PayOS success indicators: status=PAID and/or code=00, cancel=false
