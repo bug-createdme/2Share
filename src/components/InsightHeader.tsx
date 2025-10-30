@@ -29,16 +29,17 @@ const InsightsHeader: React.FC = () => {
       : "Chọn ngày";
 
   return (
-    <header className="fixed top-0 left-64 right-0 bg-white border-b border-gray-200 px-6 py-4 z-50">
+    <header className="fixed top-0 left-0 right-0 lg:left-[200px] xl:left-[265px] bg-white border-b border-gray-200 px-3 sm:px-6 py-3 sm:py-4 z-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Thống kê</h1>
+        <h1 className="text-base sm:text-lg lg:text-2xl font-bold">Thống kê</h1>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           
           {/* Calendar Picker */}
-          <div className="relative flex items-center gap-2 px-4 py-2 border border-gray-400 rounded-xl hover:bg-gray-50 transition text-sm font-medium">
-            <Calendar className="w-4 h-4" />
-            <span>{formattedRange}</span>
+          <div className="relative flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-400 rounded-lg sm:rounded-xl hover:bg-gray-50 transition text-xs sm:text-sm font-medium">
+            <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">{formattedRange}</span>
+            <span className="sm:hidden">Ngày</span>
             <div className="absolute right-0 top-12 bg-white shadow-lg border border-gray-200 rounded-2xl p-4 w-72 hidden group-hover:block">
               <p className="text-sm mb-2 text-gray-600 font-medium">Chọn khoảng thời gian</p>
               <div className="flex flex-col gap-2">
@@ -67,8 +68,8 @@ const InsightsHeader: React.FC = () => {
           </div>
 
           {/* Settings Button */}
-          <button className="p-3 border border-gray-400 rounded-xl hover:bg-gray-50 transition">
-            <Settings className="w-4 h-4" />
+          <button className="p-2 sm:p-3 border border-gray-400 rounded-lg sm:rounded-xl hover:bg-gray-50 transition">
+            <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
         </div>
       </div>

@@ -13,6 +13,30 @@
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* Hide scrollbar for mobile category tabs */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Modern scrollbar for modal content */
+.modal-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.modal-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+.modal-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+.modal-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

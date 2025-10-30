@@ -224,23 +224,23 @@ const RegisterPage: React.FC = () => {
     <img 
       src="/images/logo.png"
       alt="2share Logo"
-      className="w-[125px] h-[29px]"
+      className="w-[100px] h-auto sm:w-[125px] sm:h-[29px]"
     />
   </button>
-      <div className="w-full max-w-[679px] flex flex-col items-center px-4 sm:px-0 pt-[70px]">
+      <div className="w-full max-w-[679px] flex flex-col items-center px-4 sm:px-0 pt-[30px] md:pt-[70px]">
         <div className="w-full flex flex-col items-center">
           {/* Title */}
-          <h1 className="text-[40px] font-bold leading-[36.8px] text-black mb-[12px] font-['League_Spartan'] text-center">
+          <h1 className="text-[32px] md:text-[40px] font-bold leading-[1.1] md:leading-[36.8px] text-black mb-[8px] md:mb-[12px] font-['League_Spartan'] text-center">
             Tham gia 2Share
           </h1>
           {/* Subtitle */}
-          <p className="text-[20px] font-bold leading-[18.4px] text-[#CAC1C1] mb-[39px] font-['League_Spartan'] text-center">
+          <p className="text-[16px] md:text-[20px] font-bold leading-[1.1] md:leading-[18.4px] text-[#CAC1C1] mb-[24px] md:mb-[39px] font-['League_Spartan'] text-center">
             Đăng ký miễn phí!
           </p>
           {/* Register Form */}
           <form className="mb-[18px] w-full flex flex-col items-center space-y-3" onSubmit={handleRegister}>
             {/* Họ và tên */}
-            <div className="w-[475px] min-h-[59px] bg-[#F1F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
+            <div className="w-full max-w-[475px] min-h-[59px] bg-[#F1F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
               <input
                 type="text"
                 placeholder="Họ và tên"
@@ -253,7 +253,7 @@ const RegisterPage: React.FC = () => {
               {nameError && <span className="text-red-500 text-xs font-semibold mt-1">{nameError}</span>}
             </div>
             {/* Email */}
-            <div className="w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
+            <div className="w-full max-w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
               <input
                 type="text"
                 placeholder="Email"
@@ -266,7 +266,7 @@ const RegisterPage: React.FC = () => {
               {emailError && <span className="text-red-500 text-xs font-semibold mt-1">{emailError}</span>}
             </div>
             {/* Tên người dùng */}
-            <div className="w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center relative">
+            <div className="w-full max-w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center relative">
               <div className="flex items-center">
                 <input
                   type="text"
@@ -309,7 +309,7 @@ const RegisterPage: React.FC = () => {
               )}
             </div>
             {/* Mật khẩu */}
-            <div className="w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
+            <div className="w-full max-w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
               <div className="flex items-center">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -333,7 +333,7 @@ const RegisterPage: React.FC = () => {
               {passwordError && <span className="text-red-500 text-xs font-semibold mt-1">{passwordError}</span>}
             </div>
             {/* Xác nhận mật khẩu */}
-            <div className="w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
+            <div className="w-full max-w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
               <div className="flex items-center">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -359,7 +359,7 @@ const RegisterPage: React.FC = () => {
             {formError && <div className="text-red-500 w-full text-center text-sm font-semibold mt-2">{formError}</div>}
             <button
               type="submit"
-              className="w-[475px] h-[59px] bg-[#1B1111] rounded-[10px] flex items-center justify-center mb-[19px] hover:bg-[#2a1a1a] transition-colors text-white text-[24px] font-bold leading-[22.08px] font-['League_Spartan'] disabled:opacity-60"
+              className="w-full max-w-[475px] h-[59px] bg-[#1B1111] rounded-[10px] flex items-center justify-center mb-[19px] hover:bg-[#2a1a1a] transition-colors text-white text-[20px] md:text-[24px] font-bold leading-[1.1] md:leading-[22.08px] font-['League_Spartan'] disabled:opacity-60"
               disabled={loading}
             >
               {loading ? 'Đang đăng ký...' : 'Đăng ký'}
@@ -374,13 +374,13 @@ const RegisterPage: React.FC = () => {
           {/* Social Login Buttons */}
           <div className="space-y-[18px] mb-[20px] w-full flex flex-col items-center">
             {/* Google Login */}
-            <button className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
+            <button className="w-full max-w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
               <img 
                 src="https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-09-09/kAvOZ8CcqE.svg" 
                 alt="Google" 
                 className="w-[22.54px] h-[19px] mr-[11px]"
               />
-              <span className="text-[20px] font-bold leading-[18.4px] text-black font-['League_Spartan']">
+              <span className="text-[16px] md:text-[20px] font-bold leading-[1.1] md:leading-[18.4px] text-black font-['League_Spartan']">
                 Đăng ký bằng Google
               </span>
             </button>
@@ -437,11 +437,11 @@ const RegisterPage: React.FC = () => {
           </div> */}
           {/* Sign Up Link */}
           <div className="flex items-center justify-center w-full">
-            <span className="text-[20px] font-bold leading-[18.4px] text-[#CAC1C1] font-['League_Spartan'] mr-[14px]">
+            <span className="text-[16px] md:text-[20px] font-bold leading-[1.1] md:leading-[18.4px] text-[#CAC1C1] font-['League_Spartan'] mr-[8px] md:mr-[14px]">
               Đã có tài khoản?
             </span>
             <button
-              className="text-[20px] font-bold leading-[18.4px] text-[rgba(219,143,145,0.71)] font-['League_Spartan'] hover:underline"
+              className="text-[16px] md:text-[20px] font-bold leading-[1.1] md:leading-[18.4px] text-[rgba(219,143,145,0.71)] font-['League_Spartan'] hover:underline"
               onClick={() => navigate('/login')}
             >
               Đăng nhập

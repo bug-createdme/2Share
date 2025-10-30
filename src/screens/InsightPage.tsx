@@ -26,11 +26,18 @@ const InsightsPage: React.FC = () => {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<any | null>(null);
 
   useEffect(() => {
-    async function fetchAnalytics() {
+    async function fetchData() {
       try {
         setLoading(true);
+        // Fetch user profile first
+        const { getMyProfile } = await import('../lib/api');
+        const profile = await getMyProfile();
+        setUser(profile);
+
+        // Then fetch analytics
         const data = await getMyAnalytics();
         setAnalytics(data);
         setError(null);
@@ -42,17 +49,27 @@ const InsightsPage: React.FC = () => {
       }
     }
 
-    fetchAnalytics();
+    fetchData();
   }, []);
 
   // Calculate max clicks for progress bar scaling
   const maxClicks = analytics?.socialStats.reduce((max, stat) => Math.max(max, stat.clicks), 0) || 1;
 
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Đang tải thông tin...</div>;
+  }
+
   return (
-    <div className="ml-64 mt-20 bg-[#f9f9f9] min-h-screen px-10 py-8 text-gray-800 font-spartan">
+    <div className="bg-[#f9f9f9] min-h-screen text-gray-800 font-spartan">
+      {/* Sidebar - Fixed left */}
+      <div className="fixed top-0 left-0 h-full min-h-screen w-[200px] xl:w-[265px] bg-white border-r border-[#d9d9d9] flex-shrink-0 z-20">
+        <Sidebar user={user} />
+      </div>
+
+      {/* Header - Full width on desktop */}
       <InsightsHeader />
-      <div>
-        <Sidebar />
+
+      <div className="lg:ml-[200px] xl:ml-[265px] pt-20 px-4 sm:px-6 lg:px-10 py-8">
 
         {loading ? (
           <div className="flex justify-center items-center py-20">

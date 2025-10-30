@@ -73,23 +73,23 @@ const Hero: React.FC = () => {
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-16">
-      <div className="flex items-center justify-between">
+    <main className="max-w-7xl mx-auto px-4 py-8 sm:py-16">
+      <div className="flex flex-col md:flex-row items-center justify-between">
         <div className="flex-1 max-w-3xl">
-          <h1 className="text-[#D48A8A] font-['Unbounded'] text-6xl leading-[80px] mb-8 font-semibold">
+          <h1 className="text-[#D48A8A] font-['Unbounded'] text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.2] sm:leading-[1.3] md:leading-[1.4] lg:leading-[80px] mb-4 sm:mb-6 md:mb-8 font-semibold text-center md:text-left">
             Không còn hỏi<br />
             'Link ở đâu?'<br />
             chỉ cần 2Share!
           </h1>
           
-          <p className="text-[#440808] font-spartan text-2xl leading-[30px] mb-12 max-w-2xl">
-            Tạo hồ sơ cá nhân siêu tốc, gom mọi liên kết quan trọng về một nơi.<br />
+          <p className="text-[#440808] font-spartan text-lg sm:text-xl md:text-2xl leading-[1.4] sm:leading-[1.5] md:leading-[30px] mb-6 sm:mb-8 md:mb-12 max-w-2xl text-center md:text-left">
+            Tạo hồ sơ cá nhân siêu tốc, gom mọi liên kết quan trọng về một nơi.<br className="hidden sm:block" />
             Chia sẻ profile của bạn qua link, QR hoặc NFC – cực tiện lợi, cực chuyên nghiệp.
           </p>
           
-          <div className="flex items-center space-x-4">
-            <div className="bg-[#ece6e6] rounded-[10px] py-4 pl-6 pr-2 flex items-center w-[270px] relative">
-              <span className="text-[#A18686] font-['League_Spartan'] font-bold text-xl mr-2 select-none">
+          <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+            <div className="bg-[#ece6e6] rounded-[10px] py-3 sm:py-4 pl-4 sm:pl-6 pr-2 flex items-center w-full sm:w-[270px] relative">
+              <span className="text-[#A18686] font-['League_Spartan'] font-bold text-lg sm:text-xl mr-1 sm:mr-2 select-none">
                 2sha.re/
               </span>
               <input
@@ -98,19 +98,19 @@ const Hero: React.FC = () => {
                 value={rawName}
                 onChange={(e) => setRawName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') goRegister(); }}
-                className="bg-transparent outline-none text-[#A18686] font-['League_Spartan'] font-bold text-xl flex-1 min-w-0 placeholder-[#A18686]"
+                className="bg-transparent outline-none text-[#A18686] font-['League_Spartan'] font-bold text-lg sm:text-xl flex-1 min-w-0 placeholder-[#A18686]"
                 style={{ paddingLeft: 0 }}
               />
               {/* Checking indicator */}
               {isChecking && username.length >= 4 && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <div className="w-5 h-5 border-2 border-[#A18686] border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-[#A18686] border-t-transparent rounded-full animate-spin"></div>
                 </div>
               )}
               {/* Available indicator */}
               {!isChecking && isAvailable === true && username.length >= 4 && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                 </div>
@@ -118,7 +118,7 @@ const Hero: React.FC = () => {
               {/* Unavailable indicator */}
               {!isChecking && isAvailable === false && username.length >= 4 && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                 </div>
@@ -127,42 +127,42 @@ const Hero: React.FC = () => {
             <button
               onClick={goRegister}
               disabled={isChecking || (username.length >= 4 && isAvailable === false)}
-              className="bg-[#dea2a2] text-black font-['League_Spartan'] font-bold text-xl px-8 py-4 rounded-[20px] hover:bg-[#B88484] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-[#dea2a2] text-black font-['League_Spartan'] font-bold text-lg sm:text-xl px-4 sm:px-8 py-3 sm:py-4 rounded-[15px] sm:rounded-[20px] hover:bg-[#B88484] transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
             >
               Nhận tên của bạn
             </button>
           </div>
           {/* Hint messages */}
           {username && username.length >= 4 && (
-            <div className="mt-3 space-y-1">
-              <div className="text-sm text-[#A18686]">
+            <div className="mt-3 space-y-1 text-center md:text-left">
+              <div className="text-xs sm:text-sm text-[#A18686]">
                 Tên đề xuất: <span className="font-semibold">{username}</span>
               </div>
               {!isChecking && isAvailable === false && (
-                <div className="text-sm text-red-600 font-semibold">
+                <div className="text-xs sm:text-sm text-red-600 font-semibold">
                   ❌ Tên này đã có người sử dụng. Vui lòng chọn tên khác.
                 </div>
               )}
               {!isChecking && isAvailable === true && (
-                <div className="text-sm text-green-600 font-semibold">
+                <div className="text-xs sm:text-sm text-green-600 font-semibold">
                   ✅ Tên này có sẵn! Bạn có thể đăng ký.
                 </div>
               )}
             </div>
           )}
           {username && username.length > 0 && username.length < 4 && (
-            <div className="mt-2 text-sm text-orange-600">
+            <div className="mt-2 text-xs sm:text-sm text-orange-600 text-center md:text-left">
               Tên người dùng phải có ít nhất 4 ký tự
             </div>
           )}
         </div>
         
-        <div className="flex-shrink-0 ml-16">
+        <div className="flex-shrink-0 mt-8 md:mt-0 md:ml-8 lg:ml-16">
           <div className="relative">
             <img
               src="https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-09-09/MFrg9GUwY3.png"
               alt="Mobile App Preview"
-              className="w-[283px] h-[529px] rounded-[40px] shadow-[0px_4px_80px_rgba(0,0,0,0.55)] border-[16px] border-white/8"
+              className="w-[200px] sm:w-[240px] md:w-[283px] h-auto rounded-[30px] sm:rounded-[40px] shadow-[0px_4px_80px_rgba(0,0,0,0.55)] border-[8px] sm:border-[16px] border-white/8"
             />
           </div>
         </div>

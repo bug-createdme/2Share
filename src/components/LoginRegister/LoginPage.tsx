@@ -94,23 +94,23 @@ const LoginPage: React.FC = () => {
     <img 
       src="/images/logo.png" 
       alt="2share Logo" 
-      className="w-[125px] h-[29px]"
+      className="w-[100px] h-auto sm:w-[125px] sm:h-[29px]"
     />
   </button>
-      <div className="w-full max-w-[679px] flex flex-col items-center px-4 sm:px-0 pt-[70px]">
+      <div className="w-full max-w-[679px] flex flex-col items-center px-4 sm:px-0 pt-[30px] sm:pt-[70px]">
         <div className="w-full flex flex-col items-center">
           {/* Title */}
-          <h1 className="text-[40px] font-bold leading-[36.8px] text-black mb-[12px] font-['League_Spartan'] text-center">
+          <h1 className="text-[32px] sm:text-[40px] font-bold leading-[1.1] sm:leading-[36.8px] text-black mb-[8px] sm:mb-[12px] font-['League_Spartan'] text-center">
             Chào mừng trở lại
           </h1>
           {/* Subtitle */}
-          <p className="text-[20px] font-bold leading-[18.4px] text-[#CAC1C1] mb-[39px] font-['League_Spartan'] text-center">
+          <p className="text-[16px] sm:text-[20px] font-bold leading-[1.1] sm:leading-[18.4px] text-[#CAC1C1] mb-[24px] sm:mb-[39px] font-['League_Spartan'] text-center">
             Đăng nhập vào 2share của bạn
           </p>
           {/* Username Input */}
           <form className="mb-[18px] w-full flex flex-col items-center space-y-3" onSubmit={handleLogin}>
             {/* Email */}
-            <div className="w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
+            <div className="w-full sm:w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
               <input
                 type="text"
                 placeholder="Email"
@@ -123,7 +123,7 @@ const LoginPage: React.FC = () => {
               {emailError && <span className="text-red-500 text-xs font-semibold mt-1">{emailError}</span>}
             </div>
             {/* Mật khẩu */}
-            <div className="w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
+            <div className="w-full sm:w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
               <div className="flex items-center">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -149,7 +149,7 @@ const LoginPage: React.FC = () => {
             {formError && <div className="text-red-500 w-full text-center text-sm font-semibold mt-2">{formError}</div>}
             <button
               type="submit"
-              className="w-[475px] h-[59px] bg-[#1B1111] rounded-[10px] flex items-center justify-center mb-[19px] hover:bg-[#2a1a1a] transition-colors text-white text-[24px] font-bold leading-[22.08px] font-['League_Spartan'] disabled:opacity-60"
+              className="w-full sm:w-[475px] h-[59px] bg-[#1B1111] rounded-[10px] flex items-center justify-center mb-[19px] hover:bg-[#2a1a1a] transition-colors text-white text-[20px] sm:text-[24px] font-bold leading-[22.08px] font-['League_Spartan'] disabled:opacity-60"
               disabled={loading}
             >
               {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
@@ -166,7 +166,7 @@ const LoginPage: React.FC = () => {
             {/* Google Login */}
             <button
               type="button"
-              className="w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors"
+              className="w-full sm:w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors"
               onClick={() => window.location.href = getOauthGoogleUrl()}
             >
               <img 
@@ -174,7 +174,7 @@ const LoginPage: React.FC = () => {
                 alt="Google" 
                 className="w-[22.54px] h-[19px] mr-[11px]"
               />
-              <span className="text-[20px] font-bold leading-[18.4px] text-black font-['League_Spartan']">
+              <span className="text-[16px] sm:text-[20px] font-bold leading-[18.4px] text-black font-['League_Spartan']">
                 Đăng nhập bằng Google
               </span>
             </button>
@@ -182,9 +182,9 @@ const LoginPage: React.FC = () => {
 
           {/* Forgot Password Links */}
           <div className="flex flex-col items-center w-full mb-[33px]">
-            <div className="flex items-center justify-center gap-10 w-full">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-10 w-full">
               <button
-                className="text-[20px] font-bold leading-[18.4px] text-[#DB8F91] font-['League_Spartan'] hover:underline"
+                className="text-[16px] sm:text-[20px] font-bold leading-[18.4px] text-[#DB8F91] font-['League_Spartan'] hover:underline"
                 type="button"
                 onClick={() => navigate('/forgot-password')}
               >
@@ -194,9 +194,9 @@ const LoginPage: React.FC = () => {
                 <img 
                   src="https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-09-09/jbnLNpQ2Jx.svg" 
                   alt="Fingerprint" 
-                  className="w-[23.01px] h-[24px] mr-[11px]"
+                  className="w-[20px] sm:w-[23.01px] h-[20px] sm:h-[24px] mr-[8px] sm:mr-[11px]"
                 />
-                <button className="text-[20px] font-bold leading-[18.4px] text-[#DB8F91] font-['League_Spartan'] hover:underline">
+                <button className="text-[16px] sm:text-[20px] font-bold leading-[18.4px] text-[#DB8F91] font-['League_Spartan'] hover:underline">
                   Quên email?
                 </button>
               </div>
@@ -204,11 +204,11 @@ const LoginPage: React.FC = () => {
           </div>
           {/* Sign Up Link */}
           <div className="flex items-center justify-center w-full">
-            <span className="text-[20px] font-bold leading-[18.4px] text-[#CAC1C1] font-['League_Spartan'] mr-[14px]">
+            <span className="text-[16px] sm:text-[20px] font-bold leading-[18.4px] text-[#CAC1C1] font-['League_Spartan'] mr-[8px] sm:mr-[14px]">
               Không có tài khoản?
             </span>
             <button
-              className="text-[20px] font-bold leading-[18.4px] text-[rgba(219,143,145,0.71)] font-['League_Spartan'] hover:underline"
+              className="text-[16px] sm:text-[20px] font-bold leading-[18.4px] text-[rgba(219,143,145,0.71)] font-['League_Spartan'] hover:underline"
               onClick={() => navigate('/register')}
             >
               Đăng ký

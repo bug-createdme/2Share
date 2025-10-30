@@ -25,6 +25,7 @@ const PortfolioDesignPage: React.FC = () => {
   const [buttonCorner, setButtonCorner] = useState(1); // 0 = hard, 1 = soft, 2 = round
   const [bio, setBio] = useState("");
   const [socialLinks, setSocialLinks] = useState<any[]>([]);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
 const avatarColors: Record<string, string> = {
   coral: "bg-[#E7A5A5]",
@@ -127,16 +128,55 @@ const textColors: Record<string, string> = {
 
   return (
     <div className="min-h-screen bg-gray-50 font-spartan">
-      {/* Header */}
-      <Header />
+      {/* Mobile Menu Button */}
+      <button
+        className="lg:hidden fixed top-3 left-3 z-30 bg-white rounded-lg p-2 shadow-md border border-gray-200 hover:bg-gray-50"
+        onClick={() => setShowMobileSidebar(true)}
+        aria-label="Mở menu"
+      >
+        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
 
-      <div className="flex pt-20">
-        {/* Sidebar */}
+      {/* Mobile overlay */}
+      {showMobileSidebar && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/40 z-30"
+          onClick={() => setShowMobileSidebar(false)}
+        />
+      )}
+
+      {/* Sidebar - Desktop fixed, Mobile slide-in */}
+      <div className="hidden lg:block fixed top-0 left-0 h-full min-h-screen w-[200px] xl:w-[265px] bg-white border-r border-[#d9d9d9] flex-shrink-0 z-20">
         <Sidebar user={user} />
+      </div>
+
+      {/* Mobile slide-in sidebar */}
+      <div
+        className={`lg:hidden fixed top-0 left-0 h-full w-[280px] bg-white border-r border-[#d9d9d9] z-40 transition-transform duration-300 ${
+          showMobileSidebar ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <Sidebar user={user} />
+        <button
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+          aria-label="Đóng menu"
+          onClick={() => setShowMobileSidebar(false)}
+        >
+          <span className="text-gray-600 text-xl leading-none">×</span>
+        </button>
+      </div>
+
+      {/* Header - Full width on desktop */}
+      <Header title="Thiết kế Portfolio" />
+
+      <div className="flex pt-16 sm:pt-20 lg:ml-[200px] xl:ml-[265px]">
+        {/* Main content with proper spacing */}
 
         {/* Main Content */}
-        <main className="flex ml-72 p-8 overflow-y-auto">
-          <div className="max-w-4xl mx-auto space-y-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
             {/* Profile Section */}
             <section>
             <h2 className="text-2xl font-bold mb-6">Hồ sơ</h2>
