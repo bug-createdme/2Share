@@ -744,10 +744,30 @@ export async function getMyAnalytics(): Promise<AnalyticsData> {
   console.log('🔑 Getting my analytics with token:', token ? 'Yes' : 'No');
 
   try {
-    // Get current portfolio to calculate analytics
-    const portfolio = await getMyPortfolio();
+    // Call the new analytics API from backend
+    const res = await fetch('https://2share.icu/portfolios/get-portfolio-analytics', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Check content type before parsing
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Response is not JSON. Please check API endpoint.');
+    }
+
+    const response = await res.json();
+    console.log('📡 Get analytics response status:', res.status, 'data:', response);
+
+    if (!res.ok) throw new Error(response.message || `HTTP ${res.status}: Lỗi lấy thống kê`);
+
+    // Parse the new API response structure
+    const analyticsResult = response.result;
     
-    if (!portfolio || !portfolio.social_links) {
+    if (!analyticsResult || !analyticsResult.portfolios || analyticsResult.portfolios.length === 0) {
       return {
         totalViews: 0,
         totalClicks: 0,
@@ -756,31 +776,53 @@ export async function getMyAnalytics(): Promise<AnalyticsData> {
       };
     }
 
-    // Calculate total clicks from social links
+    // Calculate total views from all portfolios
+    let totalViews = 0;
     let totalClicks = 0;
-    const socialStats: AnalyticsData['socialStats'] = [];
 
-    Object.entries(portfolio.social_links).forEach(([key, value]: any) => {
-      const clicks = value?.clicks || 0;
-      totalClicks += clicks;
-      
-      if (value && (value.url || value.isEnabled)) {
-        socialStats.push({
-          name: key.charAt(0).toUpperCase() + key.slice(1),
-          clicks: clicks,
-          url: value.url || '',
-          displayName: value.displayName || key.charAt(0).toUpperCase() + key.slice(1),
-          icon: value.icon || '🔗',
-          color: value.color || '#6e6e6e',
+    analyticsResult.portfolios.forEach((portfolio: any) => {
+      if (portfolio.stats && Array.isArray(portfolio.stats)) {
+        portfolio.stats.forEach((stat: any) => {
+          if (stat.type === 'view') {
+            totalViews += stat.count || 0;
+          } else if (stat.type === 'click') {
+            totalClicks += stat.count || 0;
+          }
         });
       }
     });
 
-    // Sort by clicks descending
-    socialStats.sort((a, b) => b.clicks - a.clicks);
+    // Try to get portfolio social links for detailed stats (optional)
+    let socialStats: AnalyticsData['socialStats'] = [];
+    
+    try {
+      const myPortfolio = await getMyPortfolio();
+      
+      if (myPortfolio && myPortfolio.social_links) {
+        Object.entries(myPortfolio.social_links).forEach(([key, value]: any) => {
+          const clicks = value?.clicks || 0;
+          
+          if (value && (value.url || value.isEnabled)) {
+            socialStats.push({
+              name: key.charAt(0).toUpperCase() + key.slice(1),
+              clicks: clicks,
+              url: value.url || '',
+              displayName: value.displayName || key.charAt(0).toUpperCase() + key.slice(1),
+              icon: value.icon || '🔗',
+              color: value.color || '#6e6e6e',
+            });
+          }
+        });
 
-    // For now, we'll use totalClicks as views (can be updated when backend provides views)
-    const totalViews = totalClicks;
+        // Sort by clicks descending
+        socialStats.sort((a, b) => b.clicks - a.clicks);
+      }
+    } catch (portfolioError) {
+      console.warn('⚠️ Could not fetch portfolio for social stats:', portfolioError);
+      // Continue without social stats - just show total views/clicks
+    }
+
+    // Calculate click rate
     const clickRate = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
 
     return {
@@ -793,30 +835,4 @@ export async function getMyAnalytics(): Promise<AnalyticsData> {
     console.error('❌ Error getting analytics:', error);
     throw error;
   }
-}
-
-  // Track click on a social link in public portfolio
-  export async function trackSocialClick(slug: string, socialKey: string): Promise<any> {
-    try {
-      const res = await fetch(`https://2share.icu/portfolios/track-click/${encodeURIComponent(slug)}/${encodeURIComponent(socialKey)}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!res.ok) {
-        // Don't throw error, just log it - we don't want to block the user from opening the link
-        console.warn('Failed to track click:', res.status);
-        return null;
-      }
-
-      const result = await res.json();
-      console.log('✅ Click tracked:', result);
-      return result;
-    } catch (error) {
-      console.error('❌ Error tracking click:', error);
-      // Don't throw, just return null
-      return null;
-    }
   }
