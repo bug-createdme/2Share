@@ -403,7 +403,10 @@ export const MyLinksPage = (): JSX.Element => {
               // Sau khi load xong, trigger save lại
               setTimeout(async () => {
                 try {
-                  await updatePortfolio(firstSlug, { social_links: socialLinksObj });
+                  await updatePortfolio(firstSlug, { 
+                    social_links: socialLinksObj,
+                    avatar_url: user.avatar_url
+                  });
                   console.log('✅ Social links saved to first portfolio');
                 } catch (err) {
                   console.error('❌ Error saving to first portfolio:', err);
@@ -486,7 +489,10 @@ export const MyLinksPage = (): JSX.Element => {
 
         // Save to backend using update
         console.log('📤 Updating portfolio with slug:', portfolioSlug);
-        await updatePortfolio(portfolioSlug, { social_links: socialLinksObj });
+        await updatePortfolio(portfolioSlug, { 
+          social_links: socialLinksObj,
+          avatar_url: user.avatar_url
+        });
         console.log('✅ Social links saved to backend');
       } catch (error: any) {
         console.error('Error saving social links:', error);
@@ -627,7 +633,8 @@ export const MyLinksPage = (): JSX.Element => {
         console.log('📤 Updating portfolio with slug:', portfolioSlug);
         await updatePortfolio(portfolioSlug, { 
           title: tmpPortfolioTitle || 'My Portfolio',
-          blocks 
+          blocks,
+          avatar_url: user.avatar_url
         });
         console.log('✅ Portfolio bio and title updated');
       }

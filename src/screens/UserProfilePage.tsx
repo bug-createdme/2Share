@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { User, Mail, Phone, Calendar, Shield, CreditCard, Camera, Save, AlertCircle } from 'lucide-react';
-import { updateMyProfile, getMyPortfolio } from '../lib/api';
+import { updateMyProfile, getMyPortfolio, updatePortfolio } from '../lib/api';
 import { showToast } from '../lib/toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -69,6 +69,21 @@ const UserProfilePage: React.FC<UserProfileProps> = ({ user }) => {
     setLoading(true);
     try {
       await updateMyProfile(form);
+      
+      // Sync avatar to portfolio if changed
+      if (form.avatar_url !== user.avatar_url) {
+        try {
+          const portfolio = await getMyPortfolio();
+          if (portfolio && portfolio.slug) {
+            await updatePortfolio(portfolio.slug, { avatar_url: form.avatar_url });
+            console.log('✅ Avatar synced to portfolio');
+          }
+        } catch (portfolioErr) {
+          console.warn('⚠️ Could not sync avatar to portfolio:', portfolioErr);
+          // Don't show error to user, profile update was successful
+        }
+      }
+      
       showToast.success('Cập nhật thành công!');
     } catch (err: any) {
       showToast.error(err.message || 'Lỗi cập nhật');
