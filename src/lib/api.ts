@@ -50,6 +50,21 @@ export async function createPortfolio(data: {
   if (!res.ok) throw new Error(result.message || `HTTP ${res.status}: Lỗi tạo portfolio`);
   return result;
 }
+export interface DesignSettings {
+  theme: string;
+  profileLayout: number;
+  buttonFill: number;
+  buttonCorner: number;
+  fontFamily: string;
+  textColor: string;
+  buttonTextColor: string;
+  buttonColor: string;
+  backgroundType: string;
+  backgroundImage?: string;
+  backgroundSolidColor?: string;
+  backgroundGradient?: string;
+  backgroundPattern?: string;
+}
 // Cập nhật portfolio hiện tại
 export async function updatePortfolio(slug: string, data: {
   title?: string;
@@ -57,6 +72,7 @@ export async function updatePortfolio(slug: string, data: {
   social_links?: Record<string, any>;
   avatar_url?: string;
   banner_url?: string;
+  design_settings?: DesignSettings;
 }) {
   // Lấy token từ nhiều nơi có thể
   const token =
@@ -69,8 +85,7 @@ export async function updatePortfolio(slug: string, data: {
   if (!token) throw new Error('No token found');
 
   console.log('📤 updatePortfolio - Sending request with slug:', slug, 'data:', data);
-  console.log('🔑 updatePortfolio - Token:', token?.substring(0, 20) + '...');
-
+  
   const res = await fetch(`https://2share.icu/portfolios/update-portfolio/${slug}`, {
     method: 'PATCH',
     headers: {

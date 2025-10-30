@@ -159,8 +159,6 @@ function App() {
             <Route path="/portfolio/:slug" element={<PublicPortfolioPage />} />
             {/* Route xử lý callback OAuth Google */}
             <Route path="/oauth/google" element={<OAuthCallbackHandler />} />
-            <Route path="/demo/my-links" element={<MockMyLinksPage />} />
-            <Route path="/demo/portfolio-design" element={<MockPortfolioDesignPage />} />
           </Routes>
         </div>
       </AuthProvider>

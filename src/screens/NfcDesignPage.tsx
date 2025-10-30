@@ -193,12 +193,7 @@ const NfcDesignPage: React.FC = () => {
                 <h2 className="text-2xl font-bold mb-6">Chủ đề</h2>
                 <div className="bg-white rounded-3xl border border-gray-400 p-8 ml-14">
                   <div className="grid grid-cols-3 gap-6 place-items-center">
-                    <div className="text-center">
-                      <div className="w-36 h-24 border-2 border-dashed border-gray-400 rounded-2xl flex flex-col items-center justify-center mb-2 bg-white">
-                        <span className="text-sm">Tự thiết kế</span>
-                        <Zap className="w-4 h-4 mt-2" style={{ stroke: "url(#lightning-gradient)" }} />
-                      </div>
-                    </div>
+                    
 
                     {Object.entries(themeClasses).map(([key, gradient]) => (
                       <div key={key} className="text-center">
