@@ -1,50 +1,223 @@
-// PaymentSuccessPage.tsx
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { CheckCircle, Loader2, ArrowRight } from 'lucide-react';
+
+interface PaymentConfirmation {
+  orderId: string;
+  subscriptionId: string;
+  status: string;
+  amount: number;
+  planName: string;
+  createdAt: string;
+}
 
 const PaymentSuccessPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
   const orderId = searchParams.get('orderId');
+  const subscriptionId = searchParams.get('subscriptionId');
+
+  const [confirmation, setConfirmation] = useState<PaymentConfirmation | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>("");
+  const [countdown, setCountdown] = useState(10);
+
+  const API_BASE_URL = "https://2share.icu";
 
   useEffect(() => {
-    if (orderId) {
-      // Gọi API xác nhận thanh toán thành công
-      confirmPayment(orderId);
-      
-      // Hiển thị thông báo thành công
-      alert('Thanh toán thành công!');
-      
-      // Chuyển hướng về trang chủ hoặc trang subscription
-      setTimeout(() => {
-        navigate('/subscriptions');
-      }, 3000);
+    if (!orderId) {
+      setError("Không tìm thấy thông tin đơn hàng");
+      setLoading(false);
+      return;
     }
-  }, [orderId, navigate]);
 
-  const confirmPayment = async (orderId: string) => {
-    try {
-      // Gọi API backend để xác nhận thanh toán
-      const response = await fetch(`/api/payments/confirm/${orderId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+    const confirmPayment = async () => {
+      try {
+        setLoading(true);
+
+        const authToken =
+          localStorage.getItem('authToken') ||
+          localStorage.getItem('token') ||
+          localStorage.getItem('accessToken') ||
+          sessionStorage.getItem('authToken') ||
+          sessionStorage.getItem('token');
+
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        };
+
+        if (authToken) {
+          headers['Authorization'] = `Bearer ${authToken}`;
         }
-      });
-      
-      if (response.ok) {
-        console.log('Payment confirmed successfully');
+
+        // Gọi API xác nhận thanh toán
+        const response = await fetch(`${API_BASE_URL}/subscriptions/confirm-payment/${orderId}`, {
+          method: 'POST',
+          headers: headers
+        });
+
+        if (!response.ok) {
+          throw new Error(`Lỗi xác nhận thanh toán: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.result) {
+          setConfirmation({
+            orderId: orderId,
+            subscriptionId: subscriptionId || data.result.subscriptionId || '',
+            status: 'success',
+            amount: data.result.amount || 0,
+            planName: data.result.planName || 'Gói đăng ký',
+            createdAt: new Date().toLocaleString('vi-VN')
+          });
+        }
+      } catch (error: any) {
+        console.error('Lỗi xác nhận thanh toán:', error);
+        // Vẫn hiển thị trang thành công ngay cả khi API lỗi
+        setConfirmation({
+          orderId: orderId,
+          subscriptionId: subscriptionId || '',
+          status: 'success',
+          amount: 0,
+          planName: 'Gói đăng ký',
+          createdAt: new Date().toLocaleString('vi-VN')
+        });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error confirming payment:', error);
+    };
+
+    confirmPayment();
+  }, [orderId, subscriptionId]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!loading && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
     }
-  };
+
+    if (countdown === 0 && !loading) {
+      navigate('/subscription');
+    }
+  }, [countdown, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center px-4">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-[#8A2EA5] mx-auto mb-4" />
+          <p className="text-gray-600 text-lg">Đang xác nhận thanh toán...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !confirmation) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-4">❌</div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Lỗi</h1>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => navigate('/subscription')}
+            className="bg-[#8A2EA5] text-white px-6 py-3 rounded-lg hover:bg-[#6f2488] transition-colors font-semibold"
+          >
+            Quay lại
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="payment-success">
-      <h1>✅ Thanh toán thành công!</h1>
-      <p>Order ID: {orderId}</p>
-      <p>Chúng tôi đang kích hoạt gói của bạn...</p>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 flex items-center justify-center px-4 py-10">
+      <div className="max-w-md w-full">
+        {/* Success Card */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+          {/* Success Icon */}
+          <div className="mb-6 flex justify-center">
+            <div className="relative">
+              <div className="absolute inset-0 bg-green-200 rounded-full animate-pulse"></div>
+              <CheckCircle className="w-20 h-20 text-green-500 relative" />
+            </div>
+          </div>
+
+          {/* Title */}
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            Thanh toán thành công!
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Gói đăng ký của bạn đã được kích hoạt
+          </p>
+
+          {/* Order Details */}
+          {confirmation && (
+            <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Mã đơn hàng:</span>
+                <span className="font-semibold text-gray-800 break-all">{confirmation.orderId}</span>
+              </div>
+              {confirmation.subscriptionId && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Mã đăng ký:</span>
+                  <span className="font-semibold text-gray-800 break-all">{confirmation.subscriptionId}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-gray-600">Thời gian:</span>
+                <span className="font-semibold text-gray-800">{confirmation.createdAt}</span>
+              </div>
+              <div className="pt-3 border-t border-gray-200 flex justify-between">
+                <span className="text-gray-600">Trạng thái:</span>
+                <span className="font-semibold text-green-600">✅ Thành công</span>
+              </div>
+            </div>
+          )}
+
+          {/* Next Steps */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
+            <p className="text-sm text-blue-900 font-semibold mb-2">📧 Tiếp theo:</p>
+            <ul className="text-sm text-blue-800 space-y-1">
+              <li>✓ Kiểm tra email để nhận xác nhận</li>
+              <li>✓ Gói của bạn đã được kích hoạt</li>
+              <li>✓ Bạn có thể bắt đầu sử dụng ngay</li>
+            </ul>
+          </div>
+
+          {/* Countdown */}
+          <div className="mb-6 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+            <p className="text-sm text-purple-800">
+              Chuyển hướng về trang gói đăng ký trong <span className="font-bold">{countdown}</span> giây...
+            </p>
+          </div>
+
+          {/* Buttons */}
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/subscription')}
+              className="w-full bg-[#8A2EA5] text-white py-3 rounded-lg hover:bg-[#6f2488] transition-colors font-semibold flex items-center justify-center gap-2"
+            >
+              Quay lại gói đăng ký
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+            >
+              Về trang chủ
+            </button>
+          </div>
+
+          {/* Footer */}
+          <p className="text-xs text-gray-500 mt-6">
+            Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với bộ phận hỗ trợ
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

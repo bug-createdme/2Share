@@ -9,7 +9,13 @@ const EmailVerifyActionPage: React.FC = () => {
   const params = new URLSearchParams(location.search);
   const email = params.get('email') || '';
   const email_verify_token = params.get('token') || '';
-  const refresh_token = params.get('refresh_token') || localStorage.getItem('refresh_token') || '';
+  
+  // Lấy refresh_token từ nhiều nguồn và lưu vào localStorage
+  const refreshTokenFromUrl = params.get('refresh_token');
+  if (refreshTokenFromUrl) {
+    localStorage.setItem('refresh_token', refreshTokenFromUrl);
+  }
+  const refresh_token = refreshTokenFromUrl || localStorage.getItem('refresh_token') || '';
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
@@ -17,6 +23,11 @@ const EmailVerifyActionPage: React.FC = () => {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMsg, setResendMsg] = useState('');
   const hasToken = Boolean(email_verify_token);
+
+  // Debug log
+  console.log('Email:', email);
+  console.log('Email verify token:', email_verify_token ? 'exists' : 'none');
+  console.log('Refresh token:', refresh_token ? 'exists' : 'none');
 
   const handleVerify = async () => {
     setLoading(true);
@@ -55,12 +66,13 @@ const EmailVerifyActionPage: React.FC = () => {
   };
 
   const handleResend = async () => {
+    if (!refresh_token) {
+      setResendMsg('Không tìm thấy refresh token. Vui lòng đăng nhập lại.');
+      return;
+    }
     setResendLoading(true);
     setResendMsg('');
     try {
-      if (!refresh_token) {
-        throw new Error('Thiếu refresh_token. Vui lòng đăng nhập lại.');
-      }
       const result = await resendVerifyEmail(refresh_token);
       // For debugging visibility
       console.log('resendVerifyEmail result:', result);
@@ -75,13 +87,14 @@ const EmailVerifyActionPage: React.FC = () => {
 
   // Primary button behavior when NO token: send verify email but keep independent loading state
   const handleSendLinkPrimary = async () => {
+    if (!refresh_token) {
+      setError('Không tìm thấy refresh token. Vui lòng đăng nhập lại.');
+      return;
+    }
     setLoading(true);
     setSuccess('');
     setError('');
     try {
-      if (!refresh_token) {
-        throw new Error('Thiếu refresh_token. Vui lòng đăng nhập lại.');
-      }
       const result = await resendVerifyEmail(refresh_token);
       console.log('resend via primary result:', result);
       setSuccess(result.message || 'Đã gửi email xác thực. Vui lòng kiểm tra hộp thư.');
@@ -100,22 +113,31 @@ const EmailVerifyActionPage: React.FC = () => {
         <div className="text-lg text-[#222]">Email đăng ký: <span className="font-semibold">{email}</span></div>
         {/* Primary action */}
         <button
-          className="mt-2 px-6 py-3 rounded-[16px] bg-[#222] text-white font-semibold text-lg disabled:opacity-60"
+          className="mt-2 px-6 py-3 rounded-[16px] bg-[#222] text-white font-semibold text-lg disabled:opacity-60 hover:bg-[#333] transition-colors cursor-pointer"
           onClick={hasToken ? handleVerify : handleSendLinkPrimary}
-          disabled={hasToken ? loading : (!refresh_token || loading)}
+          disabled={loading}
         >
           {hasToken ? (loading ? 'Đang xác thực...' : 'Xác thực ngay') : (loading ? 'Đang gửi...' : 'Gửi link xác thực')}
         </button>
         {success && <div className="text-green-600 font-semibold text-center">{success}</div>}
         {error && <div className="text-red-500 font-semibold text-center">{error}</div>}
         <button
-          className="mt-2 px-6 py-3 rounded-[16px] bg-[#ececec] text-[#222] font-semibold text-lg disabled:opacity-60"
+          className="mt-2 px-6 py-3 rounded-[16px] bg-[#ececec] text-[#222] font-semibold text-lg disabled:opacity-60 hover:bg-[#ddd] transition-colors cursor-pointer"
           onClick={handleResend}
-          disabled={resendLoading || !refresh_token}
+          disabled={resendLoading}
         >
           {resendLoading ? 'Đang gửi lại...' : 'Gửi lại email xác thực'}
         </button>
         {resendMsg && <div className="text-green-600 font-semibold text-center">{resendMsg}</div>}
+        
+        {/* Debug info - remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-3 bg-gray-100 rounded text-xs text-left w-full">
+            <div>Email: {email}</div>
+            <div>Has verify token: {hasToken ? 'Yes' : 'No'}</div>
+            <div>Has refresh token: {refresh_token ? 'Yes' : 'No'}</div>
+          </div>
+        )}
       </div>
     </div>
   );

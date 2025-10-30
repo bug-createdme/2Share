@@ -39,7 +39,7 @@ interface PortfolioStats {
     newPortfoliosDaily: Array<{ _id: string; count: number }>;
     avgBlocksPerPortfolio: number;
     nfcCards: number;
-    topUsersByPortfolios: Array<{ _id: string; count: number }>;
+    topUsersByPortfolios: Array<{ _id: string; count: number; username?: string; name?: string; email?: string }>;
   };
 }
 
@@ -49,15 +49,13 @@ interface RevenueStats {
     monthlyRevenue: Array<any>;
     revenueBySource: Array<any>;
     revenueByGateway: Array<any>;
-    txnSuccess: number;
-    txnFailed: number;
+    txSuccess: number;  // Changed from txnSuccess
+    txFailed: number;   // Changed from txnFailed
     ARPU: number;
     activeSubscriptions: number;
-    topPlans: Array<any>;
+    topPlans: Array<any>; // Use any to handle various response structures
   };
 }
-
-
 
 const AdminPage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -378,11 +376,11 @@ const AdminPage: React.FC = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Giao dịch thành công</span>
-              <span className="font-semibold text-lg text-green-600">{revenueStats?.result?.txnSuccess ?? '0'}</span>
+              <span className="font-semibold text-lg text-green-600">{revenueStats?.result?.txSuccess ?? '0'}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Giao dịch thất bại</span>
-              <span className="font-semibold text-lg text-red-600">{revenueStats?.result?.txnFailed ?? '0'}</span>
+              <span className="font-semibold text-lg text-red-600">{revenueStats?.result?.txFailed ?? '0'}</span>
             </div>
           </CardContent>
         </Card>
@@ -567,25 +565,31 @@ const AdminPage: React.FC = () => {
       <CardContent>
         {portfolioStats?.result?.topUsersByPortfolios && portfolioStats.result.topUsersByPortfolios.length > 0 ? (
           <div className="space-y-4">
-            {portfolioStats.result.topUsersByPortfolios.map((userPortfolio, index) => (
-              <div key={userPortfolio._id} className="flex items-center justify-between p-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200 hover:shadow-md transition-all">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 text-white rounded-full font-bold text-lg shadow-lg">
-                    #{index + 1}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-lg">User ID: {userPortfolio._id}</div>
-                    <div className="text-sm text-gray-600">
-                      {userPortfolio.count} Portfolio
+            {portfolioStats.result.topUsersByPortfolios.map((userPortfolio, index) => {
+              // Find the corresponding user from the users list to get their details
+              const userDetails = users.find(u => u._id === userPortfolio._id);
+              const displayName = userDetails?.name || userDetails?.email || `User #${userPortfolio._id.slice(-6)}`;
+              
+              return (
+                <div key={userPortfolio._id} className="flex items-center justify-between p-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200 hover:shadow-md transition-all">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 text-white rounded-full font-bold text-lg shadow-lg">
+                      #{index + 1}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-lg">{displayName}</div>
+                      <div className="text-sm text-gray-600">
+                        {userDetails?.email && userDetails.name ? userDetails.email : `ID: ${userPortfolio._id.slice(-8)}`}
+                      </div>
                     </div>
                   </div>
+                  <div className="text-right">
+                    <div className="font-bold text-2xl text-orange-600">{userPortfolio.count}</div>
+                    <div className="text-sm text-gray-500">Portfolio</div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-bold text-2xl text-orange-600">{userPortfolio.count}</div>
-                  <div className="text-sm text-gray-500">Portfolio</div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500">
@@ -620,12 +624,12 @@ const AdminPage: React.FC = () => {
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <TrendingUp className="h-8 w-8 text-green-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-green-600">{revenueStats?.result?.txnSuccess ?? '0'}</p>
+              <p className="text-2xl font-bold text-green-600">{revenueStats?.result?.txSuccess ?? '0'}</p>
               <p className="text-sm text-gray-600">Giao dịch thành công</p>
             </div>
             <div className="text-center p-4 bg-red-50 rounded-lg">
               <Target className="h-8 w-8 text-red-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-red-600">{revenueStats?.result?.txnFailed ?? '0'}</p>
+              <p className="text-2xl font-bold text-red-600">{revenueStats?.result?.txFailed ?? '0'}</p>
               <p className="text-sm text-gray-600">Giao dịch thất bại</p>
             </div>
           </div>
@@ -637,18 +641,39 @@ const AdminPage: React.FC = () => {
             </h3>
             <div className="space-y-3">
               {revenueStats?.result?.topPlans && revenueStats.result.topPlans.length > 0 ? (
-                revenueStats.result.topPlans.map((plan, index) => (
-                  <div key={plan._id || index} className="flex justify-between items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                    <div>
-                      <div className="font-medium">Gói ID: {plan._id}</div>
-                      <div className="text-sm text-gray-500">Hạng #{index + 1}</div>
+                revenueStats.result.topPlans.map((planData: any, index: number) => {
+                  // Handle the structure: each item has _id, count, and optionally a 'plan' object
+                  const planInfo = planData.plan || {}; // The actual plan details are in the 'plan' property
+                  const planId = planData._id || '';
+                  const displayName = planInfo.name || `Gói #${planId.slice(-6)}`;
+                  
+                  // Get price from plan object
+                  let planPrice = 'N/A';
+                  if (planInfo.price !== undefined && planInfo.price !== null) {
+                    planPrice = `${planInfo.price.toLocaleString('vi-VN')}đ`;
+                  }
+                  
+                  // Get duration from plan object
+                  const duration = planInfo.duration_in_days || 'N/A';
+                  
+                  // Get count from root level
+                  const count = planData.count || 0;
+                  
+                  return (
+                    <div key={planId || index} className="flex justify-between items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                      <div>
+                        <div className="font-medium">{displayName}</div>
+                        <div className="text-sm text-gray-500">
+                          {planPrice} - {duration} ngày
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-green-600 text-lg">{count}</div>
+                        <div className="text-sm text-gray-500">đăng ký</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-green-600 text-lg">{plan.count || plan.value || 'N/A'}</div>
-                      <div className="text-sm text-gray-500">đăng ký</div>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   Không có dữ liệu gói

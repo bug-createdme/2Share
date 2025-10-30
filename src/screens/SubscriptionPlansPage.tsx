@@ -97,9 +97,7 @@ const SubscriptionPlansPage: React.FC = () => {
       } catch (err: any) {
         console.error('Error fetching plans:', err);
         setError(err.message || 'Không thể tải danh sách gói dịch vụ. Vui lòng thử lại sau.');
-        
-        // Fallback to mock data
-        setPlans(getMockPlans());
+        setPlans([]);
       } finally {
         setLoading(false);
       }
@@ -107,36 +105,6 @@ const SubscriptionPlansPage: React.FC = () => {
 
     fetchPlans();
   }, []);
-
-  // Mock data fallback
-  const getMockPlans = (): Plan[] => [
-    {
-      _id: "68dfe758350e9f6477f394de",
-      name: "Free Trial",
-      price: 0,
-      duration_in_days: 7,
-      description: "Gói dùng thử miễn phí với giới hạn cơ bản",
-      maxSocialLinks: 2,
-      maxTemplates: 1,
-      customDomain: false,
-      maxBusinessCard: 1,
-      maxCardLevels: 1,
-      isTrial: true
-    },
-    {
-      _id: "68dfe761350e9f6477f394df",
-      name: "Pro Plan",
-      price: 199000,
-      duration_in_days: 30,
-      description: "Gói Pro dành cho cá nhân với đầy đủ tính năng nâng cao",
-      maxSocialLinks: 10,
-      maxTemplates: 5,
-      customDomain: true,
-      maxBusinessCard: 10,
-      maxCardLevels: 3,
-      isTrial: false
-    }
-  ];
 
   // Generate features từ plan data
   const getPlanFeatures = (plan: Plan) => {
@@ -214,19 +182,12 @@ const SubscriptionPlansPage: React.FC = () => {
     return price === 0 ? 'Miễn phí' : `${price.toLocaleString('vi-VN')}đ`;
   };
 
-  // Debug: Hiển thị token info
-  const token = getAuthToken();
-  const userEmail = localStorage.getItem('userEmail');
-
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-600" />
           <p className="mt-4 text-gray-600">Đang tải gói dịch vụ...</p>
-          <p className="text-sm text-gray-500 mt-2">
-            Token: {token ? '✅ Found' : '❌ Not found'} | User: {userEmail || 'Not logged in'}
-          </p>
         </div>
       </div>
     );
@@ -245,39 +206,21 @@ const SubscriptionPlansPage: React.FC = () => {
                 className="h-8 object-contain"
               />
             </div>
-            {userEmail && (
-              <div className="flex items-center gap-4">
-                <span className="text-gray-600">Xin chào, {userEmail}</span>
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Debug Info */}
-      {/* {process.env.NODE_ENV === 'development' && (
-        <div className="bg-blue-50 border-b border-blue-200">
-          <div className="max-w-7xl mx-auto px-8 py-2">
-            <div className="text-sm text-blue-800">
-              🔍 Debug: Token: {token ? '✅' : '❌'} | User: {userEmail || 'Not set'} | Plans: {plans.length}
-            </div>
-          </div>
-        </div>
-      )} */}
-
       {/* Error Banner */}
-      {/* {error && (
-        <div className="bg-yellow-50 border border-yellow-200">
+      {error && (
+        <div className="bg-red-50 border border-red-200">
           <div className="max-w-7xl mx-auto px-8 py-4">
-            <div className="flex items-center gap-2 text-yellow-800">
-              <span>⚠️</span>
+            <div className="flex items-center gap-2 text-red-800">
+              <span>❌</span>
               <div>
-                <div className="text-sm">{error}</div>
-                {!token && (
-                  <div className="text-xs mt-1">
-                    Đang sử dụng dữ liệu demo. Vui lòng đăng nhập để xem gói thật.
-                  </div>
-                )}
+                <div className="text-sm font-semibold">{error}</div>
+                <div className="text-xs mt-1">
+                  Vui lòng kiểm tra kết nối internet hoặc thử lại sau.
+                </div>
               </div>
             </div>
           </div>
@@ -293,11 +236,6 @@ const SubscriptionPlansPage: React.FC = () => {
           <p className="text-xl text-gray-600 mb-4">
             Nâng cấp trải nghiệm của bạn với các gói dịch vụ được thiết kế đặc biệt
           </p>
-          {!token && (
-            <div className="inline-block bg-orange-100 text-orange-800 px-4 py-2 rounded-lg text-sm">
-              🔸 Đang hiển thị gói demo
-            </div>
-          )}
         </div>
       </div>
 
@@ -328,15 +266,6 @@ const SubscriptionPlansPage: React.FC = () => {
                     <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                       <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">
                         ⭐ Phổ Biến Nhất
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Demo Badge */}
-                  {!token && (
-                    <div className="absolute -top-4 right-4">
-                      <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                        DEMO
                       </div>
                     </div>
                   )}

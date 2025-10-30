@@ -123,6 +123,8 @@ const PublicPortfolioPage = (): JSX.Element => {
 
       try {
         const portfolioData = await getPortfolioBySlug(slug);
+        console.log('📋 Portfolio data received:', portfolioData);
+        console.log('📋 Username:', portfolioData?.username);
         setPortfolio(portfolioData);
       } catch (err: any) {
         setError(err.message || "Lỗi lấy thông tin portfolio");
@@ -203,8 +205,8 @@ const PublicPortfolioPage = (): JSX.Element => {
             >
               ← Về trang chủ
             </Button>
-            <div className="text-sm text-gray-600">
-              Portfolio của @{portfolio?.username || portfolio?.title || slug}
+            <div className="text-sm text-gray-600 truncate max-w-[200px]">
+              {portfolio?.username ? `Portfolio của @${portfolio.username}` : 'Portfolio'}
             </div>
           </div>
         </div>
@@ -225,22 +227,29 @@ const PublicPortfolioPage = (): JSX.Element => {
                   />
                 </div>
                 <div className="font-bold text-xl text-gray-800 tracking-wide text-center">
-                  @{portfolio.username || slug}
+                  {portfolio.title || "Portfolio"}
                 </div>
 
-                {/* Bio section */}
-                {portfolio.bio && (
-                  <div className="mt-4 mx-6">
-                    <div className="relative w-full min-h-[60px] flex items-center justify-center">
-                      <div className="absolute top-0 left-0 w-full min-h-[60px] bg-white rounded-[10px] shadow-[0px_0px_58px_12px_#c76a6a40]" />
-                      <div className="relative w-full px-4 py-3 text-center">
-                        <div className="[font-family:'Itim',Helvetica] font-normal text-pink-600 text-sm tracking-[1.40px] leading-relaxed">
-                          {portfolio.bio}
+                {/* Bio section - Load from blocks */}
+                {portfolio.blocks && portfolio.blocks.length > 0 && (() => {
+                  const textBlock = portfolio.blocks.find((b: any) => b.type === 'text');
+                  const bioContent = textBlock?.content;
+                  
+                  if (!bioContent) return null;
+                  
+                  return (
+                    <div className="mt-4 mx-6">
+                      <div className="relative w-full min-h-[60px] flex items-center justify-center">
+                        <div className="absolute top-0 left-0 w-full min-h-[60px] bg-white rounded-[10px] shadow-[0px_0px_58px_12px_#c76a6a40]" />
+                        <div className="relative w-full px-4 py-3 text-center">
+                          <div className="[font-family:'Itim',Helvetica] font-normal text-pink-600 text-sm tracking-[1.40px] leading-relaxed">
+                            {bioContent}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
 
               {/* Social links */}

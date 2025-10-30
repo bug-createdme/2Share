@@ -23,8 +23,18 @@ export async function createPortfolio(data: {
   avatar_url?: string;
   banner_url?: string;
 }) {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Creating portfolio with token:', token ? 'Yes' : 'No');
+
   const res = await fetch('https://2share.icu/portfolios/create-portfolio', {
     method: 'POST',
     headers: {
@@ -33,8 +43,11 @@ export async function createPortfolio(data: {
     },
     body: JSON.stringify(data),
   });
+
   const result = await res.json();
-  if (!res.ok) throw new Error(result.message || 'Lỗi tạo portfolio');
+  console.log('📡 Create portfolio response status:', res.status, 'data:', result);
+
+  if (!res.ok) throw new Error(result.message || `HTTP ${res.status}: Lỗi tạo portfolio`);
   return result;
 }
 // Cập nhật portfolio hiện tại
@@ -45,11 +58,18 @@ export async function updatePortfolio(slug: string, data: {
   avatar_url?: string;
   banner_url?: string;
 }) {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
 
-  console.log('updatePortfolio - Sending request with slug:', slug, 'data:', data);
-  console.log('updatePortfolio - Token:', token?.substring(0, 20) + '...');
+  if (!token) throw new Error('No token found');
+
+  console.log('📤 updatePortfolio - Sending request with slug:', slug, 'data:', data);
+  console.log('🔑 updatePortfolio - Token:', token?.substring(0, 20) + '...');
 
   const res = await fetch(`https://2share.icu/portfolios/update-portfolio/${slug}`, {
     method: 'PATCH',
@@ -60,8 +80,8 @@ export async function updatePortfolio(slug: string, data: {
     body: JSON.stringify(data),
   });
 
-  console.log('updatePortfolio - Response status:', res.status);
-  console.log('updatePortfolio - Response headers:', res.headers);
+  console.log('📡 updatePortfolio - Response status:', res.status);
+  console.log('📡 updatePortfolio - Response headers:', res.headers);
 
   const contentType = res.headers.get('content-type');
   let result;
@@ -70,7 +90,7 @@ export async function updatePortfolio(slug: string, data: {
     result = await res.json();
   } else {
     const text = await res.text();
-    console.log('updatePortfolio - Response text:', text.substring(0, 200));
+    console.log('📡 updatePortfolio - Response text:', text.substring(0, 200));
     throw new Error(`Expected JSON but got ${contentType}: ${text.substring(0, 200)}`);
   }
 
@@ -79,13 +99,25 @@ export async function updatePortfolio(slug: string, data: {
     const error = new Error(`HTTP_${res.status}:${message}`);
     throw error;
   }
+
+  console.log('✅ updatePortfolio - Success:', result);
   return result;
 }
 
 // Lấy portfolio của chính mình (cần authentication)
 export async function getMyPortfolio() {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Getting my portfolio with token:', token ? 'Yes' : 'No');
+
   const res = await fetch('https://2share.icu/portfolios/get-my-portfolio', {
     method: 'GET',
     headers: {
@@ -93,10 +125,68 @@ export async function getMyPortfolio() {
       'Content-Type': 'application/json',
     },
   });
+
   const result = await res.json();
-  if (!res.ok) throw new Error(result.message || 'Lỗi lấy portfolio');
+  console.log('📡 Get my portfolio response status:', res.status, 'data:', result);
+
+  if (!res.ok) throw new Error(result.message || `HTTP ${res.status}: Lỗi lấy portfolio`);
+
+  // If result is null, portfolio doesn't exist yet - throw error to trigger creation
+  if (result.result === null) {
+    throw new Error('Portfolio does not exist yet');
+  }
+
   return result.result;
 }
+
+// Lấy danh sách tất cả portfolio của user (cần authentication)
+export async function getMyPortfolios() {
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Getting my portfolios with token:', token ? 'Yes' : 'No');
+
+  const res = await fetch('https://2share.icu/portfolios/get-my-portfolio', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const result = await res.json();
+  console.log('📡 Get my portfolios response status:', res.status, 'data:', result);
+
+  if (!res.ok) throw new Error(result.message || `HTTP ${res.status}: Lỗi lấy danh sách portfolio`);
+
+  // Handle different response formats
+  // If result is null, return empty array
+  if (result.result === null) {
+    return [];
+  }
+
+  // If result is already an array, return it
+  if (Array.isArray(result.result)) {
+    return result.result;
+  }
+
+  // If result is an object (single portfolio), wrap it in an array
+  if (typeof result.result === 'object' && result.result !== null) {
+    return [result.result];
+  }
+
+  // Fallback to empty array
+  return [];
+}
+
+
 
 // Lấy portfolio public theo slug (không cần authentication)
 export async function getPortfolioBySlug(slug: string) {
@@ -125,16 +215,29 @@ export async function getPortfolioByUsername(username: string) {
 }
 // src/lib/api.ts
 export async function getMyProfile() {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Getting my profile with token:', token ? 'Yes' : 'No');
+
   const res = await fetch('https://2share.icu/users/me', {
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   });
+
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Lỗi lấy thông tin người dùng');
+  console.log('📡 Get my profile response status:', res.status);
+
+  if (!res.ok) throw new Error(data.message || `HTTP ${res.status}: Lỗi lấy thông tin người dùng`);
   return data.result;
 }
 
@@ -147,8 +250,18 @@ export async function updateMyProfile(data: {
   social_links?: Record<string, any>;
   username?: string;
 }) {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Updating my profile with token:', token ? 'Yes' : 'No');
+
   const res = await fetch('https://2share.icu/users/me', {
     method: 'PATCH',
     headers: {
@@ -157,8 +270,11 @@ export async function updateMyProfile(data: {
     },
     body: JSON.stringify(data),
   });
+
   const result = await res.json();
-  if (!res.ok) throw new Error(result.message || 'Lỗi cập nhật thông tin');
+  console.log('📡 Update my profile response status:', res.status);
+
+  if (!res.ok) throw new Error(result.message || `HTTP ${res.status}: Lỗi cập nhật thông tin`);
   return result;
 }
 
@@ -215,18 +331,129 @@ export async function refreshAccessToken(refresh_token: string) {
 
 // Kiểm tra gói hiện tại của người dùng (yêu cầu đăng nhập)
 export async function getCurrentPlan() {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
-  const res = await fetch('https://2share.icu/users/get-current-plan', {
+  // Lấy token từ nhiều nơi có thể
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Getting current plan with token:', token ? 'Yes' : 'No');
+
+  const url = 'https://2share.icu/users/get-current-plan';
+
+  // Force revalidation to avoid 304 confusing our logic
+  let res = await fetch(url, {
     method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      // Hint proxies/CDNs to not serve stale cached payloads
+      'Cache-Control': 'no-cache',
+    },
+    cache: 'no-store',
+  } as RequestInit);
+
+  // Some environments may still return 304. If so, perform a cache-busted retry.
+  if (res.status === 304) {
+    console.warn('⚠️ getCurrentPlan received 304 Not Modified. Retrying with cache-busting...');
+    res = await fetch(`${url}?t=${Date.now()}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+      },
+      cache: 'reload',
+    } as RequestInit);
+  }
+
+  // Try to parse JSON, but keep raw text for debugging if needed
+  const text = await res.text();
+  let result: any = {};
+  try {
+    result = text ? JSON.parse(text) : {};
+  } catch {
+    console.warn('⚠️ getCurrentPlan response is not valid JSON. Text:', text?.slice(0, 200));
+  }
+  console.log('📡 Get current plan response status:', res.status, 'data:', result);
+
+  if (!res.ok) throw new Error(result?.message || `HTTP ${res.status}: Lỗi lấy gói hiện tại`);
+  return result; // backend có thể trả {result: {...}} hoặc object thẳng
+}
+
+// Hủy subscription hiện tại
+export async function cancelSubscription() {
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Cancelling subscription with token:', token ? 'Yes' : 'No');
+
+  const res = await fetch('https://2share.icu/subscriptions/cancel', {
+    method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   });
+
   const result = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(result?.message || 'Lỗi lấy gói hiện tại');
-  return result; // backend đang trả thẳng object gói
+  console.log('📡 Cancel subscription response status:', res.status, 'data:', result);
+
+  if (!res.ok) throw new Error(result?.message || `HTTP ${res.status}: Lỗi hủy subscription`);
+  return result;
+}
+
+// Kích hoạt gói trial cho người dùng mới (gọi create-payment để backend tự động set trial)
+export async function activateTrial(planId: string) {
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🎁 Activating trial for plan:', planId);
+
+  // NOTE: Backend requires minimal validation: amount >= 1000 and items must be non-empty
+  // Even for trial, backend will record a TRIAL gateway and amount 0 internally.
+  const res = await fetch('https://2share.icu/subscriptions/create-payment', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      plan_id: planId,
+      // Send a minimal valid amount to satisfy validation (won't charge for trial)
+      amount: 2000,
+      description: 'Trial activation (first-time purchase)',
+      items: [
+        {
+          name: 'Trial activation',
+          quantity: 1,
+          price: 2000,
+        },
+      ],
+    }),
+  });
+
+  const result = await res.json().catch(() => ({}));
+  console.log('📡 Activate trial response status:', res.status, 'data:', result);
+
+  if (!res.ok) throw new Error(result?.message || `HTTP ${res.status}: Lỗi kích hoạt trial`);
+  return result;
 }
 
 // Quên mật khẩu: gửi email chứa liên kết đặt lại mật khẩu
@@ -433,3 +660,110 @@ export async function adminDeleteUser(id: string): Promise<{ deleted: boolean } 
   const data = await res.json().catch(() => ({}));
   return unwrap(res, data);
 }
+
+// =========================
+// Analytics APIs
+// =========================
+export interface AnalyticsData {
+  totalViews: number;
+  totalClicks: number;
+  clickRate: number;
+  socialStats: Array<{
+    name: string;
+    clicks: number;
+    url: string;
+    displayName?: string;
+    icon?: string;
+    color?: string;
+  }>;
+}
+
+export async function getMyAnalytics(): Promise<AnalyticsData> {
+  const token =
+    localStorage.getItem('authToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    sessionStorage.getItem('authToken') ||
+    sessionStorage.getItem('token');
+
+  if (!token) throw new Error('No token found');
+
+  console.log('🔑 Getting my analytics with token:', token ? 'Yes' : 'No');
+
+  try {
+    // Get current portfolio to calculate analytics
+    const portfolio = await getMyPortfolio();
+    
+    if (!portfolio || !portfolio.social_links) {
+      return {
+        totalViews: 0,
+        totalClicks: 0,
+        clickRate: 0,
+        socialStats: []
+      };
+    }
+
+    // Calculate total clicks from social links
+    let totalClicks = 0;
+    const socialStats: AnalyticsData['socialStats'] = [];
+
+    Object.entries(portfolio.social_links).forEach(([key, value]: any) => {
+      const clicks = value?.clicks || 0;
+      totalClicks += clicks;
+      
+      if (value && (value.url || value.isEnabled)) {
+        socialStats.push({
+          name: key.charAt(0).toUpperCase() + key.slice(1),
+          clicks: clicks,
+          url: value.url || '',
+          displayName: value.displayName || key.charAt(0).toUpperCase() + key.slice(1),
+          icon: value.icon || '🔗',
+          color: value.color || '#6e6e6e',
+        });
+      }
+    });
+
+    // Sort by clicks descending
+    socialStats.sort((a, b) => b.clicks - a.clicks);
+
+    // For now, we'll use totalClicks as views (can be updated when backend provides views)
+    const totalViews = totalClicks;
+    const clickRate = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
+
+    return {
+      totalViews,
+      totalClicks,
+      clickRate,
+      socialStats
+    };
+  } catch (error) {
+    console.error('❌ Error getting analytics:', error);
+    throw error;
+  }
+}
+
+  // Track click on a social link in public portfolio
+  export async function trackSocialClick(slug: string, socialKey: string): Promise<any> {
+    try {
+      const res = await fetch(`https://2share.icu/portfolios/track-click/${encodeURIComponent(slug)}/${encodeURIComponent(socialKey)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!res.ok) {
+        // Don't throw error, just log it - we don't want to block the user from opening the link
+        console.warn('Failed to track click:', res.status);
+        return null;
+      }
+
+      const result = await res.json();
+      console.log('✅ Click tracked:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Error tracking click:', error);
+      // Don't throw, just return null
+      return null;
+    }
+  }
