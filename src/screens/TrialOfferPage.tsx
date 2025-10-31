@@ -26,22 +26,17 @@ const TrialOfferPage: React.FC = () => {
   }, [searchParams]);
 
   const handleAcceptTrial = async () => {
-    if (!planId) {
-      showToast.error('Không tìm thấy thông tin gói. Vui lòng thử lại.');
-      navigate('/subscription-plans');
-      return;
-    }
-
     setIsActivating(true);
     try {
-      console.log('🎁 Activating trial for plan:', planId);
-      await activateTrial(planId);
+      console.log('🎁 Activating 7-day trial (backend will use Trial plan from database)...');
+      // Pass the originally selected planId for reference, but backend will use Trial plan
+      await activateTrial(planId || undefined);
       console.log('✅ Trial activated successfully');
       
       // Clear stored plan ID
       localStorage.removeItem('selectedPlanForTrial');
       
-      showToast.success('🎉 Đã kích hoạt gói dùng thử 7 ngày!');
+      showToast.success('🎉 Đã kích hoạt gói dùng thử 7 ngày miễn phí!');
       
       // Redirect to my-links after short delay
       setTimeout(() => {
@@ -131,7 +126,7 @@ const TrialOfferPage: React.FC = () => {
             </button>
             <button
               onClick={handleAcceptTrial}
-              disabled={isActivating || !planId}
+              disabled={isActivating}
               className="flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold text-lg hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isActivating ? (
@@ -142,7 +137,7 @@ const TrialOfferPage: React.FC = () => {
               ) : (
                 <>
                   <Gift className="w-5 h-5" />
-                  Đồng ý - Dùng thử 7 ngày
+                  Đồng ý - Dùng thử 7 ngày miễn phí
                 </>
               )}
             </button>

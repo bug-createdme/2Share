@@ -21,7 +21,14 @@ export const BioSection = ({ bio, setBio, user, setUser, portfolioSlug }: { bio:
       setBio(tmpBio);
       // Optionally push bio to portfolio blocks
       const blocks = [{ type: "text", content: tmpBio || "", order: 1 }];
-      try { if (portfolioSlug) await updatePortfolio(portfolioSlug, { blocks }); } catch {}
+      try { 
+        if (portfolioSlug) {
+          await updatePortfolio(portfolioSlug, { 
+            blocks,
+            avatar_url: user.avatar_url
+          }); 
+        }
+      } catch {}
       setShowModal(false);
     } finally {
       setSaving(false);

@@ -117,14 +117,22 @@ const SubscriptionUpgradePage: React.FC = () => {
         if (data && data.result && Array.isArray(data.result)) {
           console.log("📊 Plans data received:", data.result);
           
-          const transformedPlans = data.result.map((apiPlan: any, index: number) => {
+          // Filter out Trial plans (price = 0 or isTrial = true) before transforming
+          const nonTrialPlans = data.result.filter((apiPlan: any) => {
+            const isTrialPlan = apiPlan.price === 0 || apiPlan.isTrial === true;
+            if (isTrialPlan) {
+              console.log("🚫 Hiding Trial plan from upgrade UI:", apiPlan.name, `(price: ${apiPlan.price}, isTrial: ${apiPlan.isTrial})`);
+            }
+            return !isTrialPlan;
+          });
+          
+          const transformedPlans = nonTrialPlans.map((apiPlan: any, index: number) => {
             const features = [
               apiPlan.maskedallinks && `${apiPlan.maskedallinks} link ẩn`,
               apiPlan.maxTempId && `${apiPlan.maxTempId} templates`,
               apiPlan.maskslessCard && `${apiPlan.maskslessCard} danh thiếp`,
               apiPlan.maxCardLevels && `${apiPlan.maxCardLevels} cấp độ`,
-              apiPlan.customDomain && "Domain tuỳ chỉnh",
-              apiPlan.isTrial && "Dùng thử"
+              apiPlan.customDomain && "Domain tuỳ chỉnh"
             ].filter(Boolean) as string[];
 
             return {
@@ -140,6 +148,7 @@ const SubscriptionUpgradePage: React.FC = () => {
             };
           });
 
+          console.log(`✅ Filtered upgrade plans: ${transformedPlans.length} visible plans (hidden ${data.result.length - transformedPlans.length} trial plans)`);
           setPlans(transformedPlans);
           autoSelectPlan(transformedPlans);
         } else {
@@ -238,7 +247,7 @@ const SubscriptionUpgradePage: React.FC = () => {
       const paymentPayload = {
         plan_id: selectedPlan,
         amount: currentPlan.price,
-          description: `Goi ${currentPlan.name}`,
+        description: `Gói ${currentPlan.name}`,
         items: [
           {
             name: currentPlan.name,

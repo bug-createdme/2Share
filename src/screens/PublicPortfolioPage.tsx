@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { getPortfolioBySlug } from "../lib/api";
+import { getSocialAvatarUrl } from "../lib/socialConfig";
 import type { SocialLink } from "./MyLinksPage/sections/SocialLinksSection/SocialLinksSection";
 
 // Social icons import
@@ -232,19 +233,20 @@ const PublicPortfolioPage = (): JSX.Element => {
     // Chuyển đổi social_links từ object sang array để hiển thị
     const socialLinks: SocialLink[] = portfolio.social_links
       ? Object.entries(portfolio.social_links).map(([key, value]: any) => {
-          if (typeof value === 'object' && value !== null && value.url) {
+          if (typeof value === 'object' && value !== null) {
             return {
               id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               name: key.charAt(0).toUpperCase() + key.slice(1),
-              url: value.url,
-              clicks: 0,
-              isEnabled: true,
-              color: "#6e6e6e",
-              icon: "🔗",
+              url: value.url || "",
+              clicks: value.clicks || 0,
+              isEnabled: value.isEnabled !== undefined ? value.isEnabled : Boolean(value.url),
+              color: value.color || "#6e6e6e",
+              icon: value.icon || "🔗",
               displayName: value.displayName || key.charAt(0).toUpperCase() + key.slice(1),
             };
           }
-          return {
+          // Fallback for simple string URLs (legacy format)
+        return {
             id: `${key}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             name: key.charAt(0).toUpperCase() + key.slice(1),
             url: String(value || ""),
@@ -254,7 +256,7 @@ const PublicPortfolioPage = (): JSX.Element => {
             icon: "🔗",
             displayName: key.charAt(0).toUpperCase() + key.slice(1),
           };
-        }).filter(link => link.isEnabled && link.url)
+        }).filter(link => link.isEnabled === true && link.url)
       : [];
 
     const textColor = getTextColor();

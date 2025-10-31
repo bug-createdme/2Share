@@ -17,10 +17,34 @@ import {
   Calendar,
   Target,
   Award,
-  LogOut,
-  Menu,
-  X
+  LogOut
 } from 'lucide-react';
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+  SidebarRail,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from '@/components/ui/sidebar/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 
 interface UserStats {
   result: {
@@ -62,7 +86,6 @@ const AdminPage: React.FC = () => {
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [portfolioStats, setPortfolioStats] = useState<PortfolioStats | null>(null);
   const [revenueStats, setRevenueStats] = useState<RevenueStats | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
   // Users CRUD state
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -242,6 +265,63 @@ const AdminPage: React.FC = () => {
     { id: 'revenue', label: 'Doanh thu', icon: DollarSign, color: 'bg-emerald-500' },
   ];
 
+  // Helper function để tính phần trăm thay đổi so với tháng trước
+  const calculateMonthlyGrowth = (monthlyData: Array<{ _id: string; count: number }>) => {
+    if (!monthlyData || monthlyData.length < 2) return null;
+    
+    // Sắp xếp theo tháng (mới nhất trước)
+    const sorted = [...monthlyData].sort((a, b) => b._id.localeCompare(a._id));
+    const currentMonth = sorted[0]?.count || 0;
+    const previousMonth = sorted[1]?.count || 0;
+    
+    if (previousMonth === 0) return currentMonth > 0 ? '+100%' : '0%';
+    
+    const growthRate = ((currentMonth - previousMonth) / previousMonth) * 100;
+    const sign = growthRate >= 0 ? '+' : '';
+    return `${sign}${growthRate.toFixed(0)}%`;
+  };
+
+  // Tính growth rate cho user từ monthly data
+  const userGrowth = React.useMemo(() => {
+    return calculateMonthlyGrowth(userStats?.result?.newUsersMonthly || []);
+  }, [userStats]);
+
+  // Tính growth rate cho portfolio từ monthly data (chuyển đổi từ daily sang monthly)
+  const portfolioGrowth = React.useMemo(() => {
+    if (portfolioStats?.result?.newPortfoliosDaily) {
+      // Nhóm daily data thành monthly
+      const dailyData = portfolioStats.result.newPortfoliosDaily;
+      const monthlyMap = new Map<string, number>();
+      
+      dailyData.forEach(item => {
+        const monthKey = item._id.substring(0, 7); // Lấy YYYY-MM
+        monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + item.count);
+      });
+      
+      const monthlyData = Array.from(monthlyMap.entries()).map(([_id, count]) => ({ _id, count }));
+      return calculateMonthlyGrowth(monthlyData);
+    }
+    return null;
+  }, [portfolioStats]);
+  
+  // Tính premium user growth từ monthly data
+  const premiumGrowth = React.useMemo(() => {
+    if (!userStats?.result?.premiumUsers || !userStats?.result?.newUsersMonthly) return null;
+    
+    const monthlyUsers = userStats.result.newUsersMonthly;
+    if (monthlyUsers && monthlyUsers.length >= 2) {
+      // Giả sử tỷ lệ premium users là constant
+      const premiumRatio = userStats.result.premiumUsers / (userStats.result.totalUsers || 1);
+      const premiumMonthly = monthlyUsers.map(item => ({
+        _id: item._id,
+        count: Math.floor(item.count * premiumRatio)
+      }));
+      return calculateMonthlyGrowth(premiumMonthly);
+    }
+    
+    return null;
+  }, [userStats]);
+
   const renderOverview = () => (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -252,7 +332,9 @@ const AdminPage: React.FC = () => {
               <div>
                 <p className="text-blue-100 text-sm font-medium">Tổng người dùng</p>
                 <p className="text-3xl font-bold">{userStats?.result?.totalUsers ?? '0'}</p>
-                <p className="text-blue-100 text-sm mt-1">+12% từ tháng trước</p>
+                <p className="text-blue-100 text-sm mt-1">
+                  {userGrowth ? `${userGrowth} từ tháng trước` : 'Chưa có dữ liệu'}
+                </p>
               </div>
               <div className="p-3 bg-white/20 rounded-full">
                 <Users className="h-8 w-8 text-white" />
@@ -267,7 +349,9 @@ const AdminPage: React.FC = () => {
               <div>
                 <p className="text-purple-100 text-sm font-medium">Tổng Portfolio</p>
                 <p className="text-3xl font-bold">{portfolioStats?.result?.totalPortfolios ?? '0'}</p>
-                <p className="text-purple-100 text-sm mt-1">+8% từ tháng trước</p>
+                <p className="text-purple-100 text-sm mt-1">
+                  {portfolioGrowth ? `${portfolioGrowth} từ tháng trước` : 'Chưa có dữ liệu'}
+                </p>
               </div>
               <div className="p-3 bg-white/20 rounded-full">
                 <FolderOpen className="h-8 w-8 text-white" />
@@ -282,7 +366,9 @@ const AdminPage: React.FC = () => {
               <div>
                 <p className="text-emerald-100 text-sm font-medium">Người dùng Premium</p>
                 <p className="text-3xl font-bold">{userStats?.result?.premiumUsers ?? '0'}</p>
-                <p className="text-emerald-100 text-sm mt-1">+15% từ tháng trước</p>
+                <p className="text-emerald-100 text-sm mt-1">
+                  {premiumGrowth ? `${premiumGrowth} từ tháng trước` : 'Chưa có dữ liệu'}
+                </p>
               </div>
               <div className="p-3 bg-white/20 rounded-full">
                 <Crown className="h-8 w-8 text-white" />
@@ -444,7 +530,7 @@ const AdminPage: React.FC = () => {
                       <td className="px-4 py-3 text-sm">{u.email}</td>
                       <td className="px-4 py-3 text-sm">{u.name || '-'}</td>
                       <td className="px-4 py-3 text-sm">{u.role || 'user'}</td>
-                      <td className="px-4 py-3 text-sm">{u.is_verified ? '✔️' : '❌'}</td>
+                      <td className="px-4 py-3 text-sm">{u.verify === 1 ? '✔️' : '❌'}</td>
                       <td className="px-4 py-3 text-sm text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="outline" size="sm" onClick={() => openEditModal(u)}>Sửa</Button>
@@ -698,117 +784,119 @@ const AdminPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="flex">
-        {/* Sidebar */}
-        <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
-          <div className="flex items-center justify-between p-6 border-b">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500 rounded-lg">
-                <BarChart3 className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h2 className="font-bold text-lg text-gray-900">Admin Panel</h2>
-                <p className="text-xs text-gray-500">2Share Dashboard</p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <nav className="p-4 space-y-2">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Button
-                  key={item.id}
-                  variant={activeSection === item.id ? "default" : "ghost"}
-                  className={`w-full justify-start gap-3 h-12 ${
-                    activeSection === item.id
-                      ? 'bg-blue-500 text-white hover:bg-blue-600'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                  onClick={() => {
-                    setActiveSection(item.id);
-                    setSidebarOpen(false);
-                  }}
-                >
-                  <Icon className="h-5 w-5" />
-                  {item.label}
-                </Button>
-              );
-            })}
-          </nav>
-
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <Button
-              onClick={logout}
-              variant="outline"
-              className="w-full gap-2 text-red-600 border-red-200 hover:bg-red-50"
-            >
-              <LogOut className="h-4 w-4" />
-              Đăng xuất
-            </Button>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 lg:ml-0">
-          {/* Mobile menu button */}
-          <div className="lg:hidden p-4 bg-white shadow-sm border-b">
-            <Button
-              variant="ghost"
-              onClick={() => setSidebarOpen(true)}
-              className="gap-2"
-            >
-              <Menu className="h-5 w-5" />
-              Menu
-            </Button>
-          </div>
-
-          {/* Header */}
-          <div className="bg-white shadow-sm border-b">
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    {navigationItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
-                  </h1>
-                  <p className="text-gray-600 mt-1">
-                    Chào mừng quay trở lại, {user?.name || user?.email}
-                  </p>
+    <SidebarProvider defaultOpen={true}>
+      <Sidebar collapsible="icon" className="border-r">
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-blue-500 text-white">
+                  <BarChart3 className="size-4" />
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">Last updated</p>
-                    <p className="font-medium">{new Date().toLocaleDateString('vi-VN')}</p>
-                  </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Admin Panel</span>
+                  <span className="truncate text-xs">2Share Dashboard</span>
                 </div>
-              </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Quản lý</SidebarGroupLabel>
+            <SidebarMenu>
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      isActive={activeSection === item.id}
+                      onClick={() => setActiveSection(item.id)}
+                      tooltip={item.label}
+                      className="h-10 hover:shadow-md transition-shadow duration-200"
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent">
+                    <Avatar className="h-8 w-8 rounded-lg">
+                      <AvatarFallback className="rounded-lg bg-blue-500 text-white">
+                        {(user?.name || user?.email || 'AD').substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold">{user?.name || 'Admin'}</span>
+                      <span className="truncate text-xs">{user?.email}</span>
+                    </div>
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 rounded-lg" side="right" align="end" sideOffset={4}>
+                  <DropdownMenuLabel className="p-0 font-normal">
+                    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                      <Avatar className="h-8 w-8 rounded-lg">
+                        <AvatarFallback className="rounded-lg bg-blue-500 text-white">
+                          {(user?.name || user?.email || 'AD').substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="grid flex-1 text-left text-sm leading-tight">
+                        <span className="truncate font-semibold">{user?.name || 'Admin'}</span>
+                        <span className="truncate text-xs">{user?.email}</span>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={logout} className="text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Đăng xuất
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+        <SidebarRail />
+      </Sidebar>
+
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b bg-white">
+          <div className="flex items-center gap-2 px-4 flex-1">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">
+                {navigationItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
+              </h1>
+              <p className="text-xs text-gray-600 mt-0.5">
+                Chào mừng quay trở lại, {user?.name || user?.email}
+              </p>
             </div>
           </div>
-
-          {/* Content */}
-          <div className="p-6">
-            {renderContent()}
+          <div className="text-right hidden md:block pr-4">
+            <p className="text-xs text-gray-500">Cập nhật lần cuối</p>
+            <p className="text-sm font-medium">{new Date().toLocaleDateString('vi-VN')}</p>
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-    </div>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-4 bg-gradient-to-br from-gray-50 to-gray-100 min-h-[calc(100vh-4rem)]">
+          {renderContent()}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 };
 

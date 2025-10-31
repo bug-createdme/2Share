@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Check, Star, Zap, Crown, Loader2 } from "lucide-react";
+import { Check, Star, Zap, Crown, Loader2, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { getCurrentPlan } from '../lib/api';
 
 interface Plan {
   _id: string;
@@ -18,9 +20,11 @@ interface Plan {
 }
 
 const SubscriptionPlansPage: React.FC = () => {
+  const navigate = useNavigate();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
 
   // Hàm lấy authentication token
   const getAuthToken = (): string | null => {
@@ -37,6 +41,31 @@ const SubscriptionPlansPage: React.FC = () => {
     }
     return null;
   };
+
+  // Fetch current plan
+  useEffect(() => {
+    const fetchCurrentPlan = async () => {
+      try {
+        const userPlan = await getCurrentPlan();
+        console.log("📦 Current user plan:", userPlan);
+        
+        // Unwrap response shapes (same logic as SubscriptionUpgradePage)
+        const planObj: any = Array.isArray(userPlan) ? userPlan[0] : (userPlan?.result ?? userPlan);
+        const planId = planObj?.plan_id || planObj?.planInfo?.[0]?._id || null;
+        
+        if (planId) {
+          setCurrentPlanId(planId);
+          console.log("✅ Current plan ID:", planId);
+        } else {
+          console.log("⚠️ No current plan found");
+        }
+      } catch (err) {
+        console.warn("⚠️ Could not fetch current plan:", err);
+      }
+    };
+    
+    fetchCurrentPlan();
+  }, []);
 
   // Fetch plans từ API
   useEffect(() => {
@@ -90,7 +119,18 @@ const SubscriptionPlansPage: React.FC = () => {
         
         if (data.message === "Get plan successfully" && data.result) {
           console.log("✅ Plans data received:", data.result);
-          setPlans(data.result);
+          
+          // Filter out Trial plan (price = 0 or isTrial = true) - should not be visible in UI
+          const filteredPlans = data.result.filter((plan: Plan) => {
+            const isTrialPlan = plan.price === 0 || plan.isTrial === true;
+            if (isTrialPlan) {
+              console.log("🚫 Hiding Trial plan from UI:", plan.name, `(price: ${plan.price}, isTrial: ${plan.isTrial})`);
+            }
+            return !isTrialPlan;
+          });
+          
+          console.log(`✅ Filtered plans: ${filteredPlans.length} visible plans (hidden ${data.result.length - filteredPlans.length} trial plans)`);
+          setPlans(filteredPlans);
         } else {
           throw new Error('Invalid response format');
         }
@@ -197,18 +237,27 @@ const SubscriptionPlansPage: React.FC = () => {
     <div className="min-h-screen bg-white font-spartan text-gray-800">
       {/* Header */}
       <div className="border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-8">
-              <img
-                src="/images/logo.png"
-                alt="Logo"
-                className="h-8 object-contain"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+  <div className="max-w-7xl mx-auto px-8 py-6">
+    <div className="flex items-center gap-6">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors font-medium"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span>Quay lại</span>
+      </button>
+
+      {/* Logo */}
+      <img
+        src="/images/logo.png"
+        alt="Logo"
+        className="h-8 object-contain"
+      />
+    </div>
+  </div>
+</div>
+
 
       {/* Error Banner */}
       {error && (
@@ -310,13 +359,22 @@ const SubscriptionPlansPage: React.FC = () => {
                     {/* CTA Button */}
                     <button
                       onClick={() => handleUpgrade(plan._id)}
+                      disabled={currentPlanId === plan._id}
                       className={`w-full py-4 px-6 rounded-xl font-semibold transition-all ${
-                        style.popular
+                        currentPlanId === plan._id
+                          ? "bg-green-100 text-green-700 border-2 border-green-500 cursor-not-allowed"
+                          : style.popular
                           ? "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl"
                           : "bg-gray-900 hover:bg-gray-800 text-white shadow-md hover:shadow-lg"
                       }`}
                     >
-                      {plan.price === 0 ? "Dùng Thử Ngay" : style.popular ? "Nâng Cấp Ngay" : "Chọn Gói"}
+                      {currentPlanId === plan._id
+                        ? "✓ Gói Hiện Tại"
+                        : plan.price === 0 
+                        ? "Dùng Thử Ngay" 
+                        : style.popular 
+                        ? "Nâng Cấp Ngay" 
+                        : "Chọn Gói"}
                     </button>
                   </div>
                 </div>

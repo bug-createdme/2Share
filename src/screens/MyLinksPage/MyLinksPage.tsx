@@ -43,7 +43,10 @@ export const MyLinksPage = (): JSX.Element => {
   const [portfoliosList, setPortfoliosList] = useState<any[]>([]);
   const [showPortfoliosModal, setShowPortfoliosModal] = useState(false);
   const [portfolioTitle, setPortfolioTitle] = useState("My Portfolio");
-
+    // State cho mobile sidebar - PHẢI khai báo cùng các state khác
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  // State cho mobile preview sidebar phải
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
   // State cho design settings - SỬA LAYOUT BAN ĐẦU
   const [designSettings, setDesignSettings] = useState({
     buttonFill: 0,
@@ -481,7 +484,10 @@ export const MyLinksPage = (): JSX.Element => {
               showToast.warning(`Bạn đã có ${portfoliosList.length} danh thiếp (vượt giới hạn ${maxBusinessCard}). Đang cập nhật danh thiếp đầu tiên.`);
               setTimeout(async () => {
                 try {
-                  await updatePortfolio(firstSlug, { social_links: socialLinksObj });
+                  await updatePortfolio(firstSlug, { 
+                    social_links: socialLinksObj,
+                    avatar_url: user.avatar_url
+                  });
                   window.dispatchEvent(new CustomEvent('portfolio-updated'));
                 } catch (err) {
                   console.error('❌ Error saving to first portfolio:', err);
@@ -529,7 +535,10 @@ export const MyLinksPage = (): JSX.Element => {
           }
         }
 
-        await updatePortfolio(portfolioSlug, { social_links: socialLinksObj });
+        await updatePortfolio(portfolioSlug, { 
+          social_links: socialLinksObj,
+          avatar_url: user.avatar_url
+        });
         window.dispatchEvent(new CustomEvent('portfolio-updated'));
         
       } catch (error: any) {
@@ -634,7 +643,8 @@ export const MyLinksPage = (): JSX.Element => {
     } else {
       await updatePortfolio(portfolioSlug, { 
         title: tmpPortfolioTitle || 'My Portfolio',
-        blocks 
+        blocks,
+          avatar_url: user.avatar_url
       });
       window.dispatchEvent(new CustomEvent('portfolio-updated'));
     }
@@ -665,36 +675,69 @@ export const MyLinksPage = (): JSX.Element => {
 
   return (
     <div className="font-spartan">
-      {/* Sidebar trái */}
-      <div className="fixed top-0 left-0 h-full min-h-screen w-[265px] bg-white border-r border-[#d9d9d9] flex-shrink-0 flex flex-col z-20">
+      {/* Mobile Menu Button - Chỉ hiện trên mobile, đặt dưới header */}
+      <button
+        className="lg:hidden fixed top-3 left-3 z-20 bg-white rounded-lg p-2 shadow-md border border-gray-200 hover:bg-gray-50 transition-colors"
+        onClick={() => setShowMobileSidebar(true)}
+        aria-label="Open menu"
+      >
+        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      {/* Mobile Sidebar Overlay */}
+      {showMobileSidebar && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setShowMobileSidebar(false)}
+        />
+      )}
+
+      {/* Sidebar trái - Responsive */}
+      <div className={`
+        fixed top-0 left-0 h-full min-h-screen bg-white border-r border-[#d9d9d9] flex-shrink-0 transition-transform duration-300
+        ${showMobileSidebar ? 'translate-x-0 z-50' : '-translate-x-full lg:translate-x-0'}
+        lg:z-20 lg:w-[200px] xl:w-[265px]
+        w-[280px]
+      `}>
         <Sidebar user={user} />
+        {/* Close button for mobile */}
+        <button
+          className="lg:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-10"
+          onClick={() => setShowMobileSidebar(false)}
+        >
+          <span className="text-gray-600 text-xl leading-none">×</span>
+        </button>
       </div>
 
-      {/* Main content */}
-      <div className="ml-[265px] mr-[395px] bg-[#f7f7f7] min-h-screen flex flex-col items-center">
-        <main className="flex-1 w-full flex flex-col items-center pt-20">
-          <Header onShare={handleOpenShareDialog} shareBtnRef={shareBtnRef} />
-      
-          {showShareDialog && (
-            <ShareDialog
-              open={showShareDialog}
-              onClose={handleCloseShareDialog}
-              portfolioLink={portfolioSlug ? `${window.location.origin}/portfolio/${portfolioSlug}` : ''}
-              anchorRef={shareBtnRef}
-              username={user?.username}
-              avatarUrl={user?.avatar_url}
-            />
-          )}
+  {/* Header - Fixed responsive (reserve space for right preview on xl) */}
+  <Header onShare={handleOpenShareDialog} shareBtnRef={shareBtnRef} rightOffsetOnXL />
 
+      {/* Main content - Responsive margins */}
+      <div className="lg:ml-[200px] xl:ml-[265px] lg:mr-0 xl:mr-[395px] bg-[#f7f7f7] min-h-screen flex flex-col items-center">
+        <main className="flex-1 w-full flex flex-col items-center pt-14 sm:pt-16 lg:pt-20">
+      {/* Share Dialog */}
+      {showShareDialog && (
+        <ShareDialog
+          open={showShareDialog}
+          onClose={handleCloseShareDialog}
+          portfolioLink={portfolioSlug ? `${window.location.origin}/portfolio/${portfolioSlug}` : ''}
+          anchorRef={shareBtnRef}
+          username={user?.username}
+          avatarUrl={user?.avatar_url}
+        />
+      )}
+          {/* Content Section */}
           <div className="w-full flex flex-col items-center flex-1">
             {planActive === false && (
-              <div className="w-full max-w-[700px] px-9 pt-6">
-                <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-4 shadow-md">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">!</div>
+              <div className="w-full max-w-[700px] px-4 sm:px-6 lg:px-9 pt-6">
+                <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-3 sm:p-4 shadow-md">
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm">!</div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-orange-800 mb-1">Chưa có gói đang hoạt động</h3>
-                      <p className="text-sm text-orange-700">Bạn cần đăng ký gói để có thể cập nhật và lưu portfolio. Các thay đổi sẽ không được lưu.</p>
+                      <h3 className="font-bold text-orange-800 mb-1 text-sm sm:text-base">Chưa có gói đang hoạt động</h3>
+                      <p className="text-xs sm:text-sm text-orange-700">Bạn cần đăng ký gói để có thể cập nhật và lưu portfolio. Các thay đổi sẽ không được lưu.</p>
                     </div>
                   </div>
                 </div>
@@ -702,24 +745,24 @@ export const MyLinksPage = (): JSX.Element => {
             )}
             
             {planActive === true && typeof maxSocialLinks === 'number' && (
-              <div className="w-full max-w-[700px] px-9 pt-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+              <div className="w-full max-w-[700px] px-4 sm:px-6 lg:px-9 pt-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3 text-xs sm:text-sm text-blue-800">
                   📊 Gói của bạn: tối đa <strong>{maxSocialLinks}</strong> social links
                 </div>
               </div>
             )}
             
             {planActive === true && maxBusinessCard !== null && portfoliosList.length > maxBusinessCard && (
-              <div className="w-full max-w-[700px] px-9 pt-6">
-                <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 shadow-md">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm">!</div>
+              <div className="w-full max-w-[700px] px-4 sm:px-6 lg:px-9 pt-6">
+                <div className="bg-red-50 border-2 border-red-300 rounded-xl p-3 sm:p-4 shadow-md">
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm">!</div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-red-800 mb-1">Vượt quá giới hạn danh thiếp</h3>
-                      <p className="text-sm text-red-700 mb-2">
+                      <h3 className="font-bold text-red-800 mb-1 text-sm sm:text-base">Vượt quá giới hạn danh thiếp</h3>
+                      <p className="text-xs sm:text-sm text-red-700 mb-2">
                         Bạn hiện có <strong>{portfoliosList.length} danh thiếp</strong> nhưng gói của bạn chỉ cho phép <strong>{maxBusinessCard} danh thiếp</strong>.
                       </p>
-                      <p className="text-sm text-red-700">
+                      <p className="text-xs sm:text-sm text-red-700">
                         Vui lòng xóa bớt {portfoliosList.length - maxBusinessCard} danh thiếp hoặc nâng cấp gói để tiếp tục sử dụng.
                       </p>
                     </div>
@@ -728,11 +771,11 @@ export const MyLinksPage = (): JSX.Element => {
               </div>
             )}
             
-            <section className="w-full max-w-[700px] flex flex-col items-center px-9 pt-12">
-              <div className="flex flex-col items-center gap-4 mb-8 w-full">
-                <div className="flex flex-col items-center gap-4">
+            <section className="w-full max-w-[700px] flex flex-col items-center px-4 sm:px-6 lg:px-9 pt-8 sm:pt-12">
+              <div className="flex flex-col items-center gap-3 sm:gap-4 mb-6 sm:mb-8 w-full">
+                <div className="flex flex-col items-center gap-3 sm:gap-4">
                   <div className="relative">
-                    <Avatar className="w-[77px] h-[77px]">
+                    <Avatar className="w-16 h-16 sm:w-[77px] sm:h-[77px]">
                       <AvatarImage
                         src={user.avatar_url || undefined}
                         alt="Profile picture"
@@ -740,7 +783,7 @@ export const MyLinksPage = (): JSX.Element => {
                       <AvatarFallback>{user.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
                     </Avatar>
                     <button
-                      className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-blue-600 transition-all duration-200 shadow-lg border-2 border-white"
+                      className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center hover:bg-blue-600 transition-all duration-200 shadow-lg border-2 border-white"
                       onClick={() => {
                         const input = document.createElement('input');
                         input.type = 'file';
@@ -765,10 +808,10 @@ export const MyLinksPage = (): JSX.Element => {
                       <Camera className="w-3 h-3" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     <button
                       type="button"
-                      className="[font-family:'Carlito',Helvetica] font-normal text-black text-2xl tracking-[2.40px] leading-[normal] hover:underline"
+                      className="[font-family:'Carlito',Helvetica] font-normal text-black text-xl sm:text-2xl tracking-[1.5px] sm:tracking-[2.40px] leading-[normal] hover:underline text-center"
                       onClick={() => {
                         setTmpPortfolioTitle(portfolioTitle || "");
                         setTmpBio(bio || "");
@@ -781,7 +824,7 @@ export const MyLinksPage = (): JSX.Element => {
                   </div>
                   <button
                     type="button"
-                    className="text-[#6e6e6e] text-sm hover:underline"
+                    className="text-[#6e6e6e] text-xs sm:text-sm hover:underline text-center px-4"
                     onClick={() => {
                       setTmpPortfolioTitle(portfolioTitle || "");
                       setTmpBio(bio || "");
@@ -794,7 +837,7 @@ export const MyLinksPage = (): JSX.Element => {
                   {maxBusinessCard !== null && maxBusinessCard > 1 && (
                     <button
                       type="button"
-                      className={`mt-3 text-sm px-4 py-2 rounded-lg transition-all ${
+                      className={`mt-2 sm:mt-3 text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all ${
                         portfoliosList.length < maxBusinessCard
                           ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-md'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -821,13 +864,29 @@ export const MyLinksPage = (): JSX.Element => {
               </div>
 
               <div className="flex gap-3 w-full max-w-[400px] mb-8">
+
+              {/* Add Social Button & Preview Button */}
+              <div className="flex gap-3 w-full max-w-[400px] mb-6 sm:mb-8 px-4 sm:px-0">
                 <Button
-                  className="flex-1 h-auto bg-[#639fff] hover:bg-[#5a8fee] rounded-[35px] py-4 flex items-center justify-center gap-2 shadow-lg"
+                  className="flex-1 h-auto bg-[#639fff] hover:bg-[#5a8fee] rounded-[25px] sm:rounded-[35px] py-3 sm:py-4 flex items-center justify-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl"
                   onClick={() => navigate("/my-links/add-social")}
                 >
-                  <PlusIcon className="w-6 h-6 text-white" />
-                  <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-xl tracking-[2.00px]">
+                  <PlusIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-lg sm:text-xl tracking-[1.5px] sm:tracking-[2.00px]">
                     Thêm
+                  </span>
+                </Button>
+                {/* Preview Button - Chỉ hiện trên mobile/tablet */}
+                <Button
+                  className="xl:hidden h-auto bg-purple-500 hover:bg-purple-600 rounded-[25px] sm:rounded-[35px] py-3 sm:py-4 px-4 sm:px-6 flex items-center justify-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl"
+                  onClick={() => setShowMobilePreview(true)}
+                >
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span className="[font-family:'Carlito',Helvetica] font-bold text-white text-lg sm:text-xl hidden sm:inline">
+                    Xem
                   </span>
                 </Button>
               </div>
@@ -867,15 +926,15 @@ export const MyLinksPage = (): JSX.Element => {
               </Routes>
             </section>
             
-            <section className="w-full max-w-[700px] flex flex-col items-center px-9 mb-10">
+            <section className="w-full max-w-[700px] flex flex-col items-center px-4 sm:px-6 lg:px-9 mb-10 pb-8">
               <SocialLinksSection socialLinks={socialLinks} setSocialLinks={setSocialLinks} />
             </section>
           </div>
         </main>
       </div>
 
-      {/* Sidebar phải - Phone Preview */}
-      <div className="fixed top-0 right-0 h-full min-h-screen w-[395px] bg-white border-l border-[#d9d9d9] flex-shrink-0 flex flex-col z-20">
+      {/* Sidebar phải - Phone Preview - Desktop: fixed bên phải, Mobile: hidden */}
+      <div className="hidden xl:flex fixed top-0 right-0 h-full min-h-screen w-[395px] bg-white border-l border-[#d9d9d9] flex-shrink-0 flex-col z-20">
         <div className="w-full h-full flex flex-col">
           <div className="p-4 border-b border-gray-200">
             <h3 className="text-sm font-medium text-gray-700 mb-2">Live Preview</h3>
@@ -923,21 +982,48 @@ export const MyLinksPage = (): JSX.Element => {
         </div>
       </div>
 
+      {/* Mobile/Tablet Preview Modal */}
+      {showMobilePreview && (
+        <>
+          {/* Overlay */}
+          <div 
+            className="xl:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={() => setShowMobilePreview(false)}
+          />
+          {/* Preview Content */}
+          <div className="xl:hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md h-[80vh] overflow-y-auto relative">
+              {/* Close button */}
+              <button
+                onClick={() => setShowMobilePreview(false)}
+                className="sticky top-0 right-0 ml-auto mr-4 mt-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-10"
+              >
+                <span className="text-gray-600 text-xl leading-none">×</span>
+              </button>
+              {/* Preview content */}
+              <div className="px-4 pb-6">
+                <ProfilePictureSection user={user} bio={bio} socialLinks={socialLinks.filter(link => link.isEnabled)} portfolioTitle={portfolioTitle} />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Modal chỉnh sửa title/bio */}
       {showTitleBioModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] p-6 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <button 
               onClick={() => setShowTitleBioModal(false)}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
             >
               <span className="text-gray-500 text-xl leading-none">×</span>
             </button>
-            <h3 className="text-lg font-bold mb-4 text-center">Portfolio Title and Bio</h3>
+            <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 text-center pr-6">Portfolio Title and Bio</h3>
             <div className="mb-3">
-              <div className="text-sm text-gray-600 mb-1">Portfolio Title</div>
+              <div className="text-xs sm:text-sm text-gray-600 mb-1">Portfolio Title</div>
               <input
-                className="w-full border rounded-md px-3 py-2"
+                className="w-full border rounded-md px-3 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={tmpPortfolioTitle}
                 onChange={e => setTmpPortfolioTitle(e.target.value)}
                 maxLength={50}
@@ -946,9 +1032,9 @@ export const MyLinksPage = (): JSX.Element => {
               <div className="text-right text-xs text-gray-500 mt-1">{tmpPortfolioTitle.length} / 50</div>
             </div>
             <div className="mb-4">
-              <div className="text-sm text-gray-600 mb-1">Bio</div>
+              <div className="text-xs sm:text-sm text-gray-600 mb-1">Bio</div>
               <textarea
-                className="w-full border rounded-md px-3 py-2"
+                className="w-full border rounded-md px-3 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows={4}
                 value={tmpBio}
                 onChange={e => setTmpBio(e.target.value.slice(0, 160))}
@@ -957,7 +1043,7 @@ export const MyLinksPage = (): JSX.Element => {
               />
               <div className="text-right text-xs text-gray-500 mt-1">{tmpBio.length} / 160</div>
             </div>
-            <Button className="w-full" onClick={handleSaveTitleBio} disabled={savingTitleBio}>
+            <Button className="w-full text-sm sm:text-base" onClick={handleSaveTitleBio} disabled={savingTitleBio}>
               {savingTitleBio ? 'Saving...' : 'Save'}
             </Button>
           </div>
@@ -966,55 +1052,56 @@ export const MyLinksPage = (): JSX.Element => {
 
       {/* Portfolios Modal */}
       {showPortfoliosModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[500px] p-6 relative max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[500px] p-4 sm:p-6 relative max-h-[80vh] overflow-y-auto">
             <button
               onClick={() => setShowPortfoliosModal(false)}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
             >
               <span className="text-gray-500 text-xl leading-none">×</span>
             </button>
-            <h3 className="text-lg font-bold mb-4 text-center">Danh sách Portfolio ({portfoliosList.length})</h3>
+            <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 text-center pr-6">Danh sách Portfolio ({portfoliosList.length})</h3>
 
             {portfoliosList.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <p>Bạn chưa tạo portfolio nào</p>
+                <p className="text-sm sm:text-base">Bạn chưa tạo portfolio nào</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {portfoliosList.map((portfolio: any, index: number) => (
                   <div
                     key={portfolio._id || index}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:bg-gray-50 cursor-pointer transition-colors"
                     onClick={() => {
                       const portfolioIdentifier = portfolio.slug || portfolio._id;
                       loadPortfolioData(portfolioIdentifier);
                       setShowPortfoliosModal(false);
                     }}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-800">{portfolio.title || 'Untitled'}</h4>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Slug: <code className="bg-gray-100 px-2 py-1 rounded">{portfolio.slug || portfolio._id}</code>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-800 text-sm sm:text-base truncate">{portfolio.title || 'Untitled'}</h4>
+                        <p className="text-xs sm:text-sm text-gray-600 mt-1 break-all">
+                          Slug: <code className="bg-gray-100 px-1 sm:px-2 py-0.5 sm:py-1 rounded text-xs">{portfolio.slug || portfolio._id}</code>
                         </p>
                         {portfolio.blocks && portfolio.blocks.length > 0 && (
-                          <p className="text-sm text-gray-500 mt-2">
+                          <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">
                             Blocks: {portfolio.blocks.length}
                           </p>
                         )}
                         {portfolio.social_links && Object.keys(portfolio.social_links).length > 0 && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-xs sm:text-sm text-gray-500">
                             Social links: {Object.keys(portfolio.social_links).length}
                           </p>
                         )}
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex-shrink-0">
                         <a
                           href={`${window.location.origin}/portfolio/${portfolio.slug || portfolio._id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-700 text-sm font-medium"
+                          className="text-blue-500 hover:text-blue-700 text-xs sm:text-sm font-medium whitespace-nowrap"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           View →
                         </a>
