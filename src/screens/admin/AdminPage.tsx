@@ -20,6 +20,24 @@ import {
   LogOut
 } from 'lucide-react';
 import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
   SidebarProvider,
   SidebarInset,
   SidebarTrigger,
@@ -281,121 +299,274 @@ const AdminPage: React.FC = () => {
     return `${sign}${growthRate.toFixed(0)}%`;
   };
 
-  // Tính growth rate cho user từ monthly data
-  const userGrowth = React.useMemo(() => {
-    return calculateMonthlyGrowth(userStats?.result?.newUsersMonthly || []);
+  // Prepare chart data
+  const userGrowthChartData = React.useMemo(() => {
+    if (!userStats?.result?.newUsersMonthly) return [];
+    return userStats.result.newUsersMonthly.map(item => ({
+      month: item._id,
+      users: item.count
+    })).reverse();
   }, [userStats]);
 
-  // Tính growth rate cho portfolio từ monthly data (chuyển đổi từ daily sang monthly)
-  const portfolioGrowth = React.useMemo(() => {
-    if (portfolioStats?.result?.newPortfoliosDaily) {
-      // Nhóm daily data thành monthly
-      const dailyData = portfolioStats.result.newPortfoliosDaily;
-      const monthlyMap = new Map<string, number>();
-      
-      dailyData.forEach(item => {
-        const monthKey = item._id.substring(0, 7); // Lấy YYYY-MM
-        monthlyMap.set(monthKey, (monthlyMap.get(monthKey) || 0) + item.count);
-      });
-      
-      const monthlyData = Array.from(monthlyMap.entries()).map(([_id, count]) => ({ _id, count }));
-      return calculateMonthlyGrowth(monthlyData);
-    }
-    return null;
+  const portfolioDailyChartData = React.useMemo(() => {
+    if (!portfolioStats?.result?.newPortfoliosDaily) return [];
+    return portfolioStats.result.newPortfoliosDaily.map(item => ({
+      date: item._id.substring(5), // Get MM-DD
+      portfolios: item.count
+    })).slice(-7); // Last 7 days
   }, [portfolioStats]);
-  
-  // Tính premium user growth từ monthly data
-  const premiumGrowth = React.useMemo(() => {
-    if (!userStats?.result?.premiumUsers || !userStats?.result?.newUsersMonthly) return null;
+
+  const revenueChartData = React.useMemo(() => {
+    if (!revenueStats?.result?.dailyRevenue) return [];
     
-    const monthlyUsers = userStats.result.newUsersMonthly;
-    if (monthlyUsers && monthlyUsers.length >= 2) {
-      // Giả sử tỷ lệ premium users là constant
-      const premiumRatio = userStats.result.premiumUsers / (userStats.result.totalUsers || 1);
-      const premiumMonthly = monthlyUsers.map(item => ({
-        _id: item._id,
-        count: Math.floor(item.count * premiumRatio)
-      }));
-      return calculateMonthlyGrowth(premiumMonthly);
+    return revenueStats.result.dailyRevenue.map((item: any) => {
+      // API trả về field 'total' chứa giá trị doanh thu
+      const revenue = item.total || item.totalRevenue || item.revenue || item.amount || 0;
+      
+      return {
+        date: item._id?.substring(5) || item.date?.substring(5) || 'N/A',
+        revenue: revenue
+      };
+    }).slice(-7);
+  }, [revenueStats]);
+
+  const transactionPieData = React.useMemo(() => {
+    const success = revenueStats?.result?.txSuccess ?? 0;
+    const failed = revenueStats?.result?.txFailed ?? 0;
+    return [
+      { name: 'Thành công', value: success, color: '#10b981' },
+      { name: 'Thất bại', value: failed, color: '#ef4444' }
+    ];
+  }, [revenueStats]);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
     }
-    
-    return null;
-  }, [userStats]);
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring" as const,
+        stiffness: 100,
+        damping: 12
+      }
+    }
+  };
 
   const renderOverview = () => (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-sm font-medium">Tổng người dùng</p>
-                <p className="text-3xl font-bold">{userStats?.result?.totalUsers ?? '0'}</p>
-                <p className="text-blue-100 text-sm mt-1">
-                  {userGrowth ? `${userGrowth} từ tháng trước` : 'Chưa có dữ liệu'}
-                </p>
-              </div>
-              <div className="p-3 bg-white/20 rounded-full">
-                <Users className="h-8 w-8 text-white" />
-              </div>
-            </div>
+    <motion.div 
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Charts Section */}
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        variants={containerVariants}
+      >
+        {/* User Growth Line Chart */}
+        <motion.div variants={itemVariants}>
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-blue-500" />
+                Tăng trưởng người dùng
+              </CardTitle>
+              <CardDescription>Người dùng mới theo tháng</CardDescription>
+            </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={userGrowthChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="month" 
+                  stroke="#6b7280"
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis stroke="#6b7280" tick={{ fontSize: 12 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="users" 
+                  stroke="#3b82f6" 
+                  strokeWidth={3}
+                  dot={{ fill: '#3b82f6', r: 5 }}
+                  activeDot={{ r: 7 }}
+                  name="Người dùng"
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
+        </motion.div>
 
-        <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-100 text-sm font-medium">Tổng Portfolio</p>
-                <p className="text-3xl font-bold">{portfolioStats?.result?.totalPortfolios ?? '0'}</p>
-                <p className="text-purple-100 text-sm mt-1">
-                  {portfolioGrowth ? `${portfolioGrowth} từ tháng trước` : 'Chưa có dữ liệu'}
-                </p>
-              </div>
-              <div className="p-3 bg-white/20 rounded-full">
-                <FolderOpen className="h-8 w-8 text-white" />
-              </div>
-            </div>
+        {/* Portfolio Area Chart */}
+        <motion.div variants={itemVariants}>
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FolderOpen className="h-5 w-5 text-purple-500" />
+              Portfolio mới (7 ngày gần nhất)
+            </CardTitle>
+            <CardDescription>Số lượng portfolio được tạo</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={portfolioDailyChartData}>
+                <defs>
+                  <linearGradient id="colorPortfolios" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#6b7280"
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis stroke="#6b7280" tick={{ fontSize: 12 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="portfolios" 
+                  stroke="#8b5cf6" 
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorPortfolios)"
+                  name="Portfolio"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
+        </motion.div>
 
-        <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-emerald-100 text-sm font-medium">Người dùng Premium</p>
-                <p className="text-3xl font-bold">{userStats?.result?.premiumUsers ?? '0'}</p>
-                <p className="text-emerald-100 text-sm mt-1">
-                  {premiumGrowth ? `${premiumGrowth} từ tháng trước` : 'Chưa có dữ liệu'}
-                </p>
-              </div>
-              <div className="p-3 bg-white/20 rounded-full">
-                <Crown className="h-8 w-8 text-white" />
-              </div>
-            </div>
+        {/* Revenue Bar Chart */}
+        <motion.div variants={itemVariants}>
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-emerald-500" />
+              Doanh thu (7 ngày gần nhất)
+            </CardTitle>
+            <CardDescription>Tổng doanh thu theo ngày</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={revenueChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#6b7280"
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis stroke="#6b7280" tick={{ fontSize: 12 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  formatter={(value: number) => `$${value}`}
+                />
+                <Bar 
+                  dataKey="revenue" 
+                  fill="#10b981" 
+                  radius={[8, 8, 0, 0]}
+                  name="Doanh thu"
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
+        </motion.div>
 
-        <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-orange-100 text-sm font-medium">Doanh thu tháng</p>
-                <p className="text-3xl font-bold">${revenueStats?.result?.ARPU ?? '0'}</p>
-                <p className="text-orange-100 text-sm mt-1">ARPU trung bình</p>
+        {/* Transaction Pie Chart */}
+        <motion.div variants={itemVariants}>
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-orange-500" />
+              Tỷ lệ giao dịch
+            </CardTitle>
+            <CardDescription>Thành công vs Thất bại</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={transactionPieData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {transactionPieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="flex justify-center gap-6 mt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                <span className="text-sm font-medium">{revenueStats?.result?.txSuccess ?? 0} Thành công</span>
               </div>
-              <div className="p-3 bg-white/20 rounded-full">
-                <DollarSign className="h-8 w-8 text-white" />
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full bg-red-500"></div>
+                <span className="text-sm font-medium">{revenueStats?.result?.txFailed ?? 0} Thất bại</span>
               </div>
             </div>
           </CardContent>
         </Card>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Activity Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="shadow-lg border-0">
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        variants={containerVariants}
+      >
+        <motion.div variants={itemVariants}>
+          <Card className="shadow-lg border-0">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Activity className="h-5 w-5 text-blue-500" />
@@ -443,9 +614,11 @@ const AdminPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
 
-        <Card className="shadow-lg border-0">
-          <CardHeader className="pb-4">
+        <motion.div variants={itemVariants}>
+          <Card className="shadow-lg border-0">
+            <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Target className="h-5 w-5 text-purple-500" />
               Thống kê nhanh
@@ -470,12 +643,18 @@ const AdminPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 
   const renderUsers = () => (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* User stats quick tiles */}
       <Card className="shadow-lg border-0">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -577,11 +756,16 @@ const AdminPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 
   const renderPortfolios = () => (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <Card className="shadow-lg border-0">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
@@ -636,11 +820,16 @@ const AdminPage: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 
   const renderTopUsers = () => (
-    <Card className="shadow-lg border-0">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card className="shadow-lg border-0">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-xl">
           <Crown className="h-6 w-6 text-yellow-500" />
@@ -685,10 +874,16 @@ const AdminPage: React.FC = () => {
         )}
       </CardContent>
     </Card>
+    </motion.div>
   );
 
   const renderRevenue = () => (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <Card className="shadow-lg border-0">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
@@ -769,7 +964,7 @@ const AdminPage: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 
   const renderContent = () => {
@@ -893,7 +1088,17 @@ const AdminPage: React.FC = () => {
         </header>
 
         <div className="flex flex-1 flex-col gap-4 p-4 pt-4 bg-gradient-to-br from-gray-50 to-gray-100 min-h-[calc(100vh-4rem)]">
-          {renderContent()}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+            >
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </SidebarInset>
     </SidebarProvider>

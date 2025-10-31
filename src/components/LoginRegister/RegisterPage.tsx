@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { LiquidButton } from '../animate-ui/components/buttons/liquid';
+import { getOauthGoogleUrl } from '../../lib/api';
 
 const RegisterPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -240,7 +242,7 @@ const RegisterPage: React.FC = () => {
           {/* Register Form */}
           <form className="mb-[18px] w-full flex flex-col items-center space-y-3" onSubmit={handleRegister}>
             {/* Họ và tên */}
-            <div className="w-full max-w-[475px] min-h-[59px] bg-[#F1F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
+            <div className="input-glow-focus w-full max-w-[475px] min-h-[59px] bg-[#F1F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
               <input
                 type="text"
                 placeholder="Họ và tên"
@@ -253,7 +255,7 @@ const RegisterPage: React.FC = () => {
               {nameError && <span className="text-red-500 text-xs font-semibold mt-1">{nameError}</span>}
             </div>
             {/* Email */}
-            <div className="w-full max-w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
+            <div className="input-glow-focus w-full max-w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
               <input
                 type="text"
                 placeholder="Email"
@@ -266,7 +268,7 @@ const RegisterPage: React.FC = () => {
               {emailError && <span className="text-red-500 text-xs font-semibold mt-1">{emailError}</span>}
             </div>
             {/* Tên người dùng */}
-            <div className="w-full max-w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center relative">
+            <div className="input-glow-focus w-full max-w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center relative">
               <div className="flex items-center">
                 <input
                   type="text"
@@ -309,7 +311,7 @@ const RegisterPage: React.FC = () => {
               )}
             </div>
             {/* Mật khẩu */}
-            <div className="w-full max-w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
+            <div className="input-glow-focus w-full max-w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
               <div className="flex items-center">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -333,7 +335,7 @@ const RegisterPage: React.FC = () => {
               {passwordError && <span className="text-red-500 text-xs font-semibold mt-1">{passwordError}</span>}
             </div>
             {/* Xác nhận mật khẩu */}
-            <div className="w-full max-w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
+            <div className="input-glow-focus w-full max-w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
               <div className="flex items-center">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -357,13 +359,15 @@ const RegisterPage: React.FC = () => {
               {confirmPasswordError && <span className="text-red-500 text-xs font-semibold mt-1">{confirmPasswordError}</span>}
             </div>
             {formError && <div className="text-red-500 w-full text-center text-sm font-semibold mt-2">{formError}</div>}
-            <button
+            <LiquidButton
               type="submit"
-              className="w-full max-w-[475px] h-[59px] bg-[#1B1111] rounded-[10px] flex items-center justify-center mb-[19px] hover:bg-[#2a1a1a] transition-colors text-white text-[20px] md:text-[24px] font-bold leading-[1.1] md:leading-[22.08px] font-['League_Spartan'] disabled:opacity-60"
+              variant="primary"
+              size="lg"
+              className="w-full max-w-[475px] mb-[19px]"
               disabled={loading}
             >
               {loading ? 'Đang đăng ký...' : 'Đăng ký'}
-            </button>
+            </LiquidButton>
           </form>
           {/* Or divider */}
           <div className="text-center mb-[14px] w-full">
@@ -374,7 +378,11 @@ const RegisterPage: React.FC = () => {
           {/* Social Login Buttons */}
           <div className="space-y-[18px] mb-[20px] w-full flex flex-col items-center">
             {/* Google Login */}
-            <button className="w-full max-w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors">
+            <button
+              type="button"
+              className="w-full max-w-[475px] h-[59px] bg-[#F0F0F0] rounded-[10px] flex items-center px-[21px] hover:bg-[#e8e8e8] transition-colors"
+              onClick={() => window.location.href = getOauthGoogleUrl()}
+            >
               <img 
                 src="https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-09-09/kAvOZ8CcqE.svg" 
                 alt="Google" 

@@ -1,11 +1,135 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { loadFull } from "tsparticles";
+import type { ISourceOptions } from "@tsparticles/engine";
+import Particles, { initParticlesEngine } from "@tsparticles/react";
+import Card3D from '../Card3D';
+import DiscloseImage from '../animate-ui/components/image/disclose-image';
+import AuroraText from '../animate-ui/components/text/aurora-text';
+import TypingText from '../animate-ui/components/text/typing-text';
+
+const options: ISourceOptions = {
+  key: "star",
+  name: "Star",
+  particles: {
+    number: {
+      value: 20,
+      density: {
+        enable: false,
+      },
+    },
+    color: {
+      value: ["#7c3aed", "#bae6fd", "#a78bfa", "#93c5fd", "#0284c7", "#fafafa", "#38bdf8"],
+    },
+    shape: {
+      type: "star",
+      options: {
+        star: {
+          sides: 4,
+        },
+      },
+    },
+    opacity: {
+      value: 0.8,
+    },
+    size: {
+      value: { min: 1, max: 4 },
+    },
+    rotate: {
+      value: {
+        min: 0,
+        max: 360,
+      },
+      enable: true,
+      direction: "clockwise",
+      animation: {
+        enable: true,
+        speed: 10,
+        sync: false,
+      },
+    },
+    links: {
+      enable: false,
+    },
+    reduceDuplicates: true,
+    move: {
+      enable: true,
+      center: {
+        x: 120,
+        y: 45,
+      },
+    },
+  },
+  interactivity: {
+    events: {},
+  },
+  smooth: true,
+  fpsLimit: 120,
+  background: {
+    color: "transparent",
+    size: "cover",
+  },
+  fullScreen: {
+    enable: false,
+  },
+  detectRetina: true,
+  absorbers: [
+    {
+      enable: true,
+      opacity: 0,
+      size: {
+        value: 1,
+        density: 1,
+        limit: {
+          radius: 5,
+          mass: 5,
+        },
+      },
+      position: {
+        x: 110,
+        y: 45,
+      },
+    },
+  ],
+  emitters: [
+    {
+      autoPlay: true,
+      fill: true,
+      life: {
+        wait: true,
+      },
+      rate: {
+        quantity: 5,
+        delay: 0.5,
+      },
+      position: {
+        x: 110,
+        y: 45,
+      },
+    },
+  ],
+};
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();
   const [rawName, setRawName] = useState('');
   const [isChecking, setIsChecking] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  const [particleState, setParticlesReady] = useState<"loaded" | "ready">();
+  const [isHovering, setIsHovering] = useState(false);
+
+  useEffect(() => {
+    initParticlesEngine(async (engine) => {
+      await loadFull(engine);
+    }).then(() => {
+      setParticlesReady("loaded");
+    });
+  }, []);
+
+  const modifiedOptions = useMemo(() => {
+    options.autoPlay = isHovering;
+    return options;
+  }, [isHovering]);
 
   // Very light slugify for username: trim, lowercase, remove spaces -> '-', strip accents
   const slugify = (s: string) => {
@@ -79,16 +203,24 @@ const Hero: React.FC = () => {
           <h1 className="text-[#D48A8A] font-['Unbounded'] text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.2] sm:leading-[1.3] md:leading-[1.4] lg:leading-[80px] mb-4 sm:mb-6 md:mb-8 font-semibold text-center md:text-left">
             Không còn hỏi<br />
             'Link ở đâu?'<br />
-            chỉ cần 2Share!
+            chỉ cần <AuroraText className="inline">2Share!</AuroraText>
           </h1>
           
-          <p className="text-[#440808] font-spartan text-lg sm:text-xl md:text-2xl leading-[1.4] sm:leading-[1.5] md:leading-[30px] mb-6 sm:mb-8 md:mb-12 max-w-2xl text-center md:text-left">
-            Tạo hồ sơ cá nhân siêu tốc, gom mọi liên kết quan trọng về một nơi.<br className="hidden sm:block" />
-            Chia sẻ profile của bạn qua link, QR hoặc NFC – cực tiện lợi, cực chuyên nghiệp.
-          </p>
+          <div className="text-[#440808] font-spartan text-lg sm:text-xl md:text-2xl leading-[1.4] sm:leading-[1.5] md:leading-[30px] mb-6 sm:mb-8 md:mb-12 max-w-2xl text-center md:text-left">
+            <TypingText
+              text="Tạo hồ sơ cá nhân siêu tốc, gom mọi liên kết quan trọng về một nơi. Chia sẻ profile của bạn qua link, QR hoặc NFC – cực tiện lợi, cực chuyên nghiệp."
+              smooth={true}
+              delay={50}
+              repeat={true}
+              waitTime={3000}
+              className="!font-spartan !text-lg sm:!text-xl md:!text-2xl"
+              grow={true}
+              hideCursorOnComplete={false}
+            />
+          </div>
           
           <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-            <div className="bg-[#ece6e6] rounded-[10px] py-3 sm:py-4 pl-4 sm:pl-6 pr-2 flex items-center w-full sm:w-[270px] relative">
+            <div className="input-glow-focus bg-[#ece6e6] rounded-[10px] py-3 sm:py-4 pl-4 sm:pl-6 pr-2 flex items-center w-full sm:w-[270px] relative">
               <span className="text-[#A18686] font-['League_Spartan'] font-bold text-lg sm:text-xl mr-1 sm:mr-2 select-none">
                 2sha.re/
               </span>
@@ -127,9 +259,21 @@ const Hero: React.FC = () => {
             <button
               onClick={goRegister}
               disabled={isChecking || (username.length >= 4 && isAvailable === false)}
-              className="bg-[#dea2a2] text-black font-['League_Spartan'] font-bold text-lg sm:text-xl px-4 sm:px-8 py-3 sm:py-4 rounded-[15px] sm:rounded-[20px] hover:bg-[#B88484] transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+              className="group relative bg-[#dea2a2] text-black font-['League_Spartan'] font-bold text-lg sm:text-xl px-4 sm:px-8 py-3 sm:py-4 rounded-[15px] sm:rounded-[20px] hover:bg-[#B88484] transition-colors transition-transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
             >
               Nhận tên của bạn
+              {!!particleState && (
+                <Particles
+                  id="whatever"
+                  className={`pointer-events-none absolute -bottom-4 -left-4 -right-4 -top-4 z-0 opacity-0 transition-opacity ${particleState === "ready" ? "group-hover:opacity-100" : ""}`}
+                  particlesLoaded={async () => {
+                    setParticlesReady("ready");
+                  }}
+                  options={modifiedOptions}
+                />
+              )}
             </button>
           </div>
           {/* Hint messages */}
@@ -158,13 +302,43 @@ const Hero: React.FC = () => {
         </div>
         
         <div className="flex-shrink-0 mt-8 md:mt-0 md:ml-8 lg:ml-16">
-          <div className="relative">
-            <img
-              src="https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-09-09/MFrg9GUwY3.png"
-              alt="Mobile App Preview"
-              className="w-[200px] sm:w-[240px] md:w-[283px] h-auto rounded-[30px] sm:rounded-[40px] shadow-[0px_4px_80px_rgba(0,0,0,0.55)] border-[8px] sm:border-[16px] border-white/8"
-            />
-          </div>
+          <DiscloseImage
+            src="/images/hero-custom.png"
+            alt="Mobile App Preview"
+            containerClassName="w-[240px] sm:w-[280px] md:w-[340px] lg:w-[400px] h-[360px] sm:h-[420px] md:h-[510px] lg:h-[600px]"
+            doorClassName="!bg-[#D48A8A]"
+            onError={(e) => { 
+              const target = e.currentTarget as HTMLImageElement;
+              target.onerror = null; 
+              target.src = 'https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-09-09/MFrg9GUwY3.png'; 
+            }}
+          />
+        </div>
+      </div>
+
+      {/* 3D Card Carousel Section */}
+      <div className="mt-16 sm:mt-20 md:mt-24">
+        <div className="text-center mb-8">
+          <h2 className="text-[#D48A8A] font-['Unbounded'] text-2xl sm:text-3xl md:text-4xl font-semibold mb-4">
+            Chia sẻ mọi liên kết của bạn
+          </h2>
+          <p className="text-[#440808] font-spartan text-base sm:text-lg md:text-xl">
+            Tất cả trong một nơi, dễ dàng truy cập
+          </p>
+        </div>
+        <div className="relative w-full h-[360px] sm:h-[420px] md:h-[510px] lg:h-[600px]">
+          <Card3D images={[
+            '/images/card1.png',
+            '/images/card2.png',
+            '/images/card3.png',
+            '/images/card4.png',
+            '/images/card5.png',
+            '/images/card6.png',
+            '/images/card7.png',
+            '/images/card8.png',
+            '/images/card9.png',
+            '/images/card10.png',
+          ]} />
         </div>
       </div>
     </main>

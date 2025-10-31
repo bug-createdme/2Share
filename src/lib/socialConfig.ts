@@ -69,10 +69,26 @@ export const SOCIAL_PLATFORMS: SocialPlatform[] = [
     img: '/images/social/Facebook_icon.png',
     desc: 'Show your visitors any Facebook video, right on your 2Share.',
     getAvatarUrl: (url: string) => {
-      const usernameMatch = url.match(/facebook\.com\/([^\/\?#]+)/);
-      if (usernameMatch && usernameMatch[1]) {
-        return `https://unavatar.io/facebook/${usernameMatch[1]}`;
-      }
+      try {
+        const u = new URL(url.replace('m.facebook.com', 'www.facebook.com'));
+        // profile.php?id=1234567890
+        const idParam = u.searchParams.get('id');
+        if (u.pathname.includes('profile.php') && idParam) {
+          // Prefer Graph image, then unavatar by id
+          return `https://graph.facebook.com/${idParam}/picture?type=large&width=128&height=128`;
+        }
+        // pages/<page-name>/<page-id> or people/<name>/<id>
+        const parts = u.pathname.split('/').filter(Boolean);
+        const numericId = parts.find(p => /^\d+$/.test(p));
+        if (numericId) {
+          return `https://graph.facebook.com/${numericId}/picture?type=large&width=128&height=128`;
+        }
+        // Fallback to username (first segment)
+        const username = parts[0];
+        if (username) {
+          return `https://unavatar.io/facebook/${username}`;
+        }
+      } catch {}
       return 'https://www.google.com/s2/favicons?domain=facebook.com&sz=128';
     }
   },

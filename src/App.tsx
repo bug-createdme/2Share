@@ -12,21 +12,21 @@ import PortfolioDesignPage from './screens/PortfolioDesignPage';
 import PublicPortfolioPage from './screens/PublicPortfolioPage';
 import VerifyEmailPage from './screens/VerifyEmail/VerifyEmailPage';
 import EmailVerifyActionPage from './screens/VerifyEmail/EmailVerifyActionPage';
-import AdminPage from './screens/AdminPage';
+import AdminPage from './screens/admin/AdminPage';
 
 import { getMyProfile } from './lib/api';
 import Header from './components/MainLayout/Header';
 import Hero from './components/MainLayout/Hero';
 import NfcDesignPage from './screens/NfcDesignPage';
-import SubscriptionUpgradePage from './screens/SubscriptionUpgradePage';
-import SubscriptionPlansPage from './screens/SubscriptionPlansPage'; // THÊM DÒNG NÀY
+import SubscriptionUpgradePage from './subcription/SubscriptionUpgradePage';
+import SubscriptionPlansPage from './subcription/SubscriptionPlansPage'; // THÊM DÒNG NÀY
 import InsightsPage from './screens/InsightPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
-import PaymentSuccessPage from './screens/PaymentSuccessPage';
-import PaymentCancelPage from './screens/PaymentCancelPage';
-import PaymentSuccessDemoPage from './screens/PaymentSuccessDemoPage';
-import TrialOfferPage from './screens/TrialOfferPage';
+import PaymentSuccessPage from './components/payment/PaymentSuccessPage';
+import PaymentCancelPage from './components/payment/PaymentCancelPage';
+import PaymentSuccessDemoPage from './components/payment/PaymentSuccessDemoPage';
+import TrialOfferPage from './subcription/TrialOfferPage';
 
 // Wrapper để lấy user từ API và truyền vào UserProfilePage
 function UserProfilePageWrapper() {

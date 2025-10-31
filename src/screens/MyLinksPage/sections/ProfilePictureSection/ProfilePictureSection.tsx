@@ -6,13 +6,12 @@ import { Card, CardContent } from "../../../../components/ui/card";
 // Component để lấy và hiển thị avatar từ social link
 const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: string }) => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [candidates, setCandidates] = useState<string[]>([]);
+  const [idx, setIdx] = useState(0);
 
 
   useEffect(() => {
-    if (!url) {
-      setAvatarUrl(null);
-      return;
-    }
+    if (!url) { setAvatarUrl(null); setCandidates([]); setIdx(0); return; }
 
     const getSocialAvatar = async (socialUrl: string) => {
       try {
@@ -65,11 +64,31 @@ const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: st
           }
         }
         else if (socialUrl.includes('facebook.com')) {
-          const usernameMatch = socialUrl.match(/facebook\.com\/([^\/\?]+)/);
-          if (usernameMatch) {
-            const username = usernameMatch[1];
-            setAvatarUrl(`https://unavatar.io/facebook/${username}`);
+          const normalized = socialUrl.replace('m.facebook.com', 'www.facebook.com');
+          const list: string[] = [];
+          try {
+            const u = new URL(normalized);
+            const idParam = u.searchParams.get('id');
+            if (u.pathname.includes('profile.php') && idParam) {
+              list.push(`https://graph.facebook.com/${idParam}/picture?type=large&width=128&height=128`);
+              list.push(`https://unavatar.io/facebook/${idParam}`);
+            }
+            const parts = u.pathname.split('/').filter(Boolean);
+            const numericId = parts.find(p => /^\d+$/.test(p));
+            if (numericId) {
+              list.push(`https://graph.facebook.com/${numericId}/picture?type=large&width=128&height=128`);
+              list.push(`https://unavatar.io/facebook/${numericId}`);
+            }
+            if (parts[0]) list.push(`https://unavatar.io/facebook/${parts[0]}`);
+          } catch {
+            const m = normalized.match(/facebook\.com\/([^\/\?]+)/);
+            if (m) list.push(`https://unavatar.io/facebook/${m[1]}`);
           }
+          // Always add favicon as a last resort
+          list.push('https://www.google.com/s2/favicons?domain=facebook.com&sz=128');
+          setCandidates(list);
+          setIdx(0);
+          setAvatarUrl(list[0] || null);
         }
         // Nếu không match được platform nào hoặc unavatar không hoạt động
         else {
@@ -81,12 +100,20 @@ const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: st
       }
     };
 
-    const debounceTimer = setTimeout(() => {
-      getSocialAvatar(url);
-    }, 300);
+    const debounceTimer = setTimeout(() => { getSocialAvatar(url); }, 300);
 
     return () => clearTimeout(debounceTimer);
   }, [url]);
+
+  // Advance to next candidate if the current image errors
+  const handleImgError = () => {
+    if (idx + 1 < candidates.length) {
+      setIdx(idx + 1);
+      setAvatarUrl(candidates[idx + 1]);
+    } else {
+      setAvatarUrl(null);
+    }
+  };
 
   return (
     <div className="absolute top-[11px] left-[11px] w-[18px] h-[18px] rounded-full overflow-hidden bg-white flex items-center justify-center">
@@ -95,7 +122,7 @@ const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: st
           src={avatarUrl}
           alt={`${name} avatar`}
           className="w-full h-full object-cover"
-          onError={() => setAvatarUrl(null)} // Fallback nếu ảnh lỗi
+          onError={handleImgError} // thử nguồn khác nếu ảnh lỗi
         />
       ) : (
         <span className="text-lg">{icon}</span>
@@ -146,7 +173,7 @@ export const ProfilePictureSection = ({ user, bio, socialLinks, portfolioTitle }
               <div key={index} className="w-[212px] h-[39.09px] relative">
                 <Button
                   variant="outline"
-                  className="w-[210px] h-[39px] rounded-[10px] border-2 border-solid border-white bg-transparent hover:bg-white/10 transition-colors h-auto"
+                  className="w-[210px] h-[39px] rounded-[10px] border-2 border-solid border-white bg-transparent hover:bg-white/10 transition-colors"
                   onClick={() => {
                     if (link.url && link.isEnabled) {
                       // Tăng số lượt click

@@ -9,23 +9,57 @@ import type { SocialLink } from "./MyLinksPage/sections/SocialLinksSection/Socia
 // Component để lấy và hiển thị avatar từ social link
 const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: string }) => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [candidates, setCandidates] = useState<string[]>([]);
+  const [idx, setIdx] = useState(0);
 
 
   useEffect(() => {
-    if (!url) {
-      setAvatarUrl(null);
-      return;
-    }
+    if (!url) { setAvatarUrl(null); setCandidates([]); setIdx(0); return; }
 
     // Use shared configuration for avatar extraction
     const debounceTimer = setTimeout(() => {
       console.log('🔍 Getting avatar for:', name, url);
-      const avatar = getSocialAvatarUrl(name, url);
-      setAvatarUrl(avatar);
+      // primary from config
+      const first = getSocialAvatarUrl(name, url);
+      const list: string[] = [];
+      if (first) list.push(first);
+      // extra handling for Facebook to improve reliability
+      if (name.toLowerCase().includes('facebook')) {
+        try {
+          const normalized = url.replace('m.facebook.com', 'www.facebook.com');
+          const u = new URL(normalized);
+          const idParam = u.searchParams.get('id');
+          if (u.pathname.includes('profile.php') && idParam) {
+            list.unshift(`https://graph.facebook.com/${idParam}/picture?type=large&width=128&height=128`); // prefer Graph ID
+            list.push(`https://unavatar.io/facebook/${idParam}`);
+          }
+          const parts = u.pathname.split('/').filter(Boolean);
+          const numericId = parts.find(p => /^\d+$/.test(p));
+          if (numericId) {
+            list.push(`https://graph.facebook.com/${numericId}/picture?type=large&width=128&height=128`);
+            list.push(`https://unavatar.io/facebook/${numericId}`);
+          }
+          if (parts[0]) list.push(`https://unavatar.io/facebook/${parts[0]}`);
+        } catch {}
+        list.push('https://www.google.com/s2/favicons?domain=facebook.com&sz=128');
+      }
+      setCandidates(list);
+      setIdx(0);
+      setAvatarUrl(list[0] || null);
     }, 300);
 
     return () => clearTimeout(debounceTimer);
   }, [url, name]);
+
+  const handleImgError = () => {
+    if (idx + 1 < candidates.length) {
+      setIdx(idx + 1);
+      setAvatarUrl(candidates[idx + 1]);
+    } else {
+      console.log('❌ Failed to load all avatar sources');
+      setAvatarUrl(null);
+    }
+  };
 
   return (
     <div className="absolute top-[11px] left-[11px] w-[18px] h-[18px] rounded-full overflow-hidden bg-white flex items-center justify-center">
@@ -34,10 +68,7 @@ const SocialAvatar = ({ url, name, icon }: { url: string; name: string; icon: st
           src={avatarUrl}
           alt={`${name} avatar`}
           className="w-full h-full object-cover"
-          onError={() => {
-            console.log('❌ Failed to load avatar:', avatarUrl);
-            setAvatarUrl(null);
-          }}
+          onError={handleImgError}
         />
       ) : (
         <span className="text-[10px]">{icon}</span>

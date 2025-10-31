@@ -118,7 +118,6 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose, portfolioLink,
       </div>
       {/* Action rows */}
       <div className="w-full flex flex-col">
-        <RowItem icon={<FileText className="w-4 h-4" />} label="Add to bio" onClick={() => {}} />
         <RowItem icon={<QrCode className="w-4 h-4" />} label="QR code" onClick={() => setShowQRCode(true)} />
         <RowItem icon={<Share2 className="w-4 h-4" />} label="Share to..." onClick={handleShareTo} />
         <RowItem icon={<ExternalLink className="w-4 h-4" />} label="Open" onClick={() => window.open(portfolioLink, '_blank')} />

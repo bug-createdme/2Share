@@ -60,13 +60,24 @@ export default {
         'goblin': ['Goblin One', 'cursive'],
         'spartan': ['League Spartan', 'sans-serif'],
       },
+      transitionTimingFunction: {
+        slow: "cubic-bezier(.405, 0, .025, 1)",
+      },
+      transitionDuration: {
+        mid: "3s",
+      },
       animation: {
         'fade-in': 'fadeIn 0.7s ease forwards',
+        'out': 'slideOut 3s cubic-bezier(.405, 0, .025, 1) forwards',
       },
       keyframes: {
         fadeIn: {
           '0%': { opacity: 0, transform: 'translateY(-1rem)' },
           '100%': { opacity: 1, transform: 'translateY(0)' },
+        },
+        slideOut: {
+          '0%': { transform: 'translate(0, 0)' },
+          '100%': { transform: 'var(--tw-slide-out-translate)' },
         },
       },
     },

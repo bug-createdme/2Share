@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getOauthGoogleUrl } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import showToast from '@/lib/toast';
+import { LiquidButton } from '../animate-ui/components/buttons/liquid';
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -110,7 +111,7 @@ const LoginPage: React.FC = () => {
           {/* Username Input */}
           <form className="mb-[18px] w-full flex flex-col items-center space-y-3" onSubmit={handleLogin}>
             {/* Email */}
-            <div className="w-full sm:w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
+            <div className="input-glow-focus w-full sm:w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
               <input
                 type="text"
                 placeholder="Email"
@@ -123,7 +124,7 @@ const LoginPage: React.FC = () => {
               {emailError && <span className="text-red-500 text-xs font-semibold mt-1">{emailError}</span>}
             </div>
             {/* Mật khẩu */}
-            <div className="w-full sm:w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
+            <div className="input-glow-focus w-full sm:w-[475px] min-h-[59px] bg-[#F0F0F0] rounded-[10px] px-[21px] flex flex-col justify-center">
               <div className="flex items-center">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -147,13 +148,15 @@ const LoginPage: React.FC = () => {
               {passwordError && <span className="text-red-500 text-xs font-semibold mt-1">{passwordError}</span>}
             </div>
             {formError && <div className="text-red-500 w-full text-center text-sm font-semibold mt-2">{formError}</div>}
-            <button
+            <LiquidButton
               type="submit"
-              className="w-full sm:w-[475px] h-[59px] bg-[#1B1111] rounded-[10px] flex items-center justify-center mb-[19px] hover:bg-[#2a1a1a] transition-colors text-white text-[20px] sm:text-[24px] font-bold leading-[22.08px] font-['League_Spartan'] disabled:opacity-60"
+              variant="primary"
+              size="lg"
+              className="w-full sm:w-[475px] mb-[19px]"
               disabled={loading}
             >
               {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-            </button>
+            </LiquidButton>
           </form>
           {/* Or divider */}
           <div className="text-center mb-[14px] w-full">

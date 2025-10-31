@@ -41,6 +41,27 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .slide-out-to-left-full {
+    --tw-slide-out-translate: -100%, 0;
+  }
+  .slide-out-to-right-full {
+    --tw-slide-out-translate: 100%, 0;
+  }
+  .slide-out-to-top-full {
+    --tw-slide-out-translate: 0, -100%;
+  }
+  .slide-out-to-bottom-full {
+    --tw-slide-out-translate: 0, 100%;
+  }
+  .animate-out {
+    animation: slideOut var(--tw-duration, 3s) var(--tw-ease, cubic-bezier(.405, 0, .025, 1)) forwards;
+  }
+  .fill-mode-forwards {
+    animation-fill-mode: forwards;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -78,4 +99,94 @@
 body {
   margin: 0;
   font-family: 'spartan', sans-serif;
+}
+
+/* Input Focus Glow Effect */
+.input-glow-focus {
+  position: relative;
+  transition: all 0.3s ease-in-out;
+}
+
+.input-glow-focus::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 12px;
+  padding: 2px;
+  background: linear-gradient(135deg, #f472b6, #fb7185, #a78bfa, #60a5fa, #34d399);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: none;
+}
+
+.input-glow-focus:focus-within::before {
+  opacity: 1;
+  animation: glow-rotate 2s linear infinite;
+}
+
+.input-glow-focus:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(244, 114, 182, 0.15);
+}
+
+@keyframes glow-rotate {
+  0% {
+    filter: hue-rotate(0deg) brightness(1.1);
+  }
+  100% {
+    filter: hue-rotate(360deg) brightness(1.1);
+  }
+}
+
+/* Aurora Text effect */
+.aurora-text {
+  /* Base full coverage gradient so every glyph is fully filled */
+  background-image:
+    linear-gradient(90deg, #f472b6 0%, #fb7185 20%, #a78bfa 50%, #60a5fa 80%, #34d399 100%),
+    /* Aurora waves layered on top */
+    radial-gradient(120px 60px at 10% 20%, rgba(236, 72, 153, 0.85), rgba(236, 72, 153, 0) 60%),
+    radial-gradient(120px 60px at 90% 30%, rgba(34, 197, 94, 0.85), rgba(34, 197, 94, 0) 60%),
+    radial-gradient(120px 80px at 50% 80%, rgba(56, 189, 248, 0.85), rgba(56, 189, 248, 0) 60%);
+  background-size: 300% 300%;
+  animation: aurora-shift var(--aurora-speed, 12000ms) ease-in-out infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.15));
+}
+
+@keyframes aurora-shift {
+  0% {
+    background-position: 0% 50%, 50% 20%, 100% 80%;
+  }
+  50% {
+    background-position: 100% 50%, 50% 80%, 0% 20%;
+  }
+  100% {
+    background-position: 0% 50%, 50% 20%, 100% 80%;
+  }
+}
+
+/* Layered Aurora structure for readability */
+.aurora-wrap {
+  position: relative;
+  display: inline-block;
+}
+.aurora-base {
+  position: relative;
+  z-index: 1;
+  /* subtle shadow for contrast on light backgrounds */
+  text-shadow: 0 1px 0 rgba(255,255,255,0.4), 0 2px 8px rgba(0,0,0,0.06);
+}
+.aurora-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: var(--aurora-opacity, 1);
+  /* a tiny stroke to keep shapes crisp on bright backgrounds */
+  -webkit-text-stroke: 0.5px rgba(0,0,0,0.05);
 }

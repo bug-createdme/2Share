@@ -867,9 +867,9 @@ export const MyLinksPage = (): JSX.Element => {
 
 
               {/* Add Social Button & Preview Button */}
-              <div className="flex gap-3 w-full max-w-[400px] mb-6 sm:mb-8 px-4 sm:px-0">
+              <div className="flex gap-3 w-full max-w-[300px] mb-6 sm:mb-8 px-4 sm:px-0">
                 <Button
-                  className="flex-1 h-auto bg-[#639fff] hover:bg-[#5a8fee] rounded-[25px] sm:rounded-[35px] py-3 sm:py-4 flex items-center justify-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl"
+                  className="flex-1 h-auto bg-[#f3b4c3] hover:bg-[#f3b4c3] rounded-[25px] sm:rounded-[35px] py-3 sm:py-4 flex items-center justify-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl"
                   onClick={() => navigate("/my-links/add-social")}
                 >
                   <PlusIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
