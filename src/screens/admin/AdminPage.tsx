@@ -283,21 +283,7 @@ const AdminPage: React.FC = () => {
     { id: 'revenue', label: 'Doanh thu', icon: DollarSign, color: 'bg-emerald-500' },
   ];
 
-  // Helper function để tính phần trăm thay đổi so với tháng trước
-  const calculateMonthlyGrowth = (monthlyData: Array<{ _id: string; count: number }>) => {
-    if (!monthlyData || monthlyData.length < 2) return null;
-    
-    // Sắp xếp theo tháng (mới nhất trước)
-    const sorted = [...monthlyData].sort((a, b) => b._id.localeCompare(a._id));
-    const currentMonth = sorted[0]?.count || 0;
-    const previousMonth = sorted[1]?.count || 0;
-    
-    if (previousMonth === 0) return currentMonth > 0 ? '+100%' : '0%';
-    
-    const growthRate = ((currentMonth - previousMonth) / previousMonth) * 100;
-    const sign = growthRate >= 0 ? '+' : '';
-    return `${sign}${growthRate.toFixed(0)}%`;
-  };
+
 
   // Prepare chart data
   const userGrowthChartData = React.useMemo(() => {

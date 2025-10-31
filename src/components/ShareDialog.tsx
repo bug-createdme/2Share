@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { FileText, QrCode, Share2, ExternalLink, ChevronRight, Copy } from 'lucide-react';
+import { QrCode, Share2, ExternalLink, ChevronRight, Copy } from 'lucide-react';
 
 interface ShareDialogProps {
   open: boolean;
