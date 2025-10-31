@@ -45,6 +45,27 @@ const getSocialIcon = (platform: string) => {
   }
 };
 
+// Theme classes mapping - KHỚP VỚI PORTFOLIO DESIGN
+const themeClasses: Record<string, string> = {
+  coral: "from-[#E7A5A5] to-[#E7A5A5]",
+  green: "from-green-300 to-green-400",
+  dark: "from-gray-700 to-gray-800", 
+  gradient: "from-purple-400 via-blue-400 to-green-400",
+  orange: "from-blue-400 to-orange-400",
+};
+
+// Bio text colors theo theme - KHỚP VỚI PHONE PREVIEW
+const getBioTextColor = (selectedTheme: string) => {
+  switch (selectedTheme) {
+    case 'coral': return '#E7A5A5';
+    case 'green': return '#4ADE80';
+    case 'dark': return '#6B7280';
+    case 'gradient': return '#A855F7';
+    case 'orange': return '#FB923C';
+    default: return '#6B7280';
+  }
+};
+
 const PublicPortfolioPage = (): JSX.Element => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -80,7 +101,7 @@ const PublicPortfolioPage = (): JSX.Element => {
     fetchPortfolio();
   }, [slug]);
 
-  // Hàm xác định background style dựa trên design settings - SỬA LẠI
+  // Hàm xác định background style dựa trên design settings - SỬA LẠI ĐỂ KHỚP VỚI PHONE PREVIEW
   const getBackgroundStyle = () => {
     if (!portfolio?.design_settings) {
       return {
@@ -91,12 +112,13 @@ const PublicPortfolioPage = (): JSX.Element => {
     const design = portfolio.design_settings;
     console.log('🎨 Applying design settings for background:', {
       backgroundType: design.backgroundType,
-      selectedTheme: design.selectedTheme,
+      selectedTheme: design.selectedTheme || design.theme,
       backgroundImage: design.backgroundImage,
       backgroundSolidColor: design.backgroundSolidColor,
       backgroundGradient: design.backgroundGradient
     });
     
+    // ƯU TIÊN: backgroundType trước, sau đó mới đến theme
     if (design.backgroundType === "image" && design.backgroundImage) {
       console.log('🖼️ Using background image:', design.backgroundImage);
       return {
@@ -120,14 +142,17 @@ const PublicPortfolioPage = (): JSX.Element => {
           'gray-700': '#374151',
           'gray-800': '#1f2937',
           'gray-900': '#111827',
+          'blue-400': '#60a5fa',
           'blue-500': '#3b82f6',
           'blue-700': '#1d4ed8',
+          'purple-400': '#c084fc',
           'purple-500': '#a855f7', 
           'purple-700': '#7e22ce',
-          'pink-500': '#ec4899',
-          'pink-700': '#be185d',
+          'green-300': '#86efac',
+          'green-400': '#4ade80',
           'green-500': '#10b981',
           'green-700': '#047857',
+          'orange-400': '#fb923c',
         };
         
         fromColor = colorMap[gradientParts[1]] || gradientParts[1];
@@ -142,35 +167,39 @@ const PublicPortfolioPage = (): JSX.Element => {
       return {
         backgroundColor: design.backgroundSolidColor,
       };
-    } else if (design.backgroundType === "theme" && design.selectedTheme) {
-      console.log('🎭 Using theme:', design.selectedTheme);
-      // Map theme to background colors - SỬA LẠI ĐỂ KHỚP CHÍNH XÁC
-      const themeColors: Record<string, string> = {
+    } else if (design.backgroundType === "pattern") {
+      console.log('🔵 Using pattern background');
+      return {
+        backgroundColor: "#6e6e6e",
+        backgroundImage: `
+          radial-gradient(circle at 25% 25%, rgba(255,255,255,0.3) 2px, transparent 2px),
+          radial-gradient(circle at 75% 75%, rgba(255,255,255,0.3) 2px, transparent 2px)
+        `,
+        backgroundSize: "20px 20px",
+      };
+    } else {
+      // Mặc định dùng theme - SỬA LẠI ĐỂ KHỚP CHÍNH XÁC VỚI PHONE PREVIEW
+      const selectedTheme = design.selectedTheme || design.theme || "dark";
+      console.log('🎭 Using theme:', selectedTheme);
+      
+      // SỬ DỤNG CÙNG THEME CLASSES VỚI PHONE PREVIEW
+      const themeGradients: Record<string, string> = {
         "coral": "linear-gradient(135deg, #E7A5A5 0%, #E7A5A5 100%)",
         "green": "linear-gradient(135deg, #86efac 0%, #4ade80 100%)",
         "dark": "linear-gradient(135deg, #374151 0%, #1f2937 100%)",
-        "gradient": "linear-gradient(135deg, #a855f7 0%, #3b82f6 50%, #10b981 100%)",
-        "orange": "linear-gradient(135deg, #3b82f6 0%, #f97316 100%)",
+        "gradient": "linear-gradient(135deg, #c084fc 0%, #60a5fa 50%, #4ade80 100%)",
+        "orange": "linear-gradient(135deg, #60a5fa 0%, #fb923c 100%)",
       };
-      const background = themeColors[design.selectedTheme] || "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)";
+      
+      const background = themeGradients[selectedTheme] || themeGradients.dark;
       console.log('🎨 Theme background:', background);
       return { background };
     }
-
-    // Default dark theme
-    console.log('⚫ Using default dark theme');
-    return {
-      background: "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)"
-    };
   };
 
-  // Hàm xác định text color dựa trên design settings
+  // Hàm xác định text color - LUÔN DÙNG MÀU TRẮNG CHO TẤT CẢ CHỮ (TRỪ BIO)
   const getTextColor = () => {
-    if (!portfolio?.design_settings) return "#ffffff";
-    
-    const design = portfolio.design_settings;
-    console.log('🎨 Text color from design:', design.textColor);
-    return design.textColor || "#ffffff";
+    return "#ffffff"; // LUÔN MÀU TRẮNG
   };
 
   // Hàm xác định button style dựa trên design settings
@@ -200,18 +229,20 @@ const PublicPortfolioPage = (): JSX.Element => {
       // Solid fill - glassmorphism effect
       return {
         backgroundColor: "rgba(255, 255, 255, 0.2)",
-        color: buttonTextColor,
+        color: "white", // LUÔN DÙNG MÀU TRẮNG
         border: "1px solid rgba(255, 255, 255, 0.3)",
         borderRadius: getBorderRadius(),
         backdropFilter: "blur(10px)",
+        fontFamily: "spartan", // THÊM FONT SPARTAN
       };
     } else {
       // Outline
       return {
         backgroundColor: "transparent",
-        color: buttonColor,
-        border: `1px solid ${buttonColor}`,
+        color: "white", // LUÔN DÙNG MÀU TRẮNG
+        border: `1px solid white`,
         borderRadius: getBorderRadius(),
+        fontFamily: "spartan", // THÊM FONT SPARTAN
       };
     }
   };
@@ -220,10 +251,10 @@ const PublicPortfolioPage = (): JSX.Element => {
   const renderLayout = () => {
     const design = portfolio.design_settings;
     const selectedLayout = design?.selectedLayout || design?.profileLayout + 1 || 1;
+    const selectedTheme = design?.selectedTheme || design?.theme || "dark";
     
-    // Lấy thông tin user từ portfolio - SỬA ĐỂ LẤY AVATAR ĐÚNG
+    // Lấy thông tin user từ portfolio
     const username = portfolio.username || "User";
-    // QUAN TRỌNG: Lấy avatar từ portfolio.avatar_url thay vì default
     const avatarUrl = portfolio.avatar_url || "/images/profile-pictures/pfp-black.jpg";
     const portfolioTitle = portfolio.title || "Portfolio";
     
@@ -260,21 +291,23 @@ const PublicPortfolioPage = (): JSX.Element => {
       : [];
 
     const textColor = getTextColor();
+    const bioTextColor = getBioTextColor(selectedTheme);
 
     console.log('👤 Rendering with data:', {
       username,
-      avatarUrl, // KIỂM TRA AVATAR URL Ở ĐÂY
+      avatarUrl,
       portfolioTitle,
       bioContent,
       socialLinksCount: socialLinks.length,
       selectedLayout,
-      design: design
+      selectedTheme,
+      bioTextColor
     });
 
     // Layout 1: Avatar trên, centered
     const renderLayout1 = () => (
-      <div className="flex flex-col items-center gap-6 mt-6">
-        {/* Avatar - SỬA ĐỂ HIỂN THỊ AVATAR THỰC TẾ */}
+      <div className="flex flex-col items-center gap-6 mt-6 font-spartan">
+        {/* Avatar */}
         <div className="w-32 h-32 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20">
           <img
             src={avatarUrl}
@@ -287,11 +320,8 @@ const PublicPortfolioPage = (): JSX.Element => {
           />
         </div>
         
-        {/* Username */}
-        <h1 
-          className="text-2xl font-semibold mb-2 drop-shadow-lg"
-          style={{ color: textColor }}
-        >
+        {/* Username - LUÔN MÀU TRẮNG */}
+        <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white font-spartan">
           {portfolioTitle}
         </h1>
 
@@ -310,13 +340,13 @@ const PublicPortfolioPage = (): JSX.Element => {
           </div>
         )}
 
-        {/* Bio section */}
+        {/* Bio section - MÀU THEO THEME */}
         {bioContent && (
-          <div 
-            className="bg-white/10 rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-sm border border-white/15 w-full max-w-md"
-            style={{ color: textColor }}
-          >
-            <p className="leading-relaxed text-center text-sm">
+          <div className="bg-white rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-md border border-white/15 w-full max-w-md">
+            <p 
+              className="leading-relaxed text-center text-sm font-spartan"
+              style={{ color: bioTextColor }}
+            >
               {bioContent}
             </p>
           </div>
@@ -334,7 +364,7 @@ const PublicPortfolioPage = (): JSX.Element => {
                 className="w-full no-underline"
               >
                 <button 
-                  className="w-full py-4 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300"
+                  className="w-full py-4 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 font-spartan"
                   style={getButtonStyle(design)}
                 >
                   {getSocialIcon(link.name)}
@@ -349,7 +379,7 @@ const PublicPortfolioPage = (): JSX.Element => {
 
     // Layout 2: Avatar bên trái với username
     const renderLayout2 = () => (
-      <div className="flex flex-col gap-6 mt-6">
+      <div className="flex flex-col gap-6 mt-6 font-spartan">
         <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-6 mx-auto w-fit">
           {/* Avatar */}
           <div className="w-24 h-24 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20">
@@ -364,11 +394,8 @@ const PublicPortfolioPage = (): JSX.Element => {
             />
           </div>
           <div className="flex flex-col items-center md:items-start">
-            {/* Username */}
-            <h1 
-              className="text-2xl font-semibold mb-2 drop-shadow-lg"
-              style={{ color: textColor }}
-            >
+            {/* Username - LUÔN MÀU TRẮNG */}
+            <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white font-spartan">
               {portfolioTitle}
             </h1>
             {/* Social Icons */}
@@ -384,13 +411,13 @@ const PublicPortfolioPage = (): JSX.Element => {
           </div>
         </div>
         
-        {/* Bio section */}
+        {/* Bio section - MÀU THEO THEME */}
         {bioContent && (
-          <div 
-            className="bg-white/10 rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-sm border border-white/15 w-full max-w-md mx-auto"
-            style={{ color: textColor }}
-          >
-            <p className="leading-relaxed text-center text-sm">
+          <div className="bg-white rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-sm border border-white/15 w-full max-w-md mx-auto">
+            <p 
+              className="leading-relaxed text-center text-sm font-spartan"
+              style={{ color: bioTextColor }}
+            >
               {bioContent}
             </p>
           </div>
@@ -408,7 +435,7 @@ const PublicPortfolioPage = (): JSX.Element => {
                 className="w-full no-underline"
               >
                 <button 
-                  className="w-full py-3 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300"
+                  className="w-full py-3 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 font-spartan"
                   style={getButtonStyle(design)}
                 >
                   {getSocialIcon(link.name)}
@@ -423,12 +450,9 @@ const PublicPortfolioPage = (): JSX.Element => {
 
     // Layout 3: Username trên, avatar wide ở giữa
     const renderLayout3 = () => (
-      <div className="flex flex-col items-center gap-4 mt-6 w-full">
-        {/* Username */}
-        <h1 
-          className="text-2xl font-semibold mb-2 drop-shadow-lg"
-          style={{ color: textColor }}
-        >
+      <div className="flex flex-col items-center gap-4 mt-6 w-full font-spartan">
+        {/* Username - LUÔN MÀU TRẮNG */}
+        <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white font-spartan">
           {portfolioTitle}
         </h1>
         
@@ -460,13 +484,13 @@ const PublicPortfolioPage = (): JSX.Element => {
           />
         </div>
 
-        {/* Bio section */}
+        {/* Bio section - MÀU THEO THEME */}
         {bioContent && (
-          <div 
-            className="bg-white/10 rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-sm border border-white/15 w-full max-w-md"
-            style={{ color: textColor }}
-          >
-            <p className="leading-relaxed text-center text-sm">
+          <div className="bg-white rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-sm border border-white/15 w-full max-w-md">
+            <p 
+              className="leading-relaxed text-center text-sm font-spartan"
+              style={{ color: bioTextColor }}
+            >
               {bioContent}
             </p>
           </div>
@@ -484,7 +508,7 @@ const PublicPortfolioPage = (): JSX.Element => {
                 className="w-full no-underline"
               >
                 <button 
-                  className="w-full py-3 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300"
+                  className="w-full py-3 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 font-spartan"
                   style={getButtonStyle(design)}
                 >
                   {getSocialIcon(link.name)}
@@ -497,89 +521,86 @@ const PublicPortfolioPage = (): JSX.Element => {
       </div>
     );
 
-    // Layout 4: Background avatar style
-    const renderLayout4 = () => (
-      <div className="relative h-full flex flex-col items-center justify-between py-6">
-        {/* Background avatar - large avatar in center */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-20">
-          <div className="w-48 h-48 rounded-full overflow-hidden bg-white/30 border-2 border-white/20">
-            <img
-              className="w-full h-full object-cover"
-              alt="Avatar background"
-              src={avatarUrl}
-              onError={(e) => {
-                console.error('❌ Avatar load error, using fallback');
-                (e.target as HTMLImageElement).src = "/images/profile-pictures/pfp-black.jpg";
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Foreground content */}
-        <div className="relative z-10 w-full flex flex-col items-center mt-4">
-          {/* Username */}
-          <h1 
-            className="text-2xl font-semibold mb-4 drop-shadow-lg"
-            style={{ color: textColor }}
-          >
-            {portfolioTitle}
-          </h1>
-          
-          {/* Social Icons */}
-          {socialLinks.length > 0 && (
-            <div className="flex gap-3 justify-center mb-6">
-              {socialLinks.slice(0, 5).map((link) => (
-                <div 
-                  key={link.id}
-                  className="hover:opacity-80 transition-transform hover:scale-110 w-6 h-6 flex items-center justify-center"
-                  title={link.displayName || link.name}
-                >
-                  {getSocialIcon(link.name)}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Bio and links at bottom */}
-        <div className="relative z-10 w-full space-y-4">
-          {/* Bio Section */}
-          {bioContent && (
-            <div 
-              className="bg-white/10 rounded-2xl p-4 mb-4 shadow-lg backdrop-blur-sm border border-white/15 w-full max-w-md mx-auto"
-              style={{ color: textColor }}
-            >
-              <p className="leading-relaxed text-center text-sm">
-                {bioContent}
-              </p>
-            </div>
-          )}
-
-          {/* Links */}
-          {socialLinks.length > 0 && (
-            <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
-              {socialLinks.slice(0, 4).map((link) => (
-                <a 
-                  key={link.id} 
-                  href={link.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="w-full no-underline"
-                >
-                  <button 
-                    className="w-full py-3 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300"
-                    style={getButtonStyle(design)}
-                  >
-                    {getSocialIcon(link.name)}
-                    <span>{link.displayName || link.name}</span>
-                  </button>
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
+    // Layout 4: Background avatar style - SỬA LẠI ĐỂ AVATAR LÀ ĐIỂM NHẤN
+const renderLayout4 = () => (
+  <div className="relative h-full flex flex-col items-center justify-start min-h-[500px]">
+    {/* Background avatar - LỚN và NỔI BẬT */}
+    <div className="absolute inset-0 flex items-center justify-center opacity-50 mb-52">
+      <div className="w-64 h-64 rounded-full overflow-hidden bg-white/20 border-4 border-white/30 shadow-2xl">
+        <img
+          className="w-full h-full object-cover"
+          alt="Avatar background"
+          src={avatarUrl}
+          onError={(e) => {
+            console.error('❌ Avatar load error, using fallback');
+            (e.target as HTMLImageElement).src = "/images/profile-pictures/pfp-black.jpg";
+          }}
+        />
       </div>
-    );
+    </div>
+
+    {/* Foreground content - NẰM Ở TRÊN CÙNG */}
+    <div className="relative z-10 w-full flex flex-col items-center mt-8">
+      {/* Username - NỔI BẬT Ở TRÊN CÙNG */}
+      <h1 className="text-3xl font-bold mb-4 drop-shadow-2xl text-white font-spartan text-center">
+        {portfolioTitle}
+      </h1>
+      
+      {/* Social Icons - NẰM NGAY DƯỚI USERNAME */}
+      {socialLinks.length > 0 && (
+        <div className="flex gap-4 justify-center mb-8">
+          {socialLinks.slice(0, 6).map((link) => (
+            <div 
+              key={link.id}
+              className="hover:opacity-80 transition-transform hover:scale-110 w-8 h-8 flex items-center justify-center bg-white/20 rounded-full backdrop-blur-sm border border-white/30"
+              title={link.displayName || link.name}
+            >
+              {getSocialIcon(link.name)}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+
+    {/* Bio and links at bottom - NẰM Ở DƯỚI CÙNG */}
+    <div className="relative z-10 w-full mt-64 space-y-6 pb-8 ">
+      {/* Bio Section - CHỈ HIỆN KHI CÓ NỘI DUNG */}
+      {bioContent && (
+        <div className="bg-white rounded-2xl p-6 shadow-lg backdrop-blur-sm border border-white/20 w-full max-w-md mx-auto">
+          <p 
+              className="leading-relaxed text-center text-sm font-spartan"
+              style={{ color: bioTextColor }}
+            >
+              {bioContent}
+            </p>
+        </div>
+      )}
+
+      {/* Links - NẰM DƯỚI BIO */}
+      {socialLinks.length > 0 && (
+        <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
+          {socialLinks.map((link) => (
+            <a 
+              key={link.id} 
+              href={link.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-full no-underline"
+            >
+              <button 
+                className="w-full py-4 font-medium rounded-xl hover:bg-white/20 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 border border-white/30"
+                style={getButtonStyle(design)}
+              >
+                {getSocialIcon(link.name)}
+                <span className="text-white">{link.displayName || link.name}</span>
+              </button>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+);
 
     switch (selectedLayout) {
       case 1: return renderLayout1();
@@ -592,7 +613,7 @@ const PublicPortfolioPage = (): JSX.Element => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center font-spartan">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
           <p className="text-white">Đang tải portfolio...</p>
@@ -603,7 +624,7 @@ const PublicPortfolioPage = (): JSX.Element => {
 
   if (error || !portfolio) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center font-spartan">
         <div className="text-center">
           <div className="bg-white/10 rounded-lg shadow-lg p-8 max-w-md mx-auto backdrop-blur-sm">
             <div className="text-white text-6xl mb-4">😔</div>
@@ -611,7 +632,7 @@ const PublicPortfolioPage = (): JSX.Element => {
             <p className="text-white/80 mb-4">{error || "Portfolio này không tồn tại hoặc chưa được công khai."}</p>
             <Button 
               onClick={() => navigate("/")} 
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30 font-spartan"
             >
               Về trang chủ
             </Button>
@@ -625,7 +646,7 @@ const PublicPortfolioPage = (): JSX.Element => {
   console.log('🎨 Final background style:', backgroundStyle);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-center text-white relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center text-center text-white relative overflow-hidden font-spartan">
       {/* Background với design settings - ĐẢM BẢO ÁP DỤNG ĐÚNG */}
       <div 
         className="absolute inset-0"
@@ -653,17 +674,17 @@ const PublicPortfolioPage = (): JSX.Element => {
       )}
 
       {/* Header đơn giản */}
-      <div className="absolute top-0 left-0 right-0 bg-white/10 backdrop-blur-sm border-b border-white/20 z-10">
+      <div className="absolute top-0 left-0 right-0 bg-white/10 backdrop-blur-sm border-b border-white/20 z-10 font-spartan">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               onClick={() => navigate("/")}
-              className="text-white hover:text-white hover:bg-white/20 border-white/30"
+              className="text-white hover:text-white hover:bg-white/20 border-white/30 font-spartan"
             >
               ← Về trang chủ
             </Button>
-            <div className="text-sm text-white/80 truncate max-w-[200px]">
+            <div className="text-sm text-white/80 truncate max-w-[200px] font-spartan">
               {portfolio?.username ? `@${portfolio.username}` : 'Portfolio'}
             </div>
           </div>
@@ -686,7 +707,7 @@ const PublicPortfolioPage = (): JSX.Element => {
               }}
             />
           </div>
-          <div className="text-xs text-white/60">
+          <div className="text-xs text-white/60 font-spartan">
             Powered by 2Share
           </div>
         </div>

@@ -61,11 +61,23 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
   const buttonColor = designSettings?.buttonColor || "#ffffff";
   const buttonTextColor = designSettings?.buttonTextColor || "#ffffff";
   const textColorValue = designSettings?.textColor || "#ffffff";
-  const fontFamily = designSettings?.fontFamily || "spartan";
+  const fontFamily = "spartan"; // LUÔN DÙNG FONT SPARTAN
   const backgroundType = designSettings?.backgroundType || "theme";
   const backgroundImage = designSettings?.backgroundImage;
   const backgroundSolidColor = designSettings?.backgroundSolidColor;
   const backgroundGradient = designSettings?.backgroundGradient;
+
+  // Màu chữ cho bio theo theme
+  const getBioTextColor = () => {
+    switch (selectedTheme) {
+      case 'coral': return '#E7A5A5';
+      case 'green': return '#4ADE80';
+      case 'dark': return '#6B7280';
+      case 'gradient': return '#A855F7';
+      case 'orange': return '#FB923C';
+      default: return '#6B7280';
+    }
+  };
 
   // Social icons mapping - CẬP NHẬT THÊM NHIỀU PLATFORM
   const getSocialIcon = (platform: string) => {
@@ -117,7 +129,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
       // Solid fill - glassmorphism effect
       return {
         backgroundColor: "rgba(255, 255, 255, 0.2)",
-        color: buttonTextColor,
+        color: "white", // LUÔN DÙNG MÀU TRẮNG
         border: "1px solid rgba(255, 255, 255, 0.3)",
         borderRadius,
         backdropFilter: "blur(10px)",
@@ -127,8 +139,8 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
       // Outline
       return {
         backgroundColor: "transparent",
-        color: buttonColor,
-        border: `1px solid ${buttonColor}`,
+        color: "white", // LUÔN DÙNG MÀU TRẮNG
+        border: `1px solid white`,
         borderRadius,
         fontFamily: fontFamily,
       };
@@ -139,13 +151,16 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
   const renderBioSection = (content: string, className: string = "") => {
     if (!content || content.trim() === '') return null;
     
+    const bioTextColor = getBioTextColor();
+    
     return (
       <div className={`w-full bg-white rounded-[12px] shadow-lg p-3 ${className}`}>
         <p 
-          className="text-[10px] leading-relaxed text-gray-600 text-center break-words"
+          className="text-[10px] leading-relaxed text-center break-words font-spartan"
           style={{ 
             wordBreak: 'break-word',
-            fontFamily: fontFamily
+            fontFamily: fontFamily,
+            color: bioTextColor // MÀU THEO THEME CHO BIO
           }}
         >
           {content}
@@ -207,11 +222,8 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
         />
       </div>
       
-      {/* Username */}
-      <h3 
-        className="text-white text-sm font-bold tracking-wide font-spartan"
-        style={{ fontFamily: fontFamily }}
-      >
+      {/* Username - LUÔN MÀU TRẮNG */}
+      <h3 className="text-white text-sm font-bold tracking-wide font-spartan">
         @{displayUsername}
       </h3>
 
@@ -221,7 +233,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
           {enabledLinks.slice(0, 6).map((link) => (
             <div 
               key={link.id}
-              className="hover:opacity-80 transition-transform hover:scale-110 w-4 h-4 flex items-center justify-center "
+              className="hover:opacity-80 transition-transform hover:scale-110 w-4 h-4 flex items-center justify-center"
               title={link.displayName || link.name}
             >
               {getSocialIcon(link.name)}
@@ -253,7 +265,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
 
   // Layout 2: Avatar bên trái với username (giống mock)
   const renderLayout2 = () => (
-    <div className="flex flex-col gap-4 mt-6">
+    <div className="flex flex-col gap-4 mt-6 font-spartan">
       <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-6 mx-auto w-fit">
         {/* Avatar */}
         <div className="w-12 h-12 rounded-2xl bg-white/50 flex items-center justify-center backdrop-blur-sm border border-white/30">
@@ -264,11 +276,8 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
           />
         </div>
         <div className="flex flex-col items-start">
-          {/* Username */}
-          <h3 
-            className="text-white text-sm font-bold tracking-wide font-spartan"
-            style={{ fontFamily: fontFamily }}
-          >
+          {/* Username - LUÔN MÀU TRẮNG */}
+          <h3 className="text-white text-sm font-bold tracking-wide font-spartan">
             @{displayUsername}
           </h3>
           {/* Social Icons */}
@@ -307,12 +316,9 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
 
   // Layout 3: Username trên, avatar wide ở giữa (giống mock)
   const renderLayout3 = () => (
-    <div className="flex flex-col items-center gap-3 mt-6 w-full">
-      {/* Username */}
-      <h3 
-        className="text-white text-sm font-bold tracking-wide"
-        style={{ fontFamily: fontFamily }}
-      >
+    <div className="flex flex-col items-center gap-3 mt-6 w-full font-spartan">
+      {/* Username - LUÔN MÀU TRẮNG */}
+      <h3 className="text-white text-sm font-bold tracking-wide font-spartan">
         @{displayUsername}
       </h3>
       
@@ -349,7 +355,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
           {enabledLinks.map((link) => (
             <button
               key={link.id}
-              className="w-full py-1 text-[11px] font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-1 text-[11px] font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-2 font-spartan"
               style={getButtonStyle()}
             >
               {getSocialIcon(link.name)}
@@ -363,7 +369,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
 
   // Layout 4: Background avatar style (giống mock)
   const renderLayout4 = () => (
-    <div className="relative h-full flex flex-col items-center justify-between py-6">
+    <div className="relative h-full flex flex-col items-center justify-between py-6 font-spartan">
       {/* Background avatar - large avatar in center */}
       <div className="absolute inset-0 flex items-center justify-center opacity-30">
         <div className="w-32 h-32 rounded-full overflow-hidden bg-white/30 border-2 border-white/20">
@@ -377,11 +383,8 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
 
       {/* Foreground content */}
       <div className="relative z-10 w-full flex flex-col items-center mt-4">
-        {/* Username */}
-        <h3 
-          className="text-white text-sm font-bold tracking-wide mb-2"
-          style={{ fontFamily: fontFamily }}
-        >
+        {/* Username - LUÔN MÀU TRẮNG */}
+        <h3 className="text-white text-sm font-bold tracking-wide mb-2 font-spartan">
           @{displayUsername}
         </h3>
         
@@ -412,7 +415,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
             {enabledLinks.slice(0, 4).map((link) => (
               <button
                 key={link.id}
-                className="w-full py-1 text-[10px] font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-2"
+                className="w-full py-1 text-[10px] font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-2 font-spartan"
                 style={getButtonStyle()}
               >
                 {getSocialIcon(link.name)}
@@ -437,9 +440,9 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
   };
 
   return (
-    <div className="w-70 py-4 px-20 mx-auto bg-white border-l border-gray-200 fixed top-0 right-0 h-screen overflow-hidden z-40 font-spartan">
+    <div className="w-70 py-4 px-20 mx-auto bg-white border-l border-gray-200 fixed top-16 right-0 h-screen overflow-hidden z-20 font-spartan">
       <div
-        className={`w-60 h-[580px] bg-gradient-to-br ${themeClasses[selectedTheme]} rounded-3xl border-4 border-gray-600 p-6 relative overflow-hidden mt-20`}
+        className={`w-60 h-[580px] bg-gradient-to-br ${themeClasses[selectedTheme]} rounded-3xl border-4 border-gray-600 p-6 relative overflow-hidden mt-4 font-spartan`}
         style={getPhoneBackgroundStyle()}
       >
         {renderCurrentLayout()}

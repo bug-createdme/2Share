@@ -401,13 +401,6 @@ const PortfolioDesignPage: React.FC = () => {
   }, [portfolioSlug, hasChanges]);
 
   // Auto-refresh mỗi 30 giây để catch changes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLastUpdate(Date.now());
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   // Handlers cho các design changes
   const handleThemeChange = (theme: string) => {
@@ -443,7 +436,7 @@ const PortfolioDesignPage: React.FC = () => {
     return <div className="flex items-center justify-center h-screen text-red-500">{error || "Không có thông tin người dùng"}</div>;
   }
 
-  return (
+      return (
     <div className="min-h-screen bg-gray-50 font-spartan">
       {/* Mobile Menu Button */}
       <button
@@ -465,35 +458,33 @@ const PortfolioDesignPage: React.FC = () => {
       )}
 
       {/* Sidebar - Desktop fixed, Mobile slide-in */}
-      <div className="hidden lg:block fixed top-0 left-0 h-full min-h-screen w-[200px] xl:w-[265px] bg-white border-r border-[#d9d9d9] flex-shrink-0 z-20">
+      <div className={`
+        fixed top-0 left-0 h-full min-h-screen bg-white border-r border-[#d9d9d9] flex-shrink-0 transition-transform duration-300
+        ${showMobileSidebar ? 'translate-x-0 z-40' : '-translate-x-full lg:translate-x-0'}
+        lg:z-20 lg:w-[200px] xl:w-[265px]
+        w-[280px]
+      `}>
         <Sidebar user={user} />
-      </div>
-
-      {/* Mobile slide-in sidebar */}
-      <div
-        className={`lg:hidden fixed top-0 left-0 h-full w-[280px] bg-white border-r border-[#d9d9d9] z-40 transition-transform duration-300 ${
-          showMobileSidebar ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <Sidebar user={user} />
+        {/* Close button for mobile */}
         <button
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
-          aria-label="Đóng menu"
+          className="lg:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-10"
           onClick={() => setShowMobileSidebar(false)}
         >
           <span className="text-gray-600 text-xl leading-none">×</span>
         </button>
       </div>
 
-      {/* Header - Full width on desktop */}
+      {/* Header - Fixed với z-index cao nhất */}
       <Header title="Thiết kế Portfolio" />
 
-      <div className="flex pt-16 sm:pt-20 lg:ml-[200px] xl:ml-[265px]">
-        {/* Main content with proper spacing */}
+      {/* Main Layout Container - CÓ THÊM MARGIN TOP ĐỂ TRÁNH HEADER */}
+      <div className="lg:ml-[200px] xl:ml-[265px] lg:mr-[395px] min-h-screen flex pt-16"> {/* THÊM pt-16 */}
+        
+        {/* Main Content - Chiếm toàn bộ không gian còn lại */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
             {/* Loading indicator và unsaved changes indicator */}
-            <div className="fixed top-4 right-4 z-50 space-y-2">
+            <div className="fixed top-20 right-4 z-50 space-y-2">
             </div>
 
             {/* Profile Section */}
@@ -578,8 +569,6 @@ const PortfolioDesignPage: React.FC = () => {
               <h2 className="text-2xl font-bold mb-6">Chủ đề</h2>
               <div className="bg-white rounded-3xl border border-gray-400 p-8 max-w-xl mx-auto">
                 <div className="grid grid-cols-3 gap-6 place-items-center">
-                  
-
                   {/* Coral Theme */}
                   <div className="text-center">
                     <div
@@ -854,28 +843,42 @@ const PortfolioDesignPage: React.FC = () => {
             </section>
           </div>
         </main>
+      </div>
 
-        <PhonePreview
-          themeClasses={themeClasses}
-          textColors={textColors}
-          selectedTheme={selectedTheme}
-          selectedLayout={selectedProfile + 1}
-          user={user}
-          bio={bio}
-          socialLinks={socialLinks}
-          designSettings={{
-            buttonFill,
-            buttonCorner,
-            buttonColor,
-            buttonTextColor,
-            textColor,
-            fontFamily,
-            backgroundType,
-            backgroundImage,
-            backgroundSolidColor,
-            backgroundGradient
-          }}
-        />
+      {/* Phone Preview Sidebar - Fixed bên phải, CÓ THÊM MARGIN TOP và Z-INDEX THẤP HƠN */}
+      <div className="hidden xl:flex fixed top-16 right-0 h-full min-h-screen w-[395px] bg-white border-l border-[#d9d9d9] flex-shrink-0 flex-col z-12"> {/* THÊM top-16 và z-10 */}
+        <div className="w-full h-full flex flex-col pt-16">
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Live Preview</h3>
+            <p className="text-xs text-gray-500">
+              Changes update in real-time
+            </p>
+          </div>
+          
+          <div className="flex-1 flex items-center justify-center p-4">
+            <PhonePreview
+              themeClasses={themeClasses}
+              textColors={textColors}
+              selectedTheme={selectedTheme}
+              selectedLayout={selectedProfile + 1}
+              user={user}
+              bio={bio}
+              socialLinks={socialLinks}
+              designSettings={{
+                buttonFill,
+                buttonCorner,
+                buttonColor,
+                buttonTextColor,
+                textColor,
+                fontFamily,
+                backgroundType,
+                backgroundImage,
+                backgroundSolidColor,
+                backgroundGradient
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* SVG Gradients */}

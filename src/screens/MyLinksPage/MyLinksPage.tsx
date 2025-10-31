@@ -890,6 +890,7 @@ export const MyLinksPage = (): JSX.Element => {
                   </span>
                 </Button>
               </div>
+              </div>
               
               <Routes>
                 <Route path="add-social" element={
@@ -934,9 +935,9 @@ export const MyLinksPage = (): JSX.Element => {
       </div>
 
       {/* Sidebar phải - Phone Preview - Desktop: fixed bên phải, Mobile: hidden */}
-      <div className="hidden xl:flex fixed top-0 right-0 h-full min-h-screen w-[395px] bg-white border-l border-[#d9d9d9] flex-shrink-0 flex-col z-20">
+      <div className="hidden xl:flex fixed top-0 right-0 h-full min-h-screen w-[395px] bg-white border-l border-[#d9d9d9] flex-shrink-0 flex-col z-12">
         <div className="w-full h-full flex flex-col">
-          <div className="p-4 border-b border-gray-200">
+          <div className="w-70 p-4 border-b border-gray-200 ">
             <h3 className="text-sm font-medium text-gray-700 mb-2">Live Preview</h3>
             <p className="text-xs text-gray-500">
               Changes update in real-time
