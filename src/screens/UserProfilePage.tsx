@@ -120,7 +120,7 @@ const UserProfilePage: React.FC<UserProfileProps> = ({ user }) => {
   };
 
   return (
-    <div>
+    <div className="font-spartan">
       {/* Mobile: Menu button to open left sidebar */}
       <button
         className="lg:hidden fixed top-3 left-3 z-30 bg-white rounded-lg p-2 shadow-md border border-gray-200 hover:bg-gray-50"

@@ -274,7 +274,7 @@ const SubscriptionPlansPage: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+      )} 
 
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-purple-50 to-blue-50 py-16">

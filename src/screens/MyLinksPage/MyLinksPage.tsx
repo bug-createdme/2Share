@@ -8,25 +8,21 @@ import {
   AvatarImage,
 } from "../../components/ui/avatar";
 import { Button } from "../../components/ui/button";
-// import { BioSection } from "./sections/BioSection/BioSection";
-
 import type { SocialLink } from "./sections/SocialLinksSection/SocialLinksSection";
 import { ProfilePictureSection } from "./sections/ProfilePictureSection/ProfilePictureSection";
 import { SocialLinksSection } from "./sections/SocialLinksSection/SocialLinksSection";
-
 import { getMyProfile, getMyPortfolio, getMyPortfolios, updateMyProfile, updatePortfolio, getCurrentPlan } from "../../lib/api";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import { useRef } from 'react';
-
 import ShareDialog from "../../components/ShareDialog";
 import { showToast } from "../../lib/toast";
+import PhonePreview from "../../components/PhonePreview";
 
 export const MyLinksPage = (): JSX.Element => {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  // Đã xóa addStatus vì không sử dụng
   const [selectedCategory, setSelectedCategory] = useState<'social' | 'media' | 'all'>('social');
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
@@ -38,7 +34,6 @@ export const MyLinksPage = (): JSX.Element => {
   const [savingTitleBio, setSavingTitleBio] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const shareBtnRef = useRef<HTMLButtonElement>(null);
-  // Giữ tạm slug/id vừa tạo để tránh tạo trùng do state chưa kịp cập nhật
   const creatingSlugRef = useRef<string | null>(null);
   const [portfolioExists, setPortfolioExists] = useState(false);
   const [portfolioSlug, setPortfolioSlug] = useState<string | null>(null);
@@ -48,62 +43,111 @@ export const MyLinksPage = (): JSX.Element => {
   const [portfoliosList, setPortfoliosList] = useState<any[]>([]);
   const [showPortfoliosModal, setShowPortfoliosModal] = useState(false);
   const [portfolioTitle, setPortfolioTitle] = useState("My Portfolio");
-  // State cho mobile sidebar - PHẢI khai báo cùng các state khác
+    // State cho mobile sidebar - PHẢI khai báo cùng các state khác
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   // State cho mobile preview sidebar phải
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+  // State cho design settings - SỬA LAYOUT BAN ĐẦU
+  const [designSettings, setDesignSettings] = useState({
+    buttonFill: 0,
+    buttonCorner: 1,
+    buttonColor: "#ffffff",
+    buttonTextColor: "#ffffff",
+    textColor: "#ffffff",
+    fontFamily: "spartan",
+    backgroundType: "theme",
+    backgroundImage: "",
+    backgroundSolidColor: "#ffffff",
+    backgroundGradient: "from-gray-600 to-gray-400",
+    selectedTheme: "coral",
+    selectedLayout: 1 // Layout 1 tương ứng với profileLayout 0
+  });
 
-  // Function to load portfolio data and update UI
-  const loadPortfolioData = (portfolioSlug: string) => {
+  // Theme classes cho PhonePreview - KHỚP VỚI PORTFOLIODESIGN
+  const themeClasses: Record<string, string> = {
+    "coral": "from-[#E7A5A5] to-[#E7A5A5]",
+    "green": "from-green-300 to-green-400", 
+    "dark": "from-gray-700 to-gray-800",
+    "gradient": "from-purple-400 via-blue-400 to-green-400",
+    "orange": "from-blue-400 to-orange-400",
+  };
+
+  const textColors: Record<string, string> = {
+    "coral": "#ffffff",
+    "green": "#ffffff",
+    "dark": "#ffffff",
+    "gradient": "#ffffff", 
+    "orange": "#ffffff",
+  };
+
+  // Function to load portfolio data và design settings
+  const loadPortfolioData = async (portfolioSlug: string) => {
     try {
       console.log('📥 Loading portfolio:', portfolioSlug);
-      console.log('📋 Available portfolios:', portfoliosList);
-      console.log('🔍 Looking for slug:', portfolioSlug, 'in', portfoliosList.map((p: any) => ({ slug: p.slug, _id: p._id })));
 
-      // Find portfolio from list by slug or _id (fallback)
       let portfolio = portfoliosList.find((p: any) => p.slug === portfolioSlug);
-
-      // If not found by slug, try by _id (in case slug is not set)
       if (!portfolio) {
-        console.warn('⚠️ Portfolio not found by slug, trying by _id:', portfolioSlug);
         portfolio = portfoliosList.find((p: any) => p._id === portfolioSlug);
       }
 
       if (!portfolio) {
         console.error('❌ Portfolio not found:', portfolioSlug);
-        console.error('❌ Available portfolios:', portfoliosList.map((p: any) => ({ slug: p.slug, _id: p._id })));
         showToast.error('Portfolio không tìm thấy');
         return;
       }
 
       console.log('✅ Portfolio found:', portfolio);
 
-      // Set portfolio slug
       const finalSlug = portfolio.slug || portfolio._id;
       if (finalSlug) {
         setPortfolioSlug(finalSlug);
-        // Save to localStorage to remember current portfolio (use slug or _id)
         localStorage.setItem('currentPortfolioSlug', finalSlug);
-        console.log('✅ Portfolio slug/id saved to localStorage:', finalSlug);
-        console.log('✅ Verify localStorage:', localStorage.getItem('currentPortfolioSlug'));
       }
 
-      // Load portfolio title
       if (portfolio?.title) {
         setPortfolioTitle(portfolio.title);
-        console.log('✅ Portfolio title loaded:', portfolio.title);
       }
 
-      // Load bio from portfolio blocks
       if (portfolio?.blocks && Array.isArray(portfolio.blocks)) {
         const textBlock = portfolio.blocks.find((b: any) => b.type === 'text');
         if (textBlock && textBlock.content) {
           setBio(textBlock.content);
-          console.log('✅ Bio loaded from portfolio blocks:', textBlock.content);
         }
       }
 
-      // Load social links from portfolio
+      // QUAN TRỌNG: Load design settings từ portfolio - SỬA LAYOUT
+      if (portfolio.design_settings) {
+        const design = portfolio.design_settings;
+        console.log('🎨 Loading design settings for MyLinks:', design);
+        
+        let themeKey = design.selectedTheme || design.theme || "coral";
+        
+        // QUAN TRỌNG: Sửa layout mapping
+        const profileLayout = design.profileLayout || 0;
+        const selectedLayout = design.selectedLayout || profileLayout + 1;
+        
+        setDesignSettings({
+          buttonFill: design.buttonFill ?? 0,
+          buttonCorner: design.buttonCorner ?? 1,
+          buttonColor: design.buttonColor || "#ffffff",
+          buttonTextColor: design.buttonTextColor || "#ffffff",
+          textColor: design.textColor || "#ffffff",
+          fontFamily: design.fontFamily || "spartan",
+          backgroundType: design.backgroundType || "theme",
+          backgroundImage: design.backgroundImage || "",
+          backgroundSolidColor: design.backgroundSolidColor || "#ffffff",
+          backgroundGradient: design.backgroundGradient || "from-gray-600 to-gray-400",
+          selectedTheme: themeKey,
+          selectedLayout: selectedLayout // QUAN TRỌNG: +1 để khớp
+        });
+        
+        console.log('✅ Design settings loaded:', {
+          theme: themeKey,
+          layout: selectedLayout,
+          profileLayout: profileLayout
+        });
+      }
+
       if (portfolio && portfolio.social_links) {
         const links: SocialLink[] = Object.entries(portfolio.social_links).map(([key, value]: any) => {
           if (typeof value === 'object' && value !== null && value.id) {
@@ -124,12 +168,12 @@ export const MyLinksPage = (): JSX.Element => {
           };
         });
         setSocialLinks(links);
-        console.log('✅ Social links loaded:', links.length);
       } else {
         setSocialLinks([]);
       }
 
       setPortfolioExists(true);
+      
     } catch (err: any) {
       console.error('❌ Error loading portfolio:', err);
       showToast.error('Lỗi tải portfolio');
@@ -137,51 +181,59 @@ export const MyLinksPage = (): JSX.Element => {
   };
 
   useEffect(() => {
-    // Load from backend (source of truth)
     async function fetchProfile() {
       try {
-        // Get user profile
         const profile = await getMyProfile();
-      console.log(profile);
-      console.log("hello");
-      
-      
         setUser(profile);
         if (typeof profile.bio === 'string') setBio(profile.bio);
 
-        // Get portfolio data (which contains social_links)
         try {
           const portfolio = await getMyPortfolio();
-          console.log('📋 Portfolio loaded:', portfolio);
           setPortfolioExists(true);
 
-          // Try to get slug from portfolio object
           const slug = portfolio?.slug || portfolio?._id;
           if (slug) {
             setPortfolioSlug(slug);
-            console.log('✅ Portfolio slug set:', slug);
-          } else {
-            console.warn('⚠️ Portfolio loaded but no slug or _id:', portfolio);
+            localStorage.setItem('currentPortfolioSlug', slug);
           }
           
-          // Load portfolio title
           if (portfolio?.title) {
             setPortfolioTitle(portfolio.title);
-            console.log('✅ Portfolio title loaded:', portfolio.title);
           }
           
-          // Load bio from portfolio blocks (portfolio is source of truth)
           if (portfolio?.blocks && Array.isArray(portfolio.blocks)) {
             const textBlock = portfolio.blocks.find((b: any) => b.type === 'text');
             if (textBlock && textBlock.content) {
               setBio(textBlock.content);
-              console.log('✅ Bio loaded from portfolio blocks:', textBlock.content);
             }
+          }
+
+          // Load design settings từ portfolio - SỬA LAYOUT
+          if (portfolio.design_settings) {
+            const design = portfolio.design_settings;
+            let themeKey = design.selectedTheme || design.theme || "coral";
+            const profileLayout = design.profileLayout || 0;
+            const selectedLayout = design.selectedLayout || profileLayout + 1;
+
+            setDesignSettings(prev => ({
+              ...prev,
+              buttonFill: design.buttonFill ?? 0,
+              buttonCorner: design.buttonCorner ?? 1,
+              buttonColor: design.buttonColor || "#ffffff",
+              buttonTextColor: design.buttonTextColor || "#ffffff",
+              textColor: design.textColor || "#ffffff",
+              fontFamily: design.fontFamily || "spartan",
+              backgroundType: design.backgroundType || "theme",
+              backgroundImage: design.backgroundImage || "",
+              backgroundSolidColor: design.backgroundSolidColor || "#ffffff",
+              backgroundGradient: design.backgroundGradient || "from-gray-600 to-gray-400",
+              selectedTheme: themeKey,
+              selectedLayout: selectedLayout
+            }));
           }
           
           if (portfolio && portfolio.social_links) {
             const links: SocialLink[] = Object.entries(portfolio.social_links).map(([key, value]: any) => {
-              // Nếu value đã có id thì giữ nguyên, nếu không thì tạo mới
               if (typeof value === 'object' && value !== null && value.id) {
                 return {
                   ...value,
@@ -205,7 +257,6 @@ export const MyLinksPage = (): JSX.Element => {
           console.log('⚠️ Portfolio not found:', portfolioErr.message);
           setPortfolioExists(false);
 
-          // Fallback to profile social_links if portfolio doesn't exist
           if (profile.social_links) {
             const links: SocialLink[] = Object.entries(profile.social_links).map(([key, value]: any) => {
               if (typeof value === 'object' && value !== null && value.id) {
@@ -236,12 +287,10 @@ export const MyLinksPage = (): JSX.Element => {
     fetchProfile();
   }, []);
 
-  // Fetch portfolios list
   useEffect(() => {
     (async () => {
       try {
         const portfolios = await getMyPortfolios();
-        console.log('📋 Portfolios list:', portfolios);
         setPortfoliosList(portfolios);
       } catch (e: any) {
         console.error('❌ Error fetching portfolios:', e);
@@ -250,59 +299,38 @@ export const MyLinksPage = (): JSX.Element => {
     })();
   }, []);
 
-  // Load saved portfolio after portfoliosList is loaded
   useEffect(() => {
     if (portfoliosList.length > 0) {
       const savedPortfolioSlug = localStorage.getItem('currentPortfolioSlug');
       if (savedPortfolioSlug) {
-        console.log('📥 Attempting to load saved portfolio:', savedPortfolioSlug);
         loadPortfolioData(savedPortfolioSlug);
       }
     }
   }, [portfoliosList]);
 
-  // Fetch current plan once
   useEffect(() => {
     (async () => {
       try {
         const planResponse = await getCurrentPlan();
-        console.log('📋 Current plan response:', planResponse);
-
-        // API trả về object hoặc array
         const plan = Array.isArray(planResponse) ? planResponse[0] : planResponse;
-        console.log('📋 Current plan (after unwrap):', plan);
-
-        // API trả về status trực tiếp hoặc trong result
         const status = plan?.status || plan?.result?.status;
-        console.log('Current plan status:', status);
         const planInfo = (plan?.planInfo?.[0]) || (plan?.result?.planInfo?.[0]) || plan;
 
-        console.log('📊 Plan status:', status, 'Plan info:', planInfo);
-
-        // Kiểm tra status (có thể là 'active', 'Active', 'trial', hoặc các giá trị khác)
         const isActive = status?.toLowerCase() === 'active' || status?.toLowerCase() === 'trial';
-        console.log('isActive:', isActive, 'status:', status);
         setPlanActive(isActive);
 
         if (typeof planInfo?.maxSocialLinks === 'number') {
           setMaxSocialLinks(planInfo.maxSocialLinks);
-          console.log('✅ Max social links:', planInfo.maxSocialLinks);
         }
         
         if (typeof planInfo?.maxBusinessCard === 'number') {
           setMaxBusinessCard(planInfo.maxBusinessCard);
-          console.log('✅ Max business cards/portfolios:', planInfo.maxBusinessCard);
         }
 
-        // Nếu không có gói active, hiển thị cảnh báo
         if (!isActive) {
-          console.warn('⚠️ No active plan found');
           showToast.warning('Bạn chưa có gói nào đang hoạt động. Vui lòng đăng ký gói để cập nhật portfolio.');
-        } else {
-          console.log('✅ Active plan found:', planInfo?.name);
         }
       } catch (e: any) {
-        // If cannot read plan, assume inactive so we avoid repeated 403
         console.error('❌ Error fetching current plan:', e);
         setPlanActive(false);
         showToast.error('Không thể kiểm tra gói của bạn. Vui lòng thử lại sau.');
@@ -310,39 +338,111 @@ export const MyLinksPage = (): JSX.Element => {
     })();
   }, []);
 
+  // Listen for design updates từ PortfolioDesignPage - SỬA LAYOUT
+  useEffect(() => {
+    const handleDesignUpdate = async () => {
+      console.log('🔄 MyLinksPage: Design update received from PortfolioDesign');
+      if (portfolioSlug) {
+        try {
+          const portfolio = await getMyPortfolio();
+          if (portfolio?.design_settings) {
+            const design = portfolio.design_settings;
+            let themeKey = design.selectedTheme || design.theme || "coral";
+            const profileLayout = design.profileLayout || 0;
+            const selectedLayout = design.selectedLayout || profileLayout + 1;
+
+            setDesignSettings(prev => ({
+              ...prev,
+              buttonFill: design.buttonFill ?? 0,
+              buttonCorner: design.buttonCorner ?? 1,
+              buttonColor: design.buttonColor || "#ffffff",
+              buttonTextColor: design.buttonTextColor || "#ffffff",
+              textColor: design.textColor || "#ffffff",
+              fontFamily: design.fontFamily || "spartan",
+              backgroundType: design.backgroundType || "theme",
+              backgroundImage: design.backgroundImage || "",
+              backgroundSolidColor: design.backgroundSolidColor || "#ffffff",
+              backgroundGradient: design.backgroundGradient || "from-gray-600 to-gray-400",
+              selectedTheme: themeKey,
+              selectedLayout: selectedLayout
+            }));
+          }
+        } catch (error) {
+          console.warn('⚠️ Could not reload design settings:', error);
+        }
+      }
+    };
+
+    window.addEventListener('design-updated', handleDesignUpdate);
+    return () => window.removeEventListener('design-updated', handleDesignUpdate);
+  }, [portfolioSlug]);
+
+  // Listen for portfolio updates tổng thể - SỬA LAYOUT
+  useEffect(() => {
+    const handlePortfolioUpdate = async () => {
+      console.log('🔄 MyLinksPage: Portfolio update received');
+      if (portfolioSlug) {
+        try {
+          const portfolio = await getMyPortfolio();
+          if (portfolio) {
+            if (portfolio.title) {
+              setPortfolioTitle(portfolio.title);
+            }
+            if (portfolio.blocks && Array.isArray(portfolio.blocks)) {
+              const textBlock = portfolio.blocks.find((b: any) => b.type === 'text');
+              if (textBlock && textBlock.content) {
+                setBio(textBlock.content);
+              }
+            }
+            if (portfolio.design_settings) {
+              const design = portfolio.design_settings;
+              let themeKey = design.selectedTheme || design.theme || "coral";
+              const profileLayout = design.profileLayout || 0;
+              const selectedLayout = design.selectedLayout || profileLayout + 1;
+
+              setDesignSettings(prev => ({
+                ...prev,
+                buttonFill: design.buttonFill ?? 0,
+                buttonCorner: design.buttonCorner ?? 1,
+                buttonColor: design.buttonColor || "#ffffff",
+                buttonTextColor: design.buttonTextColor || "#ffffff",
+                textColor: design.textColor || "#ffffff",
+                fontFamily: design.fontFamily || "spartan",
+                backgroundType: design.backgroundType || "theme",
+                backgroundImage: design.backgroundImage || "",
+                backgroundSolidColor: design.backgroundSolidColor || "#ffffff",
+                backgroundGradient: design.backgroundGradient || "from-gray-600 to-gray-400",
+                selectedTheme: themeKey,
+                selectedLayout: selectedLayout
+              }));
+            }
+          }
+        } catch (error) {
+          console.warn('⚠️ Could not reload portfolio data:', error);
+        }
+      }
+    };
+
+    window.addEventListener('portfolio-updated', handlePortfolioUpdate);
+    return () => window.removeEventListener('portfolio-updated', handlePortfolioUpdate);
+  }, [portfolioSlug]);
+
   // Auto-save social links to backend when they change
   useEffect(() => {
     if (!user?._id || socialLinks.length === 0) return;
 
-    // QUAN TRỌNG: Chỉ auto-save nếu có ít nhất 1 link có URL
     const hasValidLinks = socialLinks.some(link => link.url && link.url.trim() !== '');
-    if (!hasValidLinks) {
-      console.log('⏸️ Skip auto-save: no links with URL yet');
-      return;
-    }
+    if (!hasValidLinks) return;
 
-    // Debounce the save to avoid too many API calls
     const timer = setTimeout(async () => {
       try {
-        // Check plan before saving to avoid 403 loop
-        // Only skip if we KNOW plan is inactive (planActive === false)
-        // Don't skip if planActive is null (still loading)
         if (planActive === false) {
-          console.warn('⚠️ Skip save: no active plan');
           showToast.warning('Không thể lưu: bạn chưa có gói nào đang hoạt động');
           return;
         }
-
-        if (planActive === null) {
-          console.log('⏳ Plan status still loading, will retry...');
-          // Don't return, let it try to save - backend will return 403 if needed
-        }
         
-        // Convert socialLinks array back to object format for backend
-        // CHỈ LƯU CÁC LINK CÓ URL
         const socialLinksObj: Record<string, any> = {};
         socialLinks.forEach(link => {
-          // Chỉ lưu link nếu có URL
           if (link.url && link.url.trim() !== '') {
             const key = link.name.toLowerCase();
             socialLinksObj[key] = {
@@ -357,74 +457,48 @@ export const MyLinksPage = (): JSX.Element => {
           }
         });
 
-        // Nếu không có link nào có URL, không lưu
-        if (Object.keys(socialLinksObj).length === 0) {
-          console.log('⏸️ Skip save: no valid links to save');
-          return;
-        }
+        if (Object.keys(socialLinksObj).length === 0) return;
 
-        // Optional: enforce maxSocialLinks if known
         if (typeof maxSocialLinks === 'number') {
           const enabledCount = Object.values(socialLinksObj).filter((v: any) => v?.isEnabled && v?.url).length;
           if (enabledCount > maxSocialLinks) {
-            console.warn(`Vượt quá số link cho phép (${enabledCount}/${maxSocialLinks}), bỏ qua lưu.`);
             showToast.warning(`Bạn chỉ được phép tối đa ${maxSocialLinks} link trong gói hiện tại`);
             return;
           }
         }
-        console.log('📊 Auto-save state - portfolioExists:', portfolioExists, 'portfolioSlug:', portfolioSlug);
-        console.log('📊 Current portfolios count:', portfoliosList.length, '/', maxBusinessCard);
 
-        // Check if portfolio exists, if not create it first
         if (!portfolioSlug) {
-          // Nếu vừa tạo xong mà state chưa kịp cập nhật, dùng slug tạm để tránh tạo trùng
           if (creatingSlugRef.current) {
-            console.log('⏳ Using just-created slug from ref:', creatingSlugRef.current);
             setPortfolioSlug(creatingSlugRef.current);
             setPortfolioExists(true);
           }
 
-          console.log('📝 No portfolio found, checking if can create new portfolio...');
-          
-          // ĐẶC BIỆT: Nếu đã vượt giới hạn, tự động load portfolio đầu tiên thay vì tạo mới
           if (maxBusinessCard !== null && portfoliosList.length >= maxBusinessCard) {
-            console.warn('⚠️ Already exceeded limit. Auto-loading first portfolio instead of creating new one.');
-            
             if (portfoliosList.length > 0) {
               const firstPortfolio = portfoliosList[0];
               const firstSlug = firstPortfolio.slug || firstPortfolio._id;
-              
-              console.log('📥 Auto-loading first portfolio:', firstSlug);
               setPortfolioSlug(firstSlug);
               setPortfolioExists(true);
               localStorage.setItem('currentPortfolioSlug', firstSlug);
-              
-              // Load portfolio data
               loadPortfolioData(firstSlug);
-              
               showToast.warning(`Bạn đã có ${portfoliosList.length} danh thiếp (vượt giới hạn ${maxBusinessCard}). Đang cập nhật danh thiếp đầu tiên.`);
-              
-              // Sau khi load xong, trigger save lại
               setTimeout(async () => {
                 try {
                   await updatePortfolio(firstSlug, { 
                     social_links: socialLinksObj,
                     avatar_url: user.avatar_url
                   });
-                  console.log('✅ Social links saved to first portfolio');
+                  window.dispatchEvent(new CustomEvent('portfolio-updated'));
                 } catch (err) {
                   console.error('❌ Error saving to first portfolio:', err);
                 }
               }, 500);
-              
               return;
             } else {
               showToast.error(`Không thể tạo danh thiếp mới. Giới hạn: ${maxBusinessCard} danh thiếp.`);
               return;
             }
           }
-          
-          console.log('✅ Can create new portfolio:', portfoliosList.length, '<', maxBusinessCard);
           
           try {
             const { createPortfolio } = await import('../../lib/api');
@@ -435,52 +509,22 @@ export const MyLinksPage = (): JSX.Element => {
               avatar_url: user.avatar_url,
             });
 
-            console.log('✅ New portfolio created:', newPortfolio);
-
-            // Get slug/id from created portfolio (backend may return insertedId)
-            const createdId =
-              newPortfolio?.result?.insertedId ||
-              newPortfolio?.insertedId ||
-              newPortfolio?.result?._id ||
-              newPortfolio?._id;
-
-            const newSlug =
-              newPortfolio?.result?.slug ||
-              newPortfolio?.slug ||
-              createdId;
+            const createdId = newPortfolio?.result?.insertedId || newPortfolio?.insertedId || newPortfolio?.result?._id || newPortfolio?._id;
+            const newSlug = newPortfolio?.result?.slug || newPortfolio?.slug || createdId;
 
             if (newSlug) {
               creatingSlugRef.current = newSlug;
-              // Set immediately to prevent subsequent auto-saves from creating again
               setPortfolioSlug(newSlug);
               setPortfolioExists(true);
               localStorage.setItem('currentPortfolioSlug', newSlug);
-              console.log('✅ Portfolio created with slug/id:', newSlug);
               showToast.success('Đã tạo portfolio mới');
+              window.dispatchEvent(new CustomEvent('portfolio-updated'));
 
-              // Reload portfolios list in background
               try {
                 const portfolios = await import('../../lib/api').then(m => m.getMyPortfolios());
                 setPortfoliosList(portfolios);
               } catch (reloadErr) {
                 console.warn('⚠️ Could not reload portfolios after creation:', reloadErr);
-              }
-            } else {
-              console.error('❌ No slug/id returned from created portfolio:', newPortfolio);
-              // Fallback: try to fetch portfolios and pick the latest one
-              try {
-                const portfolios = await import('../../lib/api').then(m => m.getMyPortfolios());
-                setPortfoliosList(portfolios);
-                const latest = portfolios[0];
-                const fallbackSlug = latest?.slug || latest?._id;
-                if (fallbackSlug) {
-                  setPortfolioSlug(fallbackSlug);
-                  setPortfolioExists(true);
-                  localStorage.setItem('currentPortfolioSlug', fallbackSlug);
-                  console.log('✅ Fallback set slug from list:', fallbackSlug);
-                }
-              } catch (fallbackErr) {
-                console.warn('⚠️ Fallback failed to get portfolios:', fallbackErr);
               }
             }
             return;
@@ -491,23 +535,22 @@ export const MyLinksPage = (): JSX.Element => {
           }
         }
 
-        // Save to backend using update
-        console.log('📤 Updating portfolio with slug:', portfolioSlug);
         await updatePortfolio(portfolioSlug, { 
           social_links: socialLinksObj,
           avatar_url: user.avatar_url
         });
-        console.log('✅ Social links saved to backend');
+        window.dispatchEvent(new CustomEvent('portfolio-updated'));
+        
       } catch (error: any) {
         console.error('Error saving social links:', error);
         showToast.error('Lỗi lưu social links: ' + (error?.message || 'Không xác định'));
       }
-    }, 1000); // Wait 1 second after last change before saving
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [socialLinks, user?._id, portfolioExists, portfolioSlug, planActive, maxSocialLinks, user?.username, user?.avatar_url, bio]);
 
-  // 4) Handle click tracking for social links
+  // Handle click tracking for social links
   useEffect(() => {
     function handleIncreaseClick(e: any) {
       const { id } = e.detail;
@@ -524,7 +567,7 @@ export const MyLinksPage = (): JSX.Element => {
     return () => window.removeEventListener('increase-click', handleIncreaseClick);
   }, []);
 
-  // 5) Handle open portfolios modal from sidebar
+  // Handle open portfolios modal from sidebar
   useEffect(() => {
     function handleOpenPortfoliosModal() {
       setShowPortfoliosModal(true);
@@ -534,130 +577,91 @@ export const MyLinksPage = (): JSX.Element => {
     return () => window.removeEventListener('open-portfolios-modal', handleOpenPortfoliosModal);
   }, []);
 
-
   async function handleSaveTitleBio() {
-    if (!user) return;
-    setSavingTitleBio(true);
-    try {
-      console.log('💾 Saving portfolio title:', tmpPortfolioTitle, 'bio:', tmpBio);
+  if (!user) return;
+  setSavingTitleBio(true);
+  try {
+    const result = await updateMyProfile({ bio: tmpBio });
+    setBio(tmpBio);
+    setPortfolioTitle(tmpPortfolioTitle);
 
-      // KHÔNG update username - chỉ update bio vào user profile
-      const result = await updateMyProfile({ bio: tmpBio });
-      console.log('✅ User profile bio updated:', result);
-      setBio(tmpBio);
-      setPortfolioTitle(tmpPortfolioTitle);
+    const blocks = [{ type: "text", content: tmpBio || "Welcome to my portfolio", order: 1 }];
 
-      // Also save to portfolio
-      const blocks = [{ type: "text", content: tmpBio || "Welcome to my portfolio", order: 1 }];
-
-      // Check if portfolio exists, if not create it first
-      if (!portfolioSlug) {
-        console.log('📝 No portfolio found, creating new portfolio...');
+    if (!portfolioSlug) {
+      if (maxBusinessCard !== null && portfoliosList.length >= maxBusinessCard) {
+        showToast.warning(`Gói của bạn chỉ cho phép tạo tối đa ${maxBusinessCard} danh thiếp. Vui lòng nâng cấp gói để tạo thêm.`);
+        setSavingTitleBio(false);
+        return;
+      }
+      
+      try {
+        const { createPortfolio } = await import('../../lib/api');
+        const socialLinksObj: Record<string, any> = {};
+        socialLinks.forEach(link => {
+          const key = link.name.toLowerCase();
+          socialLinksObj[key] = {
+            url: link.url,
+            clicks: link.clicks,
+            isEnabled: link.isEnabled,
+            color: link.color,
+            icon: link.icon,
+            displayName: link.displayName,
+            id: link.id,
+          };
+        });
         
-        // Validate portfolio limit
-        if (maxBusinessCard !== null && portfoliosList.length >= maxBusinessCard) {
-          console.warn('⚠️ Portfolio limit reached:', portfoliosList.length, '/', maxBusinessCard);
-          showToast.warning(`Gói của bạn chỉ cho phép tạo tối đa ${maxBusinessCard} danh thiếp. Vui lòng nâng cấp gói để tạo thêm.`);
-          setSavingTitleBio(false);
-          return;
-        }
+        const newPortfolio = await createPortfolio({
+          title: tmpPortfolioTitle || 'My Portfolio',
+          blocks,
+          social_links: socialLinksObj,
+          avatar_url: user.avatar_url,
+        });
         
-        try {
-          const { createPortfolio } = await import('../../lib/api');
-          const socialLinksObj: Record<string, any> = {};
-          socialLinks.forEach(link => {
-            const key = link.name.toLowerCase();
-            socialLinksObj[key] = {
-              url: link.url,
-              clicks: link.clicks,
-              isEnabled: link.isEnabled,
-              color: link.color,
-              icon: link.icon,
-              displayName: link.displayName,
-              id: link.id,
-            };
-          });
-          
-          const newPortfolio = await createPortfolio({
-            title: tmpPortfolioTitle || 'My Portfolio',
-            blocks,
-            social_links: socialLinksObj,
-            avatar_url: user.avatar_url,
-          });
-          
-          console.log('✅ New portfolio created:', newPortfolio);
+        const createdId = newPortfolio?.result?.insertedId || newPortfolio?.insertedId || newPortfolio?.result?._id || newPortfolio?._id;
+        const newSlug = newPortfolio?.result?.slug || newPortfolio?.slug || createdId;
 
-          // Get slug/id from created portfolio (backend may return insertedId)
-          const createdId =
-            newPortfolio?.result?.insertedId ||
-            newPortfolio?.insertedId ||
-            newPortfolio?.result?._id ||
-            newPortfolio?._id;
-          const newSlug = newPortfolio?.result?.slug || newPortfolio?.slug || createdId;
+        if (newSlug) {
+          creatingSlugRef.current = newSlug;
+          setPortfolioSlug(newSlug);
+          setPortfolioExists(true);
+          localStorage.setItem('currentPortfolioSlug', newSlug);
+          window.dispatchEvent(new CustomEvent('portfolio-updated'));
 
-          if (newSlug) {
-            creatingSlugRef.current = newSlug;
-            setPortfolioSlug(newSlug);
-            setPortfolioExists(true);
-            localStorage.setItem('currentPortfolioSlug', newSlug);
-            console.log('✅ Portfolio created with slug/id:', newSlug);
-
-            // Reload portfolios list in background
-            (async () => {
-              try {
-                const portfolios = await import('../../lib/api').then(m => m.getMyPortfolios());
-                setPortfoliosList(portfolios);
-              } catch (reloadErr) {
-                console.warn('⚠️ Could not reload portfolios after creation:', reloadErr);
-              }
-            })();
-          } else {
-            console.warn('⚠️ No slug/id returned from created portfolio - trying fallback');
+          (async () => {
             try {
               const portfolios = await import('../../lib/api').then(m => m.getMyPortfolios());
               setPortfoliosList(portfolios);
-              const latest = portfolios[0];
-              const fallbackSlug = latest?.slug || latest?._id;
-              if (fallbackSlug) {
-                setPortfolioSlug(fallbackSlug);
-                setPortfolioExists(true);
-                localStorage.setItem('currentPortfolioSlug', fallbackSlug);
-                console.log('✅ Fallback set slug from list:', fallbackSlug);
-              }
-            } catch (fallbackErr) {
-              console.error('❌ Fallback failed to fetch portfolios:', fallbackErr);
+            } catch (reloadErr) {
+              console.warn('⚠️ Could not reload portfolios after creation:', reloadErr);
             }
-          }
-        } catch (createError: any) {
-          console.error('❌ Error creating portfolio:', createError);
-          showToast.error('Lỗi tạo portfolio: ' + (createError?.message || 'Không xác định'));
+          })();
         }
-      } else {
-        // Update existing portfolio
-        console.log('📤 Updating portfolio with slug:', portfolioSlug);
-        await updatePortfolio(portfolioSlug, { 
-          title: tmpPortfolioTitle || 'My Portfolio',
-          blocks,
-          avatar_url: user.avatar_url
-        });
-        console.log('✅ Portfolio bio and title updated');
+      } catch (createError: any) {
+        console.error('❌ Error creating portfolio:', createError);
+        showToast.error('Lỗi tạo portfolio: ' + (createError?.message || 'Không xác định'));
       }
-
-      setShowTitleBioModal(false);
-      showToast.success('Đã lưu thông tin');
-    } catch (error: any) {
-      console.error('❌ Error saving title/bio:', error);
-      showToast.error('Lỗi lưu thông tin: ' + error.message);
-    } finally {
-      setSavingTitleBio(false);
+    } else {
+      await updatePortfolio(portfolioSlug, { 
+        title: tmpPortfolioTitle || 'My Portfolio',
+        blocks,
+          avatar_url: user.avatar_url
+      });
+      window.dispatchEvent(new CustomEvent('portfolio-updated'));
     }
-  }
 
-  // Hàm mở dialog chia sẻ
+    setShowTitleBioModal(false);
+  } catch (error: any) {
+    console.error('❌ Error saving title/bio:', error);
+    showToast.error('Lỗi lưu thông tin: ' + error.message);
+  } finally {
+    setSavingTitleBio(false);
+  }
+}
+
   const handleOpenShareDialog = () => {
     setShowShareDialog(true);
   };
-  // Hàm đóng dialog chia sẻ
+
   const handleCloseShareDialog = () => {
     setShowShareDialog(false);
   };
@@ -726,7 +730,6 @@ export const MyLinksPage = (): JSX.Element => {
       )}
           {/* Content Section */}
           <div className="w-full flex flex-col items-center flex-1">
-            {/* Banner cảnh báo nếu không có gói active */}
             {planActive === false && (
               <div className="w-full max-w-[700px] px-4 sm:px-6 lg:px-9 pt-6">
                 <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-3 sm:p-4 shadow-md">
@@ -741,7 +744,6 @@ export const MyLinksPage = (): JSX.Element => {
               </div>
             )}
             
-            {/* Hiển thị quota nếu có maxSocialLinks */}
             {planActive === true && typeof maxSocialLinks === 'number' && (
               <div className="w-full max-w-[700px] px-4 sm:px-6 lg:px-9 pt-6">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3 text-xs sm:text-sm text-blue-800">
@@ -750,7 +752,6 @@ export const MyLinksPage = (): JSX.Element => {
               </div>
             )}
             
-            {/* Cảnh báo vượt quá giới hạn portfolio */}
             {planActive === true && maxBusinessCard !== null && portfoliosList.length > maxBusinessCard && (
               <div className="w-full max-w-[700px] px-4 sm:px-6 lg:px-9 pt-6">
                 <div className="bg-red-50 border-2 border-red-300 rounded-xl p-3 sm:p-4 shadow-md">
@@ -773,7 +774,6 @@ export const MyLinksPage = (): JSX.Element => {
             <section className="w-full max-w-[700px] flex flex-col items-center px-4 sm:px-6 lg:px-9 pt-8 sm:pt-12">
               <div className="flex flex-col items-center gap-3 sm:gap-4 mb-6 sm:mb-8 w-full">
                 <div className="flex flex-col items-center gap-3 sm:gap-4">
-                  {/* Avatar với nút upload ảnh */}
                   <div className="relative">
                     <Avatar className="w-16 h-16 sm:w-[77px] sm:h-[77px]">
                       <AvatarImage
@@ -782,7 +782,6 @@ export const MyLinksPage = (): JSX.Element => {
                       />
                       <AvatarFallback>{user.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
                     </Avatar>
-                    {/* Icon camera nhỏ gọn */}
                     <button
                       className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center hover:bg-blue-600 transition-all duration-200 shadow-lg border-2 border-white"
                       onClick={() => {
@@ -797,6 +796,7 @@ export const MyLinksPage = (): JSX.Element => {
                               const imageUrl = await uploadImage(file);
                               await updateMyProfile({ avatar_url: imageUrl });
                               setUser({ ...user, avatar_url: imageUrl });
+                              window.dispatchEvent(new CustomEvent('portfolio-updated'));
                             } catch (error) {
                               console.error('Error updating avatar:', error);
                             }
@@ -834,7 +834,6 @@ export const MyLinksPage = (): JSX.Element => {
                     {bio ? bio : "bio"}
                   </button>
                   
-                  {/* Nút tạo danh thiếp mới - chỉ hiện khi gói cho phép > 1 portfolio */}
                   {maxBusinessCard !== null && maxBusinessCard > 1 && (
                     <button
                       type="button"
@@ -848,7 +847,6 @@ export const MyLinksPage = (): JSX.Element => {
                           showToast.error(`Bạn đã đạt giới hạn ${maxBusinessCard} danh thiếp của gói hiện tại.`);
                           return;
                         }
-                        // Reset về trạng thái tạo mới
                         setPortfolioSlug(null);
                         setPortfolioExists(false);
                         setSocialLinks([]);
@@ -865,6 +863,7 @@ export const MyLinksPage = (): JSX.Element => {
                 </div>
               </div>
 
+              <div className="flex gap-3 w-full max-w-[400px] mb-8">
 
               {/* Add Social Button & Preview Button */}
               <div className="flex gap-3 w-full max-w-[300px] mb-6 sm:mb-8 px-4 sm:px-0">
@@ -891,7 +890,8 @@ export const MyLinksPage = (): JSX.Element => {
                   </span>
                 </Button>
               </div>
-              {/* Modal as a route */}
+              </div>
+              
               <Routes>
                 <Route path="add-social" element={
                   <SocialModalPage
@@ -906,14 +906,12 @@ export const MyLinksPage = (): JSX.Element => {
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
                     onAddSocial={(name, color) => {
-                      // Kiểm tra nếu đã vượt quá giới hạn portfolio
                       if (maxBusinessCard !== null && portfoliosList.length > maxBusinessCard) {
                         showToast.error(`Bạn đã vượt quá giới hạn danh thiếp (${portfoliosList.length}/${maxBusinessCard}). Vui lòng xóa bớt danh thiếp hoặc nâng cấp gói.`);
                         navigate("/my-links");
                         return;
                       }
                       
-                      // Kiểm tra nếu chưa có portfolio và đã đạt giới hạn
                       if (!portfolioSlug && maxBusinessCard !== null && portfoliosList.length >= maxBusinessCard) {
                         showToast.error(`Gói của bạn chỉ cho phép tạo tối đa ${maxBusinessCard} danh thiếp. Bạn đã có ${portfoliosList.length} danh thiếp. Vui lòng nâng cấp gói hoặc xóa bớt danh thiếp hiện tại.`);
                         navigate("/my-links");
@@ -928,16 +926,61 @@ export const MyLinksPage = (): JSX.Element => {
                 } />
               </Routes>
             </section>
-            <section className="w-full max-w-[700px] flex flex-col items-center px-4 sm:px-6 lg:px-9 pb-8">
+            
+            <section className="w-full max-w-[700px] flex flex-col items-center px-4 sm:px-6 lg:px-9 mb-10 pb-8">
               <SocialLinksSection socialLinks={socialLinks} setSocialLinks={setSocialLinks} />
             </section>
           </div>
         </main>
       </div>
 
-      {/* Sidebar phải - Desktop: fixed bên phải, Mobile: hidden */}
-      <div className="hidden xl:flex fixed top-0 right-0 h-full min-h-screen w-[395px] bg-white border-l border-[#d9d9d9] flex-shrink-0 flex-col items-center justify-center z-20">
-        <ProfilePictureSection user={user} bio={bio} socialLinks={socialLinks.filter(link => link.isEnabled)} portfolioTitle={portfolioTitle} />
+      {/* Sidebar phải - Phone Preview - Desktop: fixed bên phải, Mobile: hidden */}
+      <div className="hidden xl:flex fixed top-0 right-0 h-full min-h-screen w-[395px] bg-white border-l border-[#d9d9d9] flex-shrink-0 flex-col z-12">
+        <div className="w-full h-full flex flex-col">
+          <div className="w-70 p-4 border-b border-gray-200 ">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Live Preview</h3>
+            <p className="text-xs text-gray-500">
+              Changes update in real-time
+            </p>
+          </div>
+          
+          <div className="flex-1 flex items-center justify-center p-4">
+            <PhonePreview
+              themeClasses={themeClasses}
+              textColors={textColors}
+              selectedTheme={designSettings.selectedTheme}
+              selectedLayout={designSettings.selectedLayout}
+              user={user}
+              bio={bio}
+              socialLinks={socialLinks.filter(link => link.isEnabled && link.url)}
+              designSettings={designSettings}
+            />
+          </div>
+
+          <div className="p-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex gap-2">
+              <button
+                onClick={handleOpenShareDialog}
+                className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors font-medium"
+              >
+                Share Portfolio
+              </button>
+              <button
+                onClick={() => navigate("/portfolio-design")}
+                className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-colors font-medium"
+              >
+                Customize Design
+              </button>
+            </div>
+            
+            {portfolioSlug && (
+              <div className="mt-3 text-xs text-gray-500 text-center">
+                <div>Portfolio: <strong>{portfolioTitle}</strong></div>
+                <div className="truncate">Slug: {portfolioSlug}</div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Mobile/Tablet Preview Modal */}
@@ -1032,7 +1075,6 @@ export const MyLinksPage = (): JSX.Element => {
                     className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:bg-gray-50 cursor-pointer transition-colors"
                     onClick={() => {
                       const portfolioIdentifier = portfolio.slug || portfolio._id;
-                      console.log('🖱️ Clicked portfolio:', portfolioIdentifier, 'Full portfolio:', portfolio);
                       loadPortfolioData(portfolioIdentifier);
                       setShowPortfoliosModal(false);
                     }}
