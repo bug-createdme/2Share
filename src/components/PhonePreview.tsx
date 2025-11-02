@@ -27,7 +27,7 @@ interface DesignSettings {
 // Định nghĩa interface đầy đủ cho PhonePreviewProps
 interface PhonePreviewProps {
   themeClasses: Record<string, string>;
-  textColors: Record<string, string>;
+  textColors?: Record<string, string>;
   selectedTheme: string;
   selectedLayout: number;
   user?: any;
@@ -38,7 +38,6 @@ interface PhonePreviewProps {
 
 const PhonePreview: React.FC<PhonePreviewProps> = ({
   themeClasses,
-  textColors,
   selectedTheme,
   selectedLayout,
   user,
@@ -60,7 +59,6 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
   const buttonCorner = designSettings?.buttonCorner ?? 1;
   const buttonColor = designSettings?.buttonColor || "#ffffff";
   const buttonTextColor = designSettings?.buttonTextColor || "#ffffff";
-  const textColorValue = designSettings?.textColor || "#ffffff";
   const fontFamily = "spartan"; // LUÔN DÙNG FONT SPARTAN
   const backgroundType = designSettings?.backgroundType || "theme";
   const backgroundImage = designSettings?.backgroundImage;

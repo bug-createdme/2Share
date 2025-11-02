@@ -10,7 +10,7 @@ import {
   TbBorderCornerPill,
 } from "react-icons/tb";
 import { getMyProfile, getMyPortfolio, updatePortfolio, DesignSettings, getPortfolioBySlug } from "../lib/api";
-import { ImageUpload } from "../components/ui/image-upload";
+// import { ImageUpload } from "../components/ui/image-upload";
 import { showToast } from "../lib/toast";
 
 const DESIGN_SETTINGS_KEY = 'portfolio_design_settings';
@@ -20,7 +20,7 @@ const PortfolioDesignPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [portfolioSlug, setPortfolioSlug] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  // const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
   
@@ -201,6 +201,7 @@ const PortfolioDesignPage: React.FC = () => {
   };
 
   // Hàm lưu design settings lên server
+  const [saving, setSaving] = useState(false);
   const saveDesignSettings = async (settings: Partial<DesignSettings> = {}) => {
   if (!portfolioSlug) {
     console.warn('⚠️ No portfolio slug, cannot save design settings');

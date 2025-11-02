@@ -3,8 +3,8 @@ import React, { useState, useEffect, useRef } from "react";
 import MockSidebar from "../../components/MockSidebar";
 import Header from "../../components/Header";
 import NFCCardPreview from "../../components/NfcCardPreview";
-import { Zap, Lock, Unlock, ChevronDown, Sparkles, Search, Camera } from "lucide-react";
-import { ImageUpload } from "../../components/ui/image-upload";
+import { ChevronDown, Sparkles, Search, Camera, Zap } from "lucide-react";
+
 
 interface MbtiTemplate {
   id: string;
