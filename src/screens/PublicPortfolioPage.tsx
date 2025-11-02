@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { getPortfolioBySlug } from "../lib/api";
-import { getSocialAvatarUrl } from "../lib/socialConfig";
 import type { SocialLink } from "./MyLinksPage/sections/SocialLinksSection/SocialLinksSection";
 
 // Social icons import

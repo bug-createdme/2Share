@@ -189,17 +189,6 @@ const MockPortfolioPage: React.FC<MockPortfolioProps> = ({
           />
         ))}
       </div>
-
-      {/* Thêm CSS animation cho floating particles */}
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-15px) rotate(90deg); }
-        }
-        .animate-float {
-          animation: float 25s ease-in-out infinite;
-        }
-      `}</style>
     </div>
   );
 };
