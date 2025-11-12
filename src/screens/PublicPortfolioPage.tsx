@@ -45,23 +45,50 @@ const getSocialIcon = (platform: string) => {
 };
 
 // Theme classes mapping - KHỚP VỚI PORTFOLIO DESIGN
-const themeClasses: Record<string, string> = {
-  coral: "from-[#E7A5A5] to-[#E7A5A5]",
-  green: "from-green-300 to-green-400",
-  dark: "from-gray-700 to-gray-800", 
-  gradient: "from-purple-400 via-blue-400 to-green-400",
-  orange: "from-blue-400 to-orange-400",
+const themeGradients: Record<string, string> = {
+  "classic-rose": "linear-gradient(135deg, #E8B4B4 0%, #E8B4B4 100%)",
+  "fresh-mint": "linear-gradient(135deg, #A7E9AF 0%, #A7E9AF 100%)",
+  "dark-slate": "linear-gradient(135deg, #4A5568 0%, #2D3748 100%)",
+  "purple-green": "linear-gradient(135deg, #C084FC 0%, #60A5FA 50%, #4ADE80 100%)",
+  "sunset": "linear-gradient(135deg, #60A5FA 0%, #FB923C 100%)",
 };
 
 // Bio text colors theo theme - KHỚP VỚI PHONE PREVIEW
 const getBioTextColor = (selectedTheme: string) => {
   switch (selectedTheme) {
-    case 'coral': return '#E7A5A5';
-    case 'green': return '#4ADE80';
-    case 'dark': return '#6B7280';
-    case 'gradient': return '#A855F7';
-    case 'orange': return '#FB923C';
+    case 'classic-rose': return '#E8B4B4';
+    case 'fresh-mint': return '#A7E9AF';
+    case 'dark-slate': return '#4A5568';
+    case 'purple-green': return '#C084FC';
+    case 'sunset': return '#FB923C';
+    case 'custom': return '#6B7280';
     default: return '#6B7280';
+  }
+};
+
+const getFontFamilyClass = (font: string) => {
+  switch (font) {
+    case 'spartan': return 'font-spartan';
+    case 'Carlito': return 'font-carlito';
+    case 'Inter': return 'font-inter';
+    case 'Montserrat': return 'font-montserrat';
+    case 'Be Vietnam Pro': return 'font-be-vietnam';
+    case 'Spline Sans': return 'font-spline-sans';
+    case 'Unbounded': return 'font-unbounded';
+    default: return 'font-spartan';
+  }
+};
+
+const getFontFamilyStyle = (font: string) => {
+  switch (font) {
+    case 'spartan': return 'spartan, sans-serif';
+    case 'Carlito': return 'Carlito, sans-serif';
+    case 'Inter': return 'Inter, sans-serif';
+    case 'Montserrat': return 'Montserrat, sans-serif';
+    case 'Be Vietnam Pro': return 'Be Vietnam Pro, sans-serif';
+    case 'Spline Sans': return 'Spline Sans, sans-serif';
+    case 'Unbounded': return 'Unbounded, sans-serif';
+    default: return 'spartan, sans-serif';
   }
 };
 
@@ -207,12 +234,14 @@ const PublicPortfolioPage = (): JSX.Element => {
     const buttonCorner = design?.buttonCorner ?? 1;
     const buttonColor = design?.buttonColor || "#ffffff";
     const buttonTextColor = design?.buttonTextColor || "#ffffff";
+    const fontFamily = design?.fontFamily || "spartan";
 
     console.log('🎨 Button settings:', {
       buttonFill,
       buttonCorner,
       buttonColor,
-      buttonTextColor
+      buttonTextColor,
+      fontFamily
     });
 
     const getBorderRadius = () => {
@@ -228,20 +257,20 @@ const PublicPortfolioPage = (): JSX.Element => {
       // Solid fill - glassmorphism effect
       return {
         backgroundColor: "rgba(255, 255, 255, 0.2)",
-        color: "white", // LUÔN DÙNG MÀU TRẮNG
+        color: "white",
         border: "1px solid rgba(255, 255, 255, 0.3)",
         borderRadius: getBorderRadius(),
         backdropFilter: "blur(10px)",
-        fontFamily: "spartan", // THÊM FONT SPARTAN
+        fontFamily: getFontFamilyStyle(fontFamily),
       };
     } else {
       // Outline
       return {
         backgroundColor: "transparent",
-        color: "white", // LUÔN DÙNG MÀU TRẮNG
+        color: "white",
         border: `1px solid white`,
         borderRadius: getBorderRadius(),
-        fontFamily: "spartan", // THÊM FONT SPARTAN
+        fontFamily: getFontFamilyStyle(fontFamily),
       };
     }
   };
@@ -251,6 +280,7 @@ const PublicPortfolioPage = (): JSX.Element => {
     const design = portfolio.design_settings;
     const selectedLayout = design?.selectedLayout || design?.profileLayout + 1 || 1;
     const selectedTheme = design?.selectedTheme || design?.theme || "dark";
+    const fontFamily = design?.fontFamily || "spartan";
     
     // Lấy thông tin user từ portfolio
     const username = portfolio.username || "User";
@@ -303,251 +333,254 @@ const PublicPortfolioPage = (): JSX.Element => {
       bioTextColor
     });
 
-    // Layout 1: Avatar trên, centered
-    const renderLayout1 = () => (
-      <div className="flex flex-col items-center gap-6 mt-6 font-spartan">
-        {/* Avatar */}
-        <div className="w-32 h-32 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20">
-          <img
-            src={avatarUrl}
-            alt="avatar"
-            className="w-28 h-28 rounded-xl object-cover"
-            onError={(e) => {
-              console.error('❌ Avatar load error, using fallback');
-              (e.target as HTMLImageElement).src = "/images/profile-pictures/pfp-black.jpg";
-            }}
-          />
-        </div>
-        
-        {/* Username - LUÔN MÀU TRẮNG */}
-        <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white font-spartan">
-          {portfolioTitle}
-        </h1>
+    // Layout 1: Avatar trên, centered - SAME WIDTH AS LAYOUT 3
+const renderLayout1 = () => (
+  <div className={`flex flex-col items-center gap-6 mt-6 w-full ${getFontFamilyClass(fontFamily)}`}>
+    {/* Avatar */}
+    <div className="w-32 h-32 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20">
+      <img
+        src={avatarUrl}
+        alt="avatar"
+        className="w-28 h-28 rounded-xl object-cover"
+        onError={(e) => {
+          console.error('❌ Avatar load error, using fallback');
+          (e.target as HTMLImageElement).src = "/images/profile-pictures/pfp-black.jpg";
+        }}
+      />
+    </div>
+    
+    {/* Username */}
+    <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white text-center" style={{ fontFamily: getFontFamilyStyle(fontFamily) }}>
+      {portfolioTitle}
+    </h1>
 
-        {/* Social icons row */}
-        {socialLinks.length > 0 && (
-          <div className="flex gap-3 justify-center mb-4">
-            {socialLinks.slice(0, 6).map((link) => (
-              <div 
-                key={link.id}
-                className="hover:opacity-80 transition-transform hover:scale-110 w-6 h-6 flex items-center justify-center"
-                title={link.displayName || link.name}
-              >
-                {getSocialIcon(link.name)}
-              </div>
-            ))}
+    {/* Social icons row */}
+    {socialLinks.length > 0 && (
+      <div className="flex gap-3 justify-center mb-4">
+        {socialLinks.slice(0, 6).map((link) => (
+          <div 
+            key={link.id}
+            className="hover:opacity-80 transition-transform hover:scale-110 w-6 h-6 flex items-center justify-center"
+            title={link.displayName || link.name}
+          >
+            {getSocialIcon(link.name)}
           </div>
-        )}
-
-        {/* Bio section - MÀU THEO THEME */}
-        {bioContent && (
-          <div className="bg-white rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-md border border-white/15 w-full max-w-md">
-            <p 
-              className="leading-relaxed text-center text-sm font-spartan"
-              style={{ color: bioTextColor }}
-            >
-              {bioContent}
-            </p>
-          </div>
-        )}
-
-        {/* Links */}
-        {socialLinks.length > 0 && (
-          <div className="flex flex-col gap-3 w-full max-w-md">
-            {socialLinks.map((link) => (
-              <a 
-                key={link.id} 
-                href={link.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-full no-underline"
-              >
-                <button 
-                  className="w-full py-4 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 font-spartan"
-                  style={getButtonStyle(design)}
-                >
-                  {getSocialIcon(link.name)}
-                  <span>{link.displayName || link.name}</span>
-                </button>
-              </a>
-            ))}
-          </div>
-        )}
+        ))}
       </div>
-    );
+    )}
 
-    // Layout 2: Avatar bên trái với username
-    const renderLayout2 = () => (
-      <div className="flex flex-col gap-6 mt-6 font-spartan">
-        <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-6 mx-auto w-fit">
-          {/* Avatar */}
-          <div className="w-24 h-24 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20">
-            <img
-              src={avatarUrl}
-              alt="avatar"
-              className="w-20 h-20 rounded-xl object-cover"
-              onError={(e) => {
-                console.error('❌ Avatar load error, using fallback');
-                (e.target as HTMLImageElement).src = "/images/profile-pictures/pfp-black.jpg";
-              }}
-            />
-          </div>
-          <div className="flex flex-col items-center md:items-start">
-            {/* Username - LUÔN MÀU TRẮNG */}
-            <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white font-spartan">
-              {portfolioTitle}
-            </h1>
-            {/* Social Icons */}
-            {socialLinks.length > 0 && (
-              <div className="flex gap-2 mt-1">
-                {socialLinks.slice(0, 4).map((link) => (
-                  <div key={link.id} className="w-5 h-5 flex items-center justify-center">
-                    {getSocialIcon(link.name)}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Bio section - MÀU THEO THEME */}
-        {bioContent && (
-          <div className="bg-white rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-sm border border-white/15 w-full max-w-md mx-auto">
-            <p 
-              className="leading-relaxed text-center text-sm font-spartan"
-              style={{ color: bioTextColor }}
-            >
-              {bioContent}
-            </p>
-          </div>
-        )}
-
-        {/* Links */}
-        {socialLinks.length > 0 && (
-          <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
-            {socialLinks.map((link) => (
-              <a 
-                key={link.id} 
-                href={link.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-full no-underline"
-              >
-                <button 
-                  className="w-full py-3 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 font-spartan"
-                  style={getButtonStyle(design)}
-                >
-                  {getSocialIcon(link.name)}
-                  <span>{link.displayName || link.name}</span>
-                </button>
-              </a>
-            ))}
-          </div>
-        )}
+    {/* Bio section - SAME WIDTH AS LAYOUT 3 */}
+    {bioContent && (
+      <div className="bg-white rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-md border border-white/15 w-full max-w-md">
+        <p 
+          className="leading-relaxed text-center text-sm"
+          style={{ 
+            color: bioTextColor,
+            fontFamily: getFontFamilyStyle(fontFamily)
+          }}
+        >
+          {bioContent}
+        </p>
       </div>
-    );
+    )}
 
-    // Layout 3: Username trên, avatar wide ở giữa
-    const renderLayout3 = () => (
-      <div className="flex flex-col items-center gap-4 mt-6 w-full font-spartan">
-        {/* Username - LUÔN MÀU TRẮNG */}
-        <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white font-spartan">
-          {portfolioTitle}
-        </h1>
-        
-        {/* Social Icons */}
-        {socialLinks.length > 0 && (
-          <div className="flex gap-2 justify-center mb-4">
-            {socialLinks.slice(0, 5).map((link) => (
-              <div 
-                key={link.id}
-                className="hover:opacity-80 transition-transform hover:scale-110 w-5 h-5 flex items-center justify-center"
-                title={link.displayName || link.name}
-              >
-                {getSocialIcon(link.name)}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Avatar large middle */}
-        <div className="w-32 h-24 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20 mb-4">
-          <img
-            src={avatarUrl}
-            alt="avatar"
-            className="w-28 h-20 rounded-xl object-cover"
-            onError={(e) => {
-              console.error('❌ Avatar load error, using fallback');
-              (e.target as HTMLImageElement).src = "/images/profile-pictures/pfp-black.jpg";
-            }}
-          />
-        </div>
-
-        {/* Bio section - MÀU THEO THEME */}
-        {bioContent && (
-          <div className="bg-white rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-sm border border-white/15 w-full max-w-md">
-            <p 
-              className="leading-relaxed text-center text-sm font-spartan"
-              style={{ color: bioTextColor }}
+    {/* Links - SAME WIDTH AS LAYOUT 3 */}
+    {socialLinks.length > 0 && (
+      <div className="flex flex-col gap-3 w-full max-w-md">
+        {socialLinks.map((link) => (
+          <a 
+            key={link.id} 
+            href={link.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="w-full no-underline"
+          >
+            <button 
+              className="w-full py-4 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300"
+              style={getButtonStyle(design)}
             >
-              {bioContent}
-            </p>
-          </div>
-        )}
-
-        {/* Links */}
-        {socialLinks.length > 0 && (
-          <div className="flex flex-col gap-3 w-full max-w-md">
-            {socialLinks.map((link) => (
-              <a 
-                key={link.id} 
-                href={link.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-full no-underline"
-              >
-                <button 
-                  className="w-full py-3 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 font-spartan"
-                  style={getButtonStyle(design)}
-                >
-                  {getSocialIcon(link.name)}
-                  <span>{link.displayName || link.name}</span>
-                </button>
-              </a>
-            ))}
-          </div>
-        )}
+              {getSocialIcon(link.name)}
+              <span>{link.displayName || link.name}</span>
+            </button>
+          </a>
+        ))}
       </div>
-    );
+    )}
+  </div>
+);
 
-    // Layout 4: Background avatar style - SỬA LẠI ĐỂ AVATAR LÀ ĐIỂM NHẤN
-const renderLayout4 = () => (
-  <div className="relative h-full flex flex-col items-center justify-start min-h-[500px]">
-    {/* Background avatar - LỚN và NỔI BẬT */}
-    <div className="absolute inset-0 flex items-center justify-center opacity-50 mb-52">
-      <div className="w-64 h-64 rounded-full overflow-hidden bg-white/20 border-4 border-white/30 shadow-2xl">
+// Layout 2: Avatar bên trái với username - SAME WIDTH AS LAYOUT 3
+const renderLayout2 = () => (
+  <div className={`flex flex-col gap-6 mt-6 w-full ${getFontFamilyClass(fontFamily)}`}>
+    <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-6 w-full max-w-md mx-auto">
+      {/* Avatar */}
+      <div className="w-24 h-24 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20">
         <img
-          className="w-full h-full object-cover"
-          alt="Avatar background"
           src={avatarUrl}
+          alt="avatar"
+          className="w-20 h-20 rounded-xl object-cover"
           onError={(e) => {
             console.error('❌ Avatar load error, using fallback');
             (e.target as HTMLImageElement).src = "/images/profile-pictures/pfp-black.jpg";
           }}
         />
       </div>
+      <div className="flex flex-col items-center md:items-start">
+        {/* Username */}
+        <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white text-center md:text-left" style={{ fontFamily: getFontFamilyStyle(fontFamily) }}>
+          {portfolioTitle}
+        </h1>
+        {/* Social Icons */}
+        {socialLinks.length > 0 && (
+          <div className="flex gap-2 mt-1">
+            {socialLinks.slice(0, 4).map((link) => (
+              <div key={link.id} className="w-5 h-5 flex items-center justify-center">
+                {getSocialIcon(link.name)}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+    
+    {/* Bio section - SAME WIDTH AS LAYOUT 3 */}
+    {bioContent && (
+      <div className="bg-white rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-sm border border-white/15 w-full max-w-md mx-auto">
+        <p 
+          className="leading-relaxed text-center text-sm"
+          style={{ 
+            color: bioTextColor,
+            fontFamily: getFontFamilyStyle(fontFamily)
+          }}
+        >
+          {bioContent}
+        </p>
+      </div>
+    )}
+
+    {/* Links - SAME WIDTH AS LAYOUT 3 */}
+    {socialLinks.length > 0 && (
+      <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
+        {socialLinks.map((link) => (
+          <a 
+            key={link.id} 
+            href={link.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="w-full no-underline"
+          >
+            <button 
+              className="w-full py-3 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300"
+              style={getButtonStyle(design)}
+            >
+              {getSocialIcon(link.name)}
+              <span>{link.displayName || link.name}</span>
+            </button>
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+// Layout 3: Username trên, avatar wide ở giữa - GIỮ NGUYÊN NHƯ BAN ĐẦU
+const renderLayout3 = () => (
+  <div className={`flex flex-col items-center gap-4 mt-6 w-full ${getFontFamilyClass(fontFamily)}`}>
+    {/* Username */}
+    <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white font-spartan text-center">
+      {portfolioTitle}
+    </h1>
+    
+    {/* Social Icons */}
+    {socialLinks.length > 0 && (
+      <div className="flex gap-2 justify-center mb-4">
+        {socialLinks.slice(0, 5).map((link) => (
+          <div 
+            key={link.id}
+            className="hover:opacity-80 transition-transform hover:scale-110 w-5 h-5 flex items-center justify-center"
+            title={link.displayName || link.name}
+          >
+            {getSocialIcon(link.name)}
+          </div>
+        ))}
+      </div>
+    )}
+
+    {/* Avatar large middle */}
+    <div className="w-32 h-24 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20 mb-4">
+      <img
+        src={avatarUrl}
+        alt="avatar"
+        className="w-28 h-20 rounded-xl object-cover"
+        onError={(e) => {
+          console.error('❌ Avatar load error, using fallback');
+          (e.target as HTMLImageElement).src = "/images/profile-pictures/pfp-black.jpg";
+        }}
+      />
     </div>
 
-    {/* Foreground content - NẰM Ở TRÊN CÙNG */}
-    <div className="relative z-10 w-full flex flex-col items-center mt-8">
-      {/* Username - NỔI BẬT Ở TRÊN CÙNG */}
-      <h1 className="text-3xl font-bold mb-4 drop-shadow-2xl text-white font-spartan text-center">
+    {/* Bio section */}
+    {bioContent && (
+      <div className="bg-white rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-sm border border-white/15 w-full max-w-md">
+        <p 
+          className="leading-relaxed text-center text-sm font-spartan"
+          style={{ color: bioTextColor }}
+        >
+          {bioContent}
+        </p>
+      </div>
+    )}
+
+    {/* Links */}
+    {socialLinks.length > 0 && (
+      <div className="flex flex-col gap-3 w-full max-w-md">
+        {socialLinks.map((link) => (
+          <a 
+            key={link.id} 
+            href={link.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="w-full no-underline"
+          >
+            <button 
+              className="w-full py-3 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 font-spartan"
+              style={getButtonStyle(design)}
+            >
+              {getSocialIcon(link.name)}
+              <span>{link.displayName || link.name}</span>
+            </button>
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+// Layout 4: Background avatar style - SAME WIDTH AS LAYOUT 3
+const renderLayout4 = () => (
+  <div className={`relative min-h-screen w-full flex flex-col items-center ${getFontFamilyClass(fontFamily)}`}>
+    
+    {/* Background Avatar - CENTERED */}
+    <div className="absolute top-1/3 transform -translate-y-1/3 w-72 h-72 rounded-full overflow-hidden bg-white/15 border-4 border-white/25 shadow-2xl opacity-90 pointer-events-none">
+      <img
+        className="w-full h-full object-cover"
+        alt="Avatar background"
+        src={avatarUrl}
+        onError={(e) => {
+          console.error('❌ Avatar load error, using fallback');
+          (e.target as HTMLImageElement).src = "/images/profile-pictures/pfp-black.jpg";
+        }}
+      />
+    </div>
+
+    {/* Header - ABOVE AVATAR */}
+    <div className="relative z-10 w-full flex flex-col items-center justify-center pt-16 px-4 mb-8 max-w-md mx-auto">
+      <h1 className="text-3xl font-bold mb-4 drop-shadow-2xl text-white text-center" style={{ fontFamily: getFontFamilyStyle(fontFamily) }}>
         {portfolioTitle}
       </h1>
       
-      {/* Social Icons - NẰM NGAY DƯỚI USERNAME */}
       {socialLinks.length > 0 && (
-        <div className="flex gap-4 justify-center mb-8">
+        <div className="flex gap-4 justify-center">
           {socialLinks.slice(0, 6).map((link) => (
             <div 
               key={link.id}
@@ -561,42 +594,47 @@ const renderLayout4 = () => (
       )}
     </div>
 
-    {/* Bio and links at bottom - NẰM Ở DƯỚI CÙNG */}
-    <div className="relative z-10 w-full mt-64 space-y-6 pb-8 ">
-      {/* Bio Section - CHỈ HIỆN KHI CÓ NỘI DUNG */}
-      {bioContent && (
-        <div className="bg-white rounded-2xl p-6 shadow-lg backdrop-blur-sm border border-white/20 w-full max-w-md mx-auto">
-          <p 
-              className="leading-relaxed text-center text-sm font-spartan"
-              style={{ color: bioTextColor }}
+    {/* Content - BELOW AVATAR với cùng chiều rộng */}
+    <div className="relative z-10 w-full flex flex-col items-center mt-80 px-4 pb-8">
+      <div className="w-full max-w-md space-y-6">
+        {/* Bio Section */}
+        {bioContent && (
+          <div className="bg-white rounded-2xl p-6 shadow-lg backdrop-blur-sm border border-white/20 w-full">
+            <p 
+              className="leading-relaxed text-center text-sm"
+              style={{ 
+                color: bioTextColor,
+                fontFamily: getFontFamilyStyle(fontFamily)
+              }}
             >
               {bioContent}
             </p>
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* Links - NẰM DƯỚI BIO */}
-      {socialLinks.length > 0 && (
-        <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
-          {socialLinks.map((link) => (
-            <a 
-              key={link.id} 
-              href={link.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="w-full no-underline"
-            >
-              <button 
-                className="w-full py-4 font-medium rounded-xl hover:bg-white/20 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 border border-white/30"
-                style={getButtonStyle(design)}
+        {/* Links - SAME WIDTH AS LAYOUT 3 */}
+        {socialLinks.length > 0 && (
+          <div className="w-full space-y-3">
+            {socialLinks.map((link) => (
+              <a 
+                key={link.id} 
+                href={link.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-full no-underline block"
               >
-                {getSocialIcon(link.name)}
-                <span className="text-white">{link.displayName || link.name}</span>
-              </button>
-            </a>
-          ))}
-        </div>
-      )}
+                <button 
+                  className="w-full py-4 font-medium rounded-xl hover:bg-white/20 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 border border-white/30"
+                  style={getButtonStyle(design)}
+                >
+                  {getSocialIcon(link.name)}
+                  <span className="text-white">{link.displayName || link.name}</span>
+                </button>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   </div>
 );
@@ -646,14 +684,25 @@ const renderLayout4 = () => (
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center text-center text-white relative overflow-hidden font-spartan">
-      {/* Background với design settings - ĐẢM BẢO ÁP DỤNG ĐÚNG */}
+      {/* Background với design settings */}
       <div 
         className="absolute inset-0"
         style={backgroundStyle}
       />
-
+      
+      {/* Overlay làm mờ và tối - CHỈ ÁP DỤNG KHI backgroundType là 'image' */}
+      {portfolio?.design_settings?.backgroundType === 'image' && portfolio?.design_settings?.backgroundImage && (
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%)',
+            backdropFilter: 'blur(1.5px)'
+          }}
+        />
+      )}
+      
       {/* Noise Texture nhẹ - chỉ hiển thị nếu không phải background image */}
-      {!portfolio?.design_settings?.backgroundImage && (
+      {portfolio?.design_settings?.backgroundType !== 'image' && (
         <div 
           className="absolute inset-0 opacity-[0.02]"
           style={{
@@ -663,7 +712,7 @@ const renderLayout4 = () => (
       )}
 
       {/* Vignette nhẹ nhàng - chỉ hiển thị nếu không phải background image */}
-      {!portfolio?.design_settings?.backgroundImage && (
+      {portfolio?.design_settings?.backgroundType !== 'image' && (
         <div 
           className="absolute inset-0"
           style={{

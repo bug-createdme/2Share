@@ -309,34 +309,36 @@ export const MyLinksPage = (): JSX.Element => {
   }, [portfoliosList]);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const planResponse = await getCurrentPlan();
-        const plan = Array.isArray(planResponse) ? planResponse[0] : planResponse;
-        const status = plan?.status || plan?.result?.status;
-        const planInfo = (plan?.planInfo?.[0]) || (plan?.result?.planInfo?.[0]) || plan;
+  (async () => {
+    try {
+      const planResponse = await getCurrentPlan();
+      const plan = Array.isArray(planResponse) ? planResponse[0] : planResponse;
+      const status = plan?.status || plan?.result?.status;
+      const planInfo = (plan?.planInfo?.[0]) || (plan?.result?.planInfo?.[0]) || plan;
 
-        const isActive = status?.toLowerCase() === 'active' || status?.toLowerCase() === 'trial';
-        setPlanActive(isActive);
+      const isActive = status?.toLowerCase() === 'active' || status?.toLowerCase() === 'trial';
+      setPlanActive(isActive);
 
-        if (typeof planInfo?.maxSocialLinks === 'number') {
-          setMaxSocialLinks(planInfo.maxSocialLinks);
-        }
-        
-        if (typeof planInfo?.maxBusinessCard === 'number') {
-          setMaxBusinessCard(planInfo.maxBusinessCard);
-        }
-
-        if (!isActive) {
-          showToast.warning('Bạn chưa có gói nào đang hoạt động. Vui lòng đăng ký gói để cập nhật portfolio.');
-        }
-      } catch (e: any) {
-        console.error('❌ Error fetching current plan:', e);
-        setPlanActive(false);
-        showToast.error('Không thể kiểm tra gói của bạn. Vui lòng thử lại sau.');
+      if (typeof planInfo?.maxSocialLinks === 'number') {
+        setMaxSocialLinks(planInfo.maxSocialLinks);
       }
-    })();
-  }, []);
+      
+      if (typeof planInfo?.maxBusinessCard === 'number') {
+        setMaxBusinessCard(planInfo.maxBusinessCard);
+      }
+
+      // CHỈ HIỆN THÔNG BÁO KHI CÓ DỮ LIỆU VÀ KHÔNG ACTIVE
+      if (planInfo && !isActive) {
+        showToast.warning('Bạn chưa có gói nào đang hoạt động. Vui lòng đăng ký gói để cập nhật portfolio.');
+      }
+    } catch (e: any) {
+      console.error('❌ Error fetching current plan:', e);
+      setPlanActive(false);
+      // ẨN THÔNG BÁO LỖI KHI MỚI ĐĂNG KÝ
+      // showToast.error('Không thể kiểm tra gói của bạn. Vui lòng thử lại sau.');
+    }
+  })();
+}, []);
 
   // Listen for design updates từ PortfolioDesignPage - SỬA LAYOUT
   useEffect(() => {
@@ -863,10 +865,8 @@ export const MyLinksPage = (): JSX.Element => {
                 </div>
               </div>
 
-              <div className="flex gap-3 w-full max-w-[400px] mb-8">
-
               {/* Add Social Button & Preview Button */}
-              <div className="flex gap-3 w-full max-w-[300px] mb-6 sm:mb-8 px-4 sm:px-0">
+              <div className="flex xl:gap-0 gap-3 w-full max-w-[300px] mb-6 sm:mb-8 px-4 sm:px-0">
                 <Button
                   className="flex-1 h-auto bg-[#f3b4c3] hover:bg-[#f3b4c3] rounded-[25px] sm:rounded-[35px] py-3 sm:py-4 flex items-center justify-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl"
                   onClick={() => navigate("/my-links/add-social")}
@@ -876,6 +876,7 @@ export const MyLinksPage = (): JSX.Element => {
                     Thêm
                   </span>
                 </Button>
+                
                 {/* Preview Button - Chỉ hiện trên mobile/tablet */}
                 <Button
                   className="xl:hidden h-auto bg-purple-500 hover:bg-purple-600 rounded-[25px] sm:rounded-[35px] py-3 sm:py-4 px-4 sm:px-6 flex items-center justify-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl"
@@ -889,7 +890,6 @@ export const MyLinksPage = (): JSX.Element => {
                     Xem
                   </span>
                 </Button>
-              </div>
               </div>
               
               <Routes>

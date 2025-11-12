@@ -1,8 +1,38 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Spline+Sans:wght@300..700&family=Unbounded:wght@200..900&display=swap');
 @import "react-day-picker/dist/style.css";
 
-/* Custom scrollbar cho ProfilePictureSection */
+/* Font Family Classes */
+.font-carlito {
+  font-family: 'Carlito', sans-serif;
+}
+
+.font-spartan {
+  font-family: 'spartan', sans-serif;
+}
+
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.font-be-vietnam {
+  font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.font-spline-sans {
+  font-family: 'Spline Sans', sans-serif;
+}
+
+.font-unbounded {
+  font-family: 'Unbounded', sans-serif;
+}
+
+/* Rest of your existing CSS remains the same */
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
 }

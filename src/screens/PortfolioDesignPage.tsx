@@ -23,14 +23,15 @@ const PortfolioDesignPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
+  const [uploadingBackground, setUploadingBackground] = useState(false);
   
   // Design states
-  const [selectedTheme, setSelectedTheme] = useState("coral");
+  const [selectedTheme, setSelectedTheme] = useState("classic-rose");
   const [selectedProfile, setSelectedProfile] = useState(0);
   const [activeTab, setActiveTab] = useState<"text" | "button">("text");
+  const [fontFamily, setFontFamily] = useState("spartan");
   const [buttonFill, setButtonFill] = useState(0);
   const [buttonCorner, setButtonCorner] = useState(1);
-  const [fontFamily, setFontFamily] = useState("Carlito");
   const [textColor, setTextColor] = useState("#000000");
   const [buttonTextColor, setButtonTextColor] = useState("#000000");
   const [buttonColor, setButtonColor] = useState("#000000");
@@ -39,6 +40,9 @@ const PortfolioDesignPage: React.FC = () => {
   const [backgroundSolidColor, setBackgroundSolidColor] = useState("#ffffff");
   const [backgroundGradient, setBackgroundGradient] = useState("from-gray-600 to-gray-400");
   
+  // THÊM STATE CHO IMAGE LIBRARY
+  const [showImageLibrary, setShowImageLibrary] = useState(false);
+  
   const [bio, setBio] = useState("");
   const [socialLinks, setSocialLinks] = useState<any[]>([]);
   const [portfolioTitle, setPortfolioTitle] = useState("My Portfolio");
@@ -46,30 +50,58 @@ const PortfolioDesignPage: React.FC = () => {
 
   // Color mappings
   const avatarColors: Record<string, string> = {
-    coral: "bg-[#E7A5A5]",
-    green: 'bg-green-300',
-    dark: 'bg-gray-500',
-    gradient: 'bg-purple-400',
-    orange: 'bg-orange-400',
+    'classic-rose': "bg-[#E8B4B4]",
+    'fresh-mint': "bg-[#A7E9AF]",
+    'dark-slate': "bg-[#4A5568]",
+    'purple-green': "bg-[#C084FC]",
+    'sunset': "bg-[#FB923C]",
+    'custom': "bg-[#6B7280]",
   };
 
   const textColors: Record<string, string> = {
-    coral: 'text-[#E7A5A5]',
-    green: 'text-green-400',
-    dark: 'text-gray-500',
-    gradient: 'text-purple-400',
-    orange: 'text-orange-400',
+    'classic-rose': 'text-[#E8B4B4]',
+    'fresh-mint': 'text-[#A7E9AF]',
+    'dark-slate': 'text-[#4A5568]',
+    'purple-green': 'text-[#C084FC]',
+    'sunset': 'text-[#FB923C]',
+    'custom': 'text-[#6B7280]',
   };
 
   const themeClasses: Record<string, string> = {
-    coral: "from-[#E7A5A5] to-[#E7A5A5]",
-    green: "from-green-300 to-green-400",
-    dark: "from-gray-700 to-gray-800",
-    gradient: "from-purple-400 via-blue-400 to-green-400",
-    orange: "from-blue-400 to-orange-400",
+    'classic-rose': "from-[#E8B4B4] to-[#E8B4B4]",
+    'fresh-mint': "from-[#A7E9AF] to-[#A7E9AF]",
+    'dark-slate': "from-[#4A5568] to-[#2D3748]",
+    'purple-green': "from-[#C084FC] via-[#60A5FA] to-[#4ADE80]",
+    'sunset': "from-[#60A5FA] to-[#FB923C]",
   };
 
-  // Hàm lưu state vào localStorage
+  // Helper function để lấy class font family
+  const getFontFamilyClass = (font: string) => {
+    switch (font) {
+      case 'spartan': return 'font-spartan';
+      case 'Carlito': return 'font-carlito';
+      case 'Inter': return 'font-inter';
+      case 'Montserrat': return 'font-montserrat';
+      case 'Be Vietnam Pro': return 'font-be-vietnam';
+      case 'Spline Sans': return 'font-spline-sans';
+      default: return 'font-spartan';
+    }
+  };
+
+  // Helper function để lấy font family cho inline style
+  const getFontFamilyStyle = (font: string) => {
+    switch (font) {
+      case 'spartan': return 'spartan, sans-serif';
+      case 'Carlito': return 'Carlito, sans-serif';
+      case 'Inter': return 'Inter, sans-serif';
+      case 'Montserrat': return 'Montserrat, sans-serif';
+      case 'Be Vietnam Pro': return 'Be Vietnam Pro, sans-serif';
+      case 'Spline Sans': return 'Spline Sans, sans-serif';
+      default: return 'spartan, sans-serif';
+    }
+  };
+
+  // Hàm lưu state vào localStorage - TỐI ƯU
   const saveStateToLocalStorage = () => {
     const state = {
       selectedTheme,
@@ -87,25 +119,36 @@ const PortfolioDesignPage: React.FC = () => {
       bio,
       socialLinks,
       portfolioTitle,
-      lastSaved: Date.now()
+      lastSaved: Date.now(),
+      portfolioSlug,
+      version: '1.0'
     };
-    localStorage.setItem(DESIGN_SETTINGS_KEY, JSON.stringify(state));
-    console.log('💾 Saved to localStorage');
+    
+    try {
+      localStorage.setItem(DESIGN_SETTINGS_KEY, JSON.stringify(state));
+      console.log('💾 Đã backup vào localStorage');
+    } catch (error) {
+      console.error('❌ Lỗi backup localStorage:', error);
+    }
   };
 
-  // Hàm load state từ localStorage
+  // Hàm load state từ localStorage - SILENT
   const loadStateFromLocalStorage = () => {
     try {
       const saved = localStorage.getItem(DESIGN_SETTINGS_KEY);
       if (saved) {
         const state = JSON.parse(saved);
         
-        // Chỉ load nếu data còn mới (dưới 2 giờ)
-        const isRecent = state.lastSaved && (Date.now() - state.lastSaved < 2 * 60 * 60 * 1000);
+        const currentSlug = portfolioSlug || localStorage.getItem('currentPortfolioSlug');
+        const savedSlug = state.portfolioSlug;
         
-        if (isRecent) {
-          console.log('📥 Loading recent design settings from localStorage');
+        const isRecent = state.lastSaved && (Date.now() - state.lastSaved < 24 * 60 * 60 * 1000);
+        const isSamePortfolio = !currentSlug || !savedSlug || currentSlug === savedSlug;
+        
+        if (isRecent && isSamePortfolio) {
+          console.log('📥 Đang khôi phục thiết kế từ bản lưu...');
           
+          // Khôi phục tất cả state
           if (state.selectedTheme) setSelectedTheme(state.selectedTheme);
           if (state.selectedProfile !== undefined) setSelectedProfile(state.selectedProfile);
           if (state.buttonFill !== undefined) setButtonFill(state.buttonFill);
@@ -122,15 +165,12 @@ const PortfolioDesignPage: React.FC = () => {
           if (state.socialLinks) setSocialLinks(state.socialLinks);
           if (state.portfolioTitle) setPortfolioTitle(state.portfolioTitle);
           
-          setHasChanges(true);
-        } else {
-          console.log('🗑️ LocalStorage data is too old, skipping load');
-          localStorage.removeItem(DESIGN_SETTINGS_KEY);
+          setHasChanges(false);
+          console.log('✅ Đã khôi phục thiết kế thành công');
         }
       }
     } catch (error) {
-      console.error('❌ Error loading from localStorage:', error);
-      localStorage.removeItem(DESIGN_SETTINGS_KEY);
+      console.error('❌ Lỗi khôi phục từ localStorage:', error);
     }
   };
 
@@ -200,54 +240,75 @@ const PortfolioDesignPage: React.FC = () => {
 }
   };
 
-  // Hàm lưu design settings lên server
-  const saveDesignSettings = async (settings: Partial<DesignSettings> = {}) => {
-  if (!portfolioSlug) {
-    console.warn('⚠️ No portfolio slug, cannot save design settings');
-    return;
-  }
+  // Hàm lưu design settings lên server - SILENT MODE
+  const saveDesignSettings = async (settings: Partial<DesignSettings> = {}, retryCount = 0): Promise<void> => {
+    if (!portfolioSlug) {
+      console.warn('⚠️ No portfolio slug, cannot save design settings');
+      return;
+    }
 
-  setSaving(true);
-  try {
-    const designSettings: DesignSettings = {
-      theme: selectedTheme,
-      profileLayout: selectedProfile,
-      buttonFill,
-      buttonCorner,
-      fontFamily,
-      textColor,
-      buttonTextColor,
-      buttonColor,
-      backgroundType,
-      backgroundImage,
-      backgroundSolidColor,
-      backgroundGradient,
-      backgroundPattern: backgroundType === 'pattern' ? 'dots' : undefined,
-      ...settings
-    };
+    // Nếu đang saving, không save lại
+    if (saving) {
+      console.log('⏳ Đang lưu, bỏ qua request mới');
+      return;
+    }
 
-    console.log('💾 Saving design settings to server:', designSettings);
-
-    await updatePortfolio(portfolioSlug, { 
-      design_settings: designSettings 
-    });
-
-    console.log('✅ Design settings saved successfully to server');
-    setHasChanges(false);
+    setSaving(true);
     
-    // Cập nhật lastSaved trong localStorage
-    saveStateToLocalStorage();
-    
-    // ĐÃ XÓA: showToast.success('Đã lưu thiết kế');
-  } catch (error: any) {
-    console.error('❌ Error saving design settings:', error);
-    showToast.error('Lỗi lưu thiết kế: ' + (error.message || 'Không xác định'));
-  } finally {
-    setSaving(false);
-  }
-};
+    try {
+      const designSettings: DesignSettings = {
+        theme: selectedTheme,
+        profileLayout: selectedProfile,
+        buttonFill,
+        buttonCorner,
+        fontFamily,
+        textColor,
+        buttonTextColor,
+        buttonColor,
+        backgroundType,
+        backgroundImage,
+        backgroundSolidColor,
+        backgroundGradient,
+        backgroundPattern: backgroundType === 'pattern' ? 'dots' : undefined,
+        ...settings
+      };
 
-  // Hàm save đồng bộ khi rời trang
+      console.log('💾 Auto-saving design settings...');
+
+      await updatePortfolio(portfolioSlug, { 
+        design_settings: designSettings 
+      });
+
+      console.log('✅ Auto-save thành công');
+      setHasChanges(false);
+      
+      // Cập nhật lastSaved trong localStorage
+      saveStateToLocalStorage();
+      
+      // Dispatch event để các component khác biết
+      window.dispatchEvent(new CustomEvent('design-updated'));
+      
+    } catch (error: any) {
+      console.error('❌ Lỗi auto-save:', error);
+      
+      // Retry logic - thử lại tối đa 1 lần (silent)
+      if (retryCount < 1) {
+        console.log(`🔄 Tự động thử lại...`);
+        setTimeout(() => {
+          saveDesignSettings(settings, retryCount + 1);
+        }, 2000);
+        return;
+      }
+      
+      // KHÔNG hiển thị thông báo lỗi cho người dùng
+      // Data đã được backup trong localStorage
+      
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Hàm save đồng bộ khi rời trang - SILENT
   const saveDesignSettingsSync = async () => {
     if (!portfolioSlug || !hasChanges) return;
     
@@ -269,9 +330,8 @@ const PortfolioDesignPage: React.FC = () => {
       };
 
       const token = localStorage.getItem('token');
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-
+      
+      // Sử dụng fetch với keepalive để đảm bảo gửi được ngay cả khi trang đóng
       await fetch(`https://2share.icu/portfolios/update-portfolio/${portfolioSlug}`, {
         method: 'PATCH',
         headers: {
@@ -279,14 +339,14 @@ const PortfolioDesignPage: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ design_settings: designSettings }),
-        signal: controller.signal,
-        keepalive: true
+        keepalive: true // QUAN TRỌNG: giữ connection alive
       });
       
-      clearTimeout(timeoutId);
-      console.log('✅ Design settings saved before unload');
+      console.log('✅ Đã lưu thay đổi trước khi rời trang');
+      setHasChanges(false);
     } catch (error) {
-      console.error('❌ Error saving before unload:', error);
+      console.error('❌ Lỗi lưu cuối cùng:', error);
+      // KHÔNG hiển thị lỗi, đã có backup trong localStorage
     }
   };
 
@@ -356,18 +416,28 @@ const PortfolioDesignPage: React.FC = () => {
   };
 }, []);
 
-  // Auto-save nhanh hơn và lưu localStorage
+// THAY THẾ TOÀN BỘ useEffect auto-save hiện tại
   useEffect(() => {
-    if (portfolioSlug) {
-      setHasChanges(true);
-      saveStateToLocalStorage();
-      
-      const timer = setTimeout(() => {
-        saveDesignSettings();
-      }, 1000);
+    if (!portfolioSlug) return;
 
-      return () => clearTimeout(timer);
-    }
+    console.log('🔄 Phát hiện thay đổi thiết kế, tự động lưu...');
+    
+    // Lưu ngay vào localStorage để backup
+    saveStateToLocalStorage();
+    
+    // Debounce auto-save để tránh save quá nhiều
+    const saveTimeout = setTimeout(async () => {
+      try {
+        await saveDesignSettings();
+        console.log('✅ Đã tự động lưu thiết kế');
+      } catch (error) {
+        console.error('❌ Lỗi auto-save:', error);
+        // Không hiển thị thông báo lỗi cho người dùng
+        // Sẽ thử lại ở lần save tiếp theo
+      }
+    }, 1000); // Giảm thời gian chờ xuống 1 giây
+
+    return () => clearTimeout(saveTimeout);
   }, [
     selectedTheme, selectedProfile, buttonFill, buttonCorner,
     fontFamily, textColor, buttonTextColor, buttonColor,
@@ -400,12 +470,11 @@ const PortfolioDesignPage: React.FC = () => {
     };
   }, [portfolioSlug, hasChanges]);
 
-  // Auto-refresh mỗi 30 giây để catch changes
-
   // Handlers cho các design changes
   const handleThemeChange = (theme: string) => {
     setSelectedTheme(theme);
     setBackgroundType('theme');
+    setBackgroundImage('');
   };
 
   const handleProfileLayoutChange = (layout: number) => {
@@ -429,6 +498,18 @@ const PortfolioDesignPage: React.FC = () => {
     });
   };
 
+  // THÊM HÀM XỬ LÝ CHỌN HÌNH NỀN TỪ THƯ VIỆN
+  const handleLibraryBackgroundSelect = async (imageUrl: string) => {
+    setBackgroundImage(imageUrl);
+    setBackgroundType('image');
+    setSelectedTheme('custom');
+    await saveDesignSettings({ 
+      backgroundImage: imageUrl, 
+      backgroundType: 'image',
+      theme: 'custom'
+    });
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Đang tải thông tin...</div>;
   }
@@ -436,7 +517,7 @@ const PortfolioDesignPage: React.FC = () => {
     return <div className="flex items-center justify-center h-screen text-red-500">{error || "Không có thông tin người dùng"}</div>;
   }
 
-      return (
+  return (
     <div className="min-h-screen bg-gray-50 font-spartan">
       {/* Mobile Menu Button */}
       <button
@@ -569,59 +650,169 @@ const PortfolioDesignPage: React.FC = () => {
               <h2 className="text-2xl font-bold mb-6">Chủ đề</h2>
               <div className="bg-white rounded-3xl border border-gray-400 p-8 max-w-xl mx-auto">
                 <div className="grid grid-cols-3 gap-6 place-items-center">
-                  {/* Coral Theme */}
+                  {/* Custom Image Theme - SỬA LẠI ĐỂ UPLOAD ẢNH */}
                   <div className="text-center">
-                    <div
-                      onClick={() => handleThemeChange('coral')}
-                      className={`
-                        w-24 h-32 bg-gradient-to-br from-[#E7A5A5] to-[#E7A5A5] rounded-2xl mb-2 cursor-pointer
-                        ${selectedTheme === 'coral' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
-                      `}
+                    <input
+                      type="file"
+                      id="background-upload"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            setUploadingBackground(true);
+                            
+                            // SỬ DỤNG CÁCH UPLOAD ĐƠN GIẢN - GIỐNG MYLINKS
+                            const formData = new FormData();
+                            formData.append('image', file);
+                            
+                            // Thử upload trực tiếp đến endpoint của bạn
+                            const response = await fetch('https://2share.icu/api/upload', {
+                              method: 'POST',
+                              body: formData,
+                              headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                              },
+                            });
+                            
+                            if (!response.ok) {
+                              throw new Error(`Upload failed: ${response.status}`);
+                            }
+                            
+                            const data = await response.json();
+                            
+                            if (data.success && data.imageUrl) {
+                              await handleLibraryBackgroundSelect(data.imageUrl);
+                              showToast.success('Đã tải ảnh lên thành công!');
+                            } else {
+                              throw new Error(data.message || 'Upload failed');
+                            }
+                            
+                          } catch (error: any) {
+                            console.error('Error uploading background image:', error);
+                            
+                            // FALLBACK: Nếu upload thất bại, tạo URL tạm thời từ file local
+                            const localImageUrl = URL.createObjectURL(file);
+                            await handleLibraryBackgroundSelect(localImageUrl);
+                            showToast.warning('Đã sử dụng ảnh tạm thời (chỉ hiển thị trên thiết bị này)');
+                            
+                          } finally {
+                            setUploadingBackground(false);
+                          }
+                        }
+                      }}
                     />
+                    <label 
+                      htmlFor="background-upload"
+                      className={`
+                        w-24 h-32 bg-gray-100 rounded-2xl mb-2 cursor-pointer border-2 border-dashed border-gray-300
+                        flex items-center justify-center hover:bg-gray-50 transition-colors block relative
+                        ${backgroundType === 'image' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
+                        ${uploadingBackground ? 'opacity-50 cursor-not-allowed' : ''}
+                      `}
+                    >
+                      {uploadingBackground ? (
+                        <div className="text-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-1"></div>
+                          <span className="text-xs text-gray-600 block">Đang tải...</span>
+                        </div>
+                      ) : backgroundType === 'image' && backgroundImage ? (
+                        <div 
+                          className="w-full h-full rounded-2xl bg-cover bg-center"
+                          style={{ backgroundImage: `url(${backgroundImage})` }}
+                        />
+                      ) : (
+                        <div className="text-center">
+                          <svg className="w-8 h-8 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-xs text-gray-600 block">Tải ảnh lên</span>
+                        </div>
+                      )}
+                    </label>
+                    <span className="text-sm font-medium">Hình nền của tôi</span>
+                    
+                    {/* Nút xóa hình nền đang chọn */}
+                    {backgroundType === 'image' && backgroundImage && !uploadingBackground && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setBackgroundType('theme');
+                          setBackgroundImage('');
+                          setSelectedTheme('classic-rose');
+                          showToast.success('Đã xóa hình nền');
+                        }}
+                        className="mt-1 text-xs text-red-500 hover:text-red-700 block mx-auto"
+                      >
+                        Xóa
+                      </button>
+                    )}
                   </div>
 
-                  {/* Green Theme */}
+                  {/* Hồng Phấn Cổ điển (Classic Rose) */}
                   <div className="text-center">
                     <div
-                      onClick={() => handleThemeChange('green')}
+                      onClick={() => handleThemeChange('classic-rose')}
                       className={`
-                        w-24 h-32 bg-gradient-to-br from-green-300 to-green-400 rounded-2xl mb-2 cursor-pointer
-                        ${selectedTheme === 'green' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
+                        w-24 h-32 bg-gradient-to-br from-[#E8B4B4] to-[#E8B4B4] rounded-2xl mb-2 cursor-pointer
+                        ${selectedTheme === 'classic-rose' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
                       `}
                     />
+                    <span className="text-sm font-medium">Hồng Phấn</span>
+                    <p className="text-xs text-gray-500 mt-1">Cổ điển</p>
                   </div>
 
-                  {/* Dark Theme */}
+                  {/* Xanh Bạc hà (Fresh Mint) */}
                   <div className="text-center">
                     <div
-                      onClick={() => handleThemeChange('dark')}
+                      onClick={() => handleThemeChange('fresh-mint')}
                       className={`
-                        w-24 h-32 bg-gray-600 rounded-2xl mb-2 cursor-pointer
-                        ${selectedTheme === 'dark' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
+                        w-24 h-32 bg-gradient-to-br from-[#A7E9AF] to-[#A7E9AF] rounded-2xl mb-2 cursor-pointer
+                        ${selectedTheme === 'fresh-mint' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
                       `}
                     />
+                    <span className="text-sm font-medium">Xanh Bạc hà</span>
+                    <p className="text-xs text-gray-500 mt-1">Tươi mới</p>
                   </div>
 
-                  {/* Gradient Theme */}
+                  {/* Xanh Than Chuyên nghiệp (Dark Slate) */}
                   <div className="text-center">
                     <div
-                      onClick={() => handleThemeChange('gradient')}
+                      onClick={() => handleThemeChange('dark-slate')}
                       className={`
-                        w-24 h-32 bg-gradient-to-br from-purple-400 via-blue-400 to-green-400 rounded-2xl mb-2 cursor-pointer
-                        ${selectedTheme === 'gradient' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
+                        w-24 h-32 bg-gradient-to-br from-[#4A5568] to-[#2D3748] rounded-2xl mb-2 cursor-pointer
+                        ${selectedTheme === 'dark-slate' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
                       `}
                     />
+                    <span className="text-sm font-medium">Xanh Than</span>
+                    <p className="text-xs text-gray-500 mt-1">Chuyên nghiệp</p>
                   </div>
 
-                  {/* Orange Gradient Theme */}
+                  {/* Gradient Tím-Lục (Purple-Green Gradient) */}
                   <div className="text-center">
                     <div
-                      onClick={() => handleThemeChange('orange')}
+                      onClick={() => handleThemeChange('purple-green')}
                       className={`
-                        w-24 h-32 bg-gradient-to-br from-blue-400 to-orange-400 rounded-2xl mb-2 cursor-pointer
-                        ${selectedTheme === 'orange' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
+                        w-24 h-32 bg-gradient-to-br from-[#C084FC] via-[#60A5FA] to-[#4ADE80] rounded-2xl mb-2 cursor-pointer
+                        ${selectedTheme === 'purple-green' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
                       `}
                     />
+                    <span className="text-sm font-medium">Tím - Lục</span>
+                    <p className="text-xs text-gray-500 mt-1">Hiện đại</p>
+                  </div>
+
+                  {/* Gradient Hoàng hôn (Sunset Gradient) */}
+                  <div className="text-center">
+                    <div
+                      onClick={() => handleThemeChange('sunset')}
+                      className={`
+                        w-24 h-32 bg-gradient-to-br from-[#60A5FA] to-[#FB923C] rounded-2xl mb-2 cursor-pointer
+                        ${selectedTheme === 'sunset' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
+                      `}
+                    />
+                    <span className="text-sm font-medium">Hoàng hôn</span>
+                    <p className="text-xs text-gray-500 mt-1">Nghệ thuật</p>
                   </div>
                 </div>
               </div>
@@ -630,215 +821,89 @@ const PortfolioDesignPage: React.FC = () => {
             {/* Custom Appearance Section */}   
             <section>
               <div className="flex items-center gap-3 mb-6">
-                <Zap className="w-6 h-6 text-[#a259ff]" />
-                <h2 className="text-2xl font-bold">Giao diện tự thiết kế</h2>
-              </div>
-
-              {/* Background Section */}
-              <div className="bg-white rounded-3xl border border-gray-400 p-8 mb-8">
-                <h3 className="text-xl font-bold mb-6">Hình nền</h3>
-
-                <div className="bg-white rounded-3xl border border-gray-400 p-8 max-w-4xl mx-auto">
-                  <div className="grid grid-cols-4 gap-10">
-                    {/* Solid Color */}
-                    <div 
-                      className="text-center cursor-pointer"
-                      onClick={() => {
-                        setBackgroundType('solid');
-                        setBackgroundSolidColor('#6e6e6e');
-                      }}
-                    >
-                      <div className="w-24 h-32 bg-gray-600 rounded-2xl mb-2"></div>
-                      <span className="text-sm">Màu phẳng</span>
-                    </div>
-
-                    {/* Gradient */}
-                    <div 
-                      className="text-center cursor-pointer"
-                      onClick={() => {
-                        setBackgroundType('gradient');
-                        setBackgroundGradient('from-gray-600 to-gray-400');
-                      }}
-                    >
-                      <div className="w-24 h-32 bg-gradient-to-b from-gray-600 to-gray-400 rounded-2xl mb-2"></div>
-                      <span className="text-sm">Màu trộn</span>
-                    </div>
-
-                    {/* Dots Pattern */}
-                    <div 
-                      className="text-center cursor-pointer"
-                      onClick={() => setBackgroundType('pattern')}
-                    >
-                      <div className="w-24 h-32 bg-gray-600 rounded-2xl mb-2 relative overflow-hidden">
-                        <div className="absolute inset-0 opacity-30">
-                          {Array.from({ length: 20 }).map((_, i) => (
-                            <div
-                              key={i}
-                              className="absolute w-2 h-2 bg-white rounded-full"
-                              style={{
-                                left: `${(i % 4) * 25 + 10}%`,
-                                top: `${Math.floor(i / 4) * 20 + 10}%`,
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <span className="text-sm">Chấm bi</span>
-                    </div>
-
-                    {/* Stripes - Diagonal */}
-                    <div className="text-center">
-                      <div className="w-24 h-32 bg-gray-600 rounded-2xl mb-2 relative overflow-hidden">
-                        <div className="absolute inset-0">
-                          {Array.from({ length: 10 }).map((_, i) => (
-                            <div
-                              key={i}
-                              className="absolute w-40 h-2 bg-white opacity-25 transform -rotate-45"
-                              style={{ 
-                                top: `${i * 18 - 20}%`,
-                                left: `${i * 8 - 50}%`
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <span className="text-sm">Kẻ sọc</span>
-                    </div>
-                  </div>
-                </div>
+                <h2 className="text-2xl font-bold">Kiểu</h2>
               </div>
             </section>
 
-            {/* Style Section */}
+            {/* Style Section - GỘP TẤT CẢ VÀO MỘT */}
             <section>
               <div className="bg-white rounded-3xl border border-gray-400 p-8 max-w-xl mx-auto">
-                <h3 className="text-xl font-bold mb-6">Kiểu</h3>
 
-                {/* Tabs */}
-                <div className="flex border-b border-gray-300 mb-6">
-                  <button
-                    onClick={() => setActiveTab("text")}
-                    className={`px-6 py-3 font-bold transition-all ${
-                      activeTab === "text"
-                        ? "border-b-2 border-black text-black"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    Chữ viết
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("button")}
-                    className={`px-6 py-3 font-bold transition-all ${
-                      activeTab === "button"
-                        ? "border-b-2 border-black text-black"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    Nút
-                  </button>
+                {/* Font Family Selection */}
+                <div className="mb-8">
+                  <label className="block text-sm font-medium mb-3">Phông chữ</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { name: "Spartan", value: "spartan", class: "font-spartan" },
+                      { name: "Carlito", value: "Carlito", class: "font-carlito" },
+                      { name: "Inter", value: "Inter", class: "font-inter" },
+                      { name: "Montserrat", value: "Montserrat", class: "font-montserrat" },
+                      { name: "Be Vietnam", value: "Be Vietnam Pro", class: "font-be-vietnam" },
+                      { name: "Spline Sans", value: "Spline Sans", class: "font-spline-sans" },
+                    ].map((font) => (
+                      <button
+                        key={font.value}
+                        onClick={() => setFontFamily(font.value)}
+                        className={`p-3 rounded-2xl border-2 text-sm font-medium transition-all ${
+                          fontFamily === font.value
+                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                            : "border-gray-300 bg-gray-100 hover:bg-gray-200 text-gray-700"
+                        } ${font.class}`}
+                      >
+                        {font.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* TEXT TAB */}
-                {activeTab === "text" && (
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm mb-2">Phông chữ</label>
-                      <div className="w-full p-4 bg-gray-200 rounded-2xl">
-                        <span className="font-bold">Carlito</span>
-                      </div>
-                    </div>
-
-                    {/* Text Color */}
-                    <div>
-                      <label className="block text-sm mb-2">Màu chữ viết trên trang</label>
-                      <div className="w-full p-4 bg-gray-200 rounded-2xl flex items-center gap-3">
-                        <div 
-                          className="w-5 h-5 rounded cursor-pointer border border-gray-300"
-                          style={{ backgroundColor: textColor }}
-                        ></div>
-                        <span className="font-bold">{textColor}</span>
-                      </div>
-                    </div>
-
-                    {/* Button Text Color */}
-                    <div>
-                      <label className="block text-sm mb-2">Màu chữ viết trên nút</label>
-                      <div className="w-full p-4 bg-gray-200 rounded-2xl flex items-center gap-3">
-                        <div 
-                          className="w-5 h-5 rounded cursor-pointer border border-gray-300"
-                          style={{ backgroundColor: buttonTextColor }}
-                        ></div>
-                        <span className="font-bold">{buttonTextColor}</span>
-                      </div>
-                    </div>
+                {/* Button Fill Style */}
+                <div className="mb-8">
+                  <label className="block text-sm font-medium mb-3">Kiểu nút</label>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    {[
+                      { icon: <FaFillDrip size={18} />, label: "Tô khối", value: 0 },
+                      { icon: <FaRegCircle size={18} />, label: "Tô viền", value: 1 },
+                    ].map((item) => (
+                      <button
+                        key={item.value}
+                        onClick={() => handleButtonFillChange(item.value)}
+                        className={`flex flex-col items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium transition-all ${
+                          buttonFill === item.value
+                            ? "bg-gray-300 border-2 border-gray-400"
+                            : "bg-gray-100 border-2 border-gray-300 hover:bg-gray-200"
+                        }`}
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </button>
+                    ))}
                   </div>
-                )}
+                </div>
 
-                {/* BUTTON TAB */}
-                {activeTab === "button" && (
-                  <div className="space-y-8">
-                    {/* Fill Style */}
-                    <div>
-                      <label className="block text-sm mb-2">Tô nền</label>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {[
-                          { icon: <FaFillDrip size={18} />, label: "Tô khối" },
-                          { icon: <FaRegCircle size={18} />, label: "Tô viền" },
-                        ].map((item, i) => (
-                          <button
-                            key={item.label}
-                            onClick={() => handleButtonFillChange(i)}
-                            className={`flex flex-col items-center justify-center gap-1 py-1 rounded-2xl text-sm font-medium transition-all ${
-                              buttonFill === i
-                                ? "bg-gray-300 border border-gray-400"
-                                : "bg-gray-100 border border-gray-300 hover:bg-gray-200"
-                            }`}
-                          >
-                            {item.icon}
-                            <span>{item.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Corner Style */}
-                    <div>
-                      <label className="block text-sm mb-2">Góc</label>
-                      <div className="grid grid-cols-3 gap-3">
-                        {[
-                          { icon: <TbBorderCornerSquare size={20} />, label: "Góc cứng" },
-                          { icon: <TbBorderCornerRounded size={20} />, label: "Góc mềm" },
-                          { icon: <TbBorderCornerPill size={20} />, label: "Góc tròn" },
-                        ].map((item, i) => (
-                          <button
-                            key={item.label}
-                            onClick={() => handleButtonCornerChange(i)}
-                            className={`flex flex-col items-center justify-center gap-1 py-1 rounded-2xl text-sm font-medium transition-all ${
-                              buttonCorner === i
-                                ? "bg-gray-300 border border-gray-400"
-                                : "bg-gray-100 border border-gray-300 hover:bg-gray-200"
-                            }`}
-                          >
-                            {item.icon}
-                            <span>{item.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Button Color */}
-                    <div>
-                      <label className="block text-sm mb-2">Màu nút</label>
-                      <div className="w-full p-4 bg-gray-200 rounded-2xl flex items-center gap-3">
-                        <div 
-                          className="w-5 h-5 rounded cursor-pointer border border-gray-300"
-                          style={{ backgroundColor: buttonColor }}
-                        ></div>
-                        <span className="font-bold">{buttonColor}</span>
-                      </div>
-                    </div>
+                {/* Button Corner Style */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-3">Góc nút</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { icon: <TbBorderCornerSquare size={20} />, label: "Góc cứng", value: 0 },
+                      { icon: <TbBorderCornerRounded size={20} />, label: "Góc mềm", value: 1 },
+                      { icon: <TbBorderCornerPill size={20} />, label: "Góc tròn", value: 2 },
+                    ].map((item) => (
+                      <button
+                        key={item.value}
+                        onClick={() => handleButtonCornerChange(item.value)}
+                        className={`flex flex-col items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium transition-all ${
+                          buttonCorner === item.value
+                            ? "bg-gray-300 border-2 border-gray-400"
+                            : "bg-gray-100 border-2 border-gray-300 hover:bg-gray-200"
+                        }`}
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </button>
+                    ))}
                   </div>
-                )}
+                </div>
               </div>
             </section>
           </div>

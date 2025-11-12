@@ -44,9 +44,6 @@ const Header: React.FC<HeaderProps> = ({ title = "2Share của tôi", onShare, i
               )}
             </button>
           )}
-          <button className="p-2 sm:p-3 border border-gray-400 rounded-lg sm:rounded-xl hover:bg-gray-50">
-            <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
-          </button>
         </div>
       </div>
     </header>
