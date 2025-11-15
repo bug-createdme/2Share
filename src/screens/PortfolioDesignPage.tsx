@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import PhonePreview from "../components/PhonePreview";
-import { Zap } from "lucide-react";
 import { FaFillDrip, FaRegCircle } from "react-icons/fa";
 import {
   TbBorderCornerSquare,
@@ -10,7 +9,6 @@ import {
   TbBorderCornerPill,
 } from "react-icons/tb";
 import { getMyProfile, getMyPortfolio, updatePortfolio, DesignSettings, getPortfolioBySlug } from "../lib/api";
-import { ImageUpload } from "../components/ui/image-upload";
 import { showToast } from "../lib/toast";
 import { AIChatBox } from "../components/AIChatBox/AIChatBox";
 import { AIChatButton } from "../components/AIChatBox/AIChatButton";
@@ -30,7 +28,6 @@ const PortfolioDesignPage: React.FC = () => {
   // Design states
   const [selectedTheme, setSelectedTheme] = useState("classic-rose");
   const [selectedProfile, setSelectedProfile] = useState(0);
-  const [activeTab, setActiveTab] = useState<"text" | "button">("text");
   const [fontFamily, setFontFamily] = useState("spartan");
   const [buttonFill, setButtonFill] = useState(0);
   const [buttonCorner, setButtonCorner] = useState(1);
@@ -94,30 +91,30 @@ const PortfolioDesignPage: React.FC = () => {
   };
 
   // Helper function để lấy class font family
-  const getFontFamilyClass = (font: string) => {
-    switch (font) {
-      case 'spartan': return 'font-spartan';
-      case 'Carlito': return 'font-carlito';
-      case 'Inter': return 'font-inter';
-      case 'Montserrat': return 'font-montserrat';
-      case 'Be Vietnam Pro': return 'font-be-vietnam';
-      case 'Spline Sans': return 'font-spline-sans';
-      default: return 'font-spartan';
-    }
-  };
+  // const getFontFamilyClass = (font: string) => {
+  //   switch (font) {
+  //     case 'spartan': return 'font-spartan';
+  //     case 'Carlito': return 'font-carlito';
+  //     case 'Inter': return 'font-inter';
+  //     case 'Montserrat': return 'font-montserrat';
+  //     case 'Be Vietnam Pro': return 'font-be-vietnam';
+  //     case 'Spline Sans': return 'font-spline-sans';
+  //     default: return 'font-spartan';
+  //   }
+  // };
 
   // Helper function để lấy font family cho inline style
-  const getFontFamilyStyle = (font: string) => {
-    switch (font) {
-      case 'spartan': return 'spartan, sans-serif';
-      case 'Carlito': return 'Carlito, sans-serif';
-      case 'Inter': return 'Inter, sans-serif';
-      case 'Montserrat': return 'Montserrat, sans-serif';
-      case 'Be Vietnam Pro': return 'Be Vietnam Pro, sans-serif';
-      case 'Spline Sans': return 'Spline Sans, sans-serif';
-      default: return 'spartan, sans-serif';
-    }
-  };
+  // const getFontFamilyStyle = (font: string) => {
+  //   switch (font) {
+  //     case 'spartan': return 'spartan, sans-serif';
+  //     case 'Carlito': return 'Carlito, sans-serif';
+  //     case 'Inter': return 'Inter, sans-serif';
+  //     case 'Montserrat': return 'Montserrat, sans-serif';
+  //     case 'Be Vietnam Pro': return 'Be Vietnam Pro, sans-serif';
+  //     case 'Spline Sans': return 'Spline Sans, sans-serif';
+  //     default: return 'spartan, sans-serif';
+  //   }
+  // };
 
   // Hàm lưu state vào localStorage - TỐI ƯU
   const saveStateToLocalStorage = () => {
@@ -749,7 +746,7 @@ const PortfolioDesignPage: React.FC = () => {
                       htmlFor="background-upload"
                       className={`
                         w-24 h-32 bg-gray-100 rounded-2xl mb-2 cursor-pointer border-2 border-dashed border-gray-300
-                        flex items-center justify-center hover:bg-gray-50 transition-colors block relative
+                        flex items-center justify-center hover:bg-gray-50 transition-colors  relative
                         ${backgroundType === 'image' ? 'ring-2 ring-blue-400 ring-offset-2' : ''}
                         ${uploadingBackground ? 'opacity-50 cursor-not-allowed' : ''}
                       `}

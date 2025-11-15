@@ -74,17 +74,7 @@ export const MyLinksPage = (): JSX.Element => {
     'dark-slate': "from-[#4A5568] to-[#2D3748]",
     'purple-green': "from-[#C084FC] via-[#60A5FA] to-[#4ADE80]",
     'sunset': "from-[#60A5FA] to-[#FB923C]",
-  };
-  
-  const avatarColors: Record<string, string> = {
-    'classic-rose': "bg-[#E8B4B4]",
-    'fresh-mint': "bg-[#A7E9AF]",
-    'dark-slate': "bg-[#4A5568]",
-    'purple-green': "bg-[#C084FC]",
-    'sunset': "bg-[#FB923C]",
-    'custom': "bg-[#6B7280]",
-  };
-  
+  };  
   const textColors: Record<string, string> = {
     'classic-rose': 'text-[#E8B4B4]',
     'fresh-mint': 'text-[#A7E9AF]',
@@ -631,7 +621,6 @@ export const MyLinksPage = (): JSX.Element => {
   if (!user) return;
   setSavingTitleBio(true);
   try {
-    const result = await updateMyProfile({ bio: tmpBio });
     setBio(tmpBio);
     setPortfolioTitle(tmpPortfolioTitle);
 

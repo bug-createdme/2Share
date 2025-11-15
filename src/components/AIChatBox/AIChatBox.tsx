@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, X, Minimize2, Maximize2 } from 'lucide-react';
+import { Send, Bot, X } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -104,9 +104,7 @@ const getStoredMessages = (sig: string): Message[] => {
 export const AIChatBox: React.FC<AIChatBoxProps> = ({
   isOpen,
   onClose,
-  onToggle,
   isMinimized,
-  onToggleMinimize,
   currentDesign
 }) => {
   // Theo dõi sự thay đổi của user
@@ -118,7 +116,7 @@ export const AIChatBox: React.FC<AIChatBoxProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  const [storageKey, setStorageKey] = useState(getChatStorageKey());
+  const [, setStorageKey] = useState(getChatStorageKey());
 
   // Effect để reset messages khi user thay đổi
   useEffect(() => {

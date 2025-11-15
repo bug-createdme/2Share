@@ -4,9 +4,8 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import NFCCardPreview from "../components/NfcCardPreview";
-import { Zap, Lock, Unlock, ChevronDown, Sparkles, Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { getMyProfile } from "../lib/api";
-import { ImageUpload } from "../components/ui/image-upload";
 
 interface MbtiTemplate {
   id: string;
@@ -21,9 +20,9 @@ const NfcDesignPage: React.FC = () => {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedTheme, setSelectedTheme] = useState("coral");
-  const [userName, setUserName] = useState("username_123");
-  const [userCategory, setUserCategory] = useState("Thiết kế đồ họa");
+  const [selectedTheme, ] = useState("coral");
+  const [userName, ] = useState("username_123");
+  const [userCategory, ] = useState("Thiết kế đồ họa");
   const [selectedMbtiTemplate, setSelectedMbtiTemplate] = useState<MbtiTemplate | null>(null);
   const [showMbtiDropdown, setShowMbtiDropdown] = useState(false);
   const [userMbti, setUserMbti] = useState("");
