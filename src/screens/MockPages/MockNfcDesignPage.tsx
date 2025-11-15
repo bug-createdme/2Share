@@ -3,8 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import MockSidebar from "../../components/MockSidebar";
 import Header from "../../components/Header";
 import NFCCardPreview from "../../components/NfcCardPreview";
-import { ChevronDown, Sparkles, Search, Camera, Zap } from "lucide-react";
-
+import { Zap, ChevronDown, Sparkles, Search, Camera } from "lucide-react";
 
 interface MbtiTemplate {
   id: string;
@@ -36,7 +35,7 @@ const MockNfcDesignPage: React.FC = () => {
   };
 
   // Danh sách đầy đủ 16 MBTI templates với đường dẫn đúng
-  const [mbtiTemplates, setMbtiTemplates] = useState<MbtiTemplate[]>([
+  const [mbtiTemplates] = useState<MbtiTemplate[]>([
     // Diplomats
     { id: "ENFJ", name: "ENFJ", group: "Diplomats", groupVi: "Nhà Ngoại giao", previewUrl: "/images/MBTI design/ENFJ.png", isLocked: false },
     { id: "ENFP", name: "ENFP", group: "Diplomats", groupVi: "Nhà Ngoại giao", previewUrl: "/images/MBTI design/ENFP.png", isLocked: false },

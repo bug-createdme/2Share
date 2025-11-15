@@ -454,44 +454,52 @@ const AdminPage: React.FC = () => {
         </motion.div>
 
         {/* Revenue Bar Chart */}
+        {/* Revenue Bar Chart */}
         <motion.div variants={itemVariants}>
           <Card className="border-0 shadow-lg">
             <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-emerald-500" />
-              Doanh thu (7 ngày gần nhất)
-            </CardTitle>
-            <CardDescription>Tổng doanh thu theo ngày</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={revenueChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="#6b7280"
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis stroke="#6b7280" tick={{ fontSize: 12 }} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                  formatter={(value: number) => `$${value}`}
-                />
-                <Bar 
-                  dataKey="revenue" 
-                  fill="#10b981" 
-                  radius={[8, 8, 0, 0]}
-                  name="Doanh thu"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-emerald-500" />
+                Doanh thu (7 ngày gần nhất)
+              </CardTitle>
+              <CardDescription>Tổng doanh thu theo ngày</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={revenueChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="#6b7280"
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis 
+                    stroke="#6b7280" 
+                    tick={{ fontSize: 12 }}
+                    // Thêm formatter cho YAxis nếu cần
+                    tickFormatter={(value) => `${value} VND`}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#fff', 
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                    // Sửa thành VND
+                    formatter={(value: number) => [`${value.toLocaleString()} VND`, 'Doanh thu']}
+                    labelFormatter={(label) => `Ngày: ${label}`}
+                  />
+                  <Bar 
+                    dataKey="revenue" 
+                    fill="#10b981" 
+                    radius={[8, 8, 0, 0]}
+                    name="Doanh thu"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Transaction Pie Chart */}

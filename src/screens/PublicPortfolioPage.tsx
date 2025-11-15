@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { getPortfolioBySlug } from "../lib/api";
+import { useQuoteOfTheDay } from "../hooks/useQuoteOfTheDay";
 import type { SocialLink } from "./MyLinksPage/sections/SocialLinksSection/SocialLinksSection";
 
 // Social icons import
@@ -44,24 +45,40 @@ const getSocialIcon = (platform: string) => {
   }
 };
 
-// Theme classes mapping - KHỚP VỚI PORTFOLIO DESIGN
-const themeClasses: Record<string, string> = {
-  coral: "from-[#E7A5A5] to-[#E7A5A5]",
-  green: "from-green-300 to-green-400",
-  dark: "from-gray-700 to-gray-800", 
-  gradient: "from-purple-400 via-blue-400 to-green-400",
-  orange: "from-blue-400 to-orange-400",
-};
-
 // Bio text colors theo theme - KHỚP VỚI PHONE PREVIEW
 const getBioTextColor = (selectedTheme: string) => {
   switch (selectedTheme) {
-    case 'coral': return '#E7A5A5';
-    case 'green': return '#4ADE80';
-    case 'dark': return '#6B7280';
-    case 'gradient': return '#A855F7';
-    case 'orange': return '#FB923C';
+    case 'classic-rose': return '#E8B4B4';
+    case 'fresh-mint': return '#A7E9AF';
+    case 'dark-slate': return '#4A5568';
+    case 'purple-green': return '#C084FC';
+    case 'sunset': return '#FB923C';
+    case 'custom': return '#6B7280';
     default: return '#6B7280';
+  }
+};
+
+const getFontFamilyClass = (font: string) => {
+  switch (font) {
+    case 'spartan': return 'font-spartan';
+    case 'Carlito': return 'font-carlito';
+    case 'Inter': return 'font-inter';
+    case 'Montserrat': return 'font-montserrat';
+    case 'Be Vietnam Pro': return 'font-be-vietnam';
+    case 'Spline Sans': return 'font-spline-sans';
+    default: return 'font-spartan';
+  }
+};
+
+const getFontFamilyStyle = (font: string) => {
+  switch (font) {
+    case 'spartan': return 'spartan, sans-serif';
+    case 'Carlito': return 'Carlito, sans-serif';
+    case 'Inter': return 'Inter, sans-serif';
+    case 'Montserrat': return 'Montserrat, sans-serif';
+    case 'Be Vietnam Pro': return 'Be Vietnam Pro, sans-serif';
+    case 'Spline Sans': return 'Spline Sans, sans-serif';
+    default: return 'spartan, sans-serif';
   }
 };
 
@@ -71,6 +88,10 @@ const PublicPortfolioPage = (): JSX.Element => {
   const [portfolio, setPortfolio] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showQuote, setShowQuote] = useState(true);
+
+  // Sử dụng hook quote of the day
+  const { quote, loading: quoteLoading } = useQuoteOfTheDay(showQuote);
 
   useEffect(() => {
     async function fetchPortfolio() {
@@ -83,12 +104,12 @@ const PublicPortfolioPage = (): JSX.Element => {
       try {
         const portfolioData = await getPortfolioBySlug(slug);
         console.log('📋 Portfolio data received:', portfolioData);
-        console.log('🎨 Design settings:', portfolioData?.design_settings);
-        console.log('👤 User data:', {
-          username: portfolioData?.username,
-          avatar_url: portfolioData?.avatar_url,
-          title: portfolioData?.title
-        });
+        
+        // Kiểm tra setting quote of the day từ portfolio
+        if (portfolioData?.settings?.showQuoteOfTheDay !== undefined) {
+          setShowQuote(portfolioData.settings.showQuoteOfTheDay);
+        }
+        
         setPortfolio(portfolioData);
       } catch (err: any) {
         setError(err.message || "Lỗi lấy thông tin portfolio");
@@ -99,6 +120,59 @@ const PublicPortfolioPage = (): JSX.Element => {
 
     fetchPortfolio();
   }, [slug]);
+
+ // Hàm render quote section - Tối giản với viền màu bio text
+const renderQuoteSection = () => {
+  if (!showQuote || !quote) return null;
+
+  const design = portfolio?.design_settings;
+  const selectedTheme = design?.selectedTheme || design?.theme || "dark";
+  const bioTextColor = getBioTextColor(selectedTheme);
+
+  return (
+    <div className="rounded-xl p-5 mb-6 w-full max-w-md backdrop-blur-sm">
+      {quoteLoading ? (
+        <div className="flex items-center justify-center gap-2 py-4">
+          <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+          <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+          <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+        </div>
+      ) : (
+        <>
+          <div className="text-center mb-4">
+            <div 
+              className="mx-auto w-fit py-2 px-4 text-xs font-medium mb-3 uppercase tracking-wider rounded-full bg-white/75 border border-white/30"
+              style={{ color: bioTextColor }}
+            >
+              Quote of the Day
+            </div>
+            <p 
+              className="text-xl leading-relaxed italic mb-4 text-white mali-bold-italic"
+              style={{ 
+                WebkitTextStroke: `0.3px ${bioTextColor}`,
+              }}
+            >
+              "{quote.quote_main}"
+            </p>
+          </div>
+          
+          {quote.playful_line && (
+            <div className="text-center">
+              <div 
+                className="text-sm italic text-white"
+                style={{ 
+                  textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                }}
+              >
+                {quote.playful_line}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
 
   // Hàm xác định background style dựa trên design settings - SỬA LẠI ĐỂ KHỚP VỚI PHONE PREVIEW
   const getBackgroundStyle = () => {
@@ -183,11 +257,11 @@ const PublicPortfolioPage = (): JSX.Element => {
       
       // SỬ DỤNG CÙNG THEME CLASSES VỚI PHONE PREVIEW
       const themeGradients: Record<string, string> = {
-        "coral": "linear-gradient(135deg, #E7A5A5 0%, #E7A5A5 100%)",
-        "green": "linear-gradient(135deg, #86efac 0%, #4ade80 100%)",
-        "dark": "linear-gradient(135deg, #374151 0%, #1f2937 100%)",
-        "gradient": "linear-gradient(135deg, #c084fc 0%, #60a5fa 50%, #4ade80 100%)",
-        "orange": "linear-gradient(135deg, #60a5fa 0%, #fb923c 100%)",
+        "classic-rose": "linear-gradient(135deg, #E8B4B4 0%, #E8B4B4 100%)",
+        "fresh-mint": "linear-gradient(135deg, #A7E9AF 0%, #A7E9AF 100%)",
+        "dark-slate": "linear-gradient(135deg, #4A5568 0%, #2D3748 100%)",
+        "purple-green": "linear-gradient(135deg, #C084FC 0%, #60A5FA 50%, #4ADE80 100%)",
+        "sunset": "linear-gradient(135deg, #60A5FA 0%, #FB923C 100%)",
       };
       
       const background = themeGradients[selectedTheme] || themeGradients.dark;
@@ -196,23 +270,20 @@ const PublicPortfolioPage = (): JSX.Element => {
     }
   };
 
-  // Hàm xác định text color - LUÔN DÙNG MÀU TRẮNG CHO TẤT CẢ CHỮ (TRỪ BIO)
-  const getTextColor = () => {
-    return "#ffffff"; // LUÔN MÀU TRẮNG
-  };
-
   // Hàm xác định button style dựa trên design settings
   const getButtonStyle = (design: any) => {
     const buttonFill = design?.buttonFill ?? 0;
     const buttonCorner = design?.buttonCorner ?? 1;
     const buttonColor = design?.buttonColor || "#ffffff";
     const buttonTextColor = design?.buttonTextColor || "#ffffff";
+    const fontFamily = design?.fontFamily || "spartan";
 
     console.log('🎨 Button settings:', {
       buttonFill,
       buttonCorner,
       buttonColor,
-      buttonTextColor
+      buttonTextColor,
+      fontFamily
     });
 
     const getBorderRadius = () => {
@@ -228,20 +299,20 @@ const PublicPortfolioPage = (): JSX.Element => {
       // Solid fill - glassmorphism effect
       return {
         backgroundColor: "rgba(255, 255, 255, 0.2)",
-        color: "white", // LUÔN DÙNG MÀU TRẮNG
+        color: "white",
         border: "1px solid rgba(255, 255, 255, 0.3)",
         borderRadius: getBorderRadius(),
         backdropFilter: "blur(10px)",
-        fontFamily: "spartan", // THÊM FONT SPARTAN
+        fontFamily: getFontFamilyStyle(fontFamily),
       };
     } else {
       // Outline
       return {
         backgroundColor: "transparent",
-        color: "white", // LUÔN DÙNG MÀU TRẮNG
+        color: "white",
         border: `1px solid white`,
         borderRadius: getBorderRadius(),
-        fontFamily: "spartan", // THÊM FONT SPARTAN
+        fontFamily: getFontFamilyStyle(fontFamily),
       };
     }
   };
@@ -251,6 +322,7 @@ const PublicPortfolioPage = (): JSX.Element => {
     const design = portfolio.design_settings;
     const selectedLayout = design?.selectedLayout || design?.profileLayout + 1 || 1;
     const selectedTheme = design?.selectedTheme || design?.theme || "dark";
+    const fontFamily = design?.fontFamily || "spartan";
     
     // Lấy thông tin user từ portfolio
     const username = portfolio.username || "User";
@@ -289,7 +361,6 @@ const PublicPortfolioPage = (): JSX.Element => {
         }).filter(link => link.isEnabled === true && link.url)
       : [];
 
-    const textColor = getTextColor();
     const bioTextColor = getBioTextColor(selectedTheme);
 
     console.log('👤 Rendering with data:', {
@@ -303,9 +374,9 @@ const PublicPortfolioPage = (): JSX.Element => {
       bioTextColor
     });
 
-    // Layout 1: Avatar trên, centered
+    // Layout 1: Avatar trên, centered - SAME WIDTH AS LAYOUT 3
     const renderLayout1 = () => (
-      <div className="flex flex-col items-center gap-6 mt-6 font-spartan">
+      <div className={`flex flex-col items-center gap-6 mt-6 w-full ${getFontFamilyClass(fontFamily)}`}>
         {/* Avatar */}
         <div className="w-32 h-32 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20">
           <img
@@ -319,8 +390,8 @@ const PublicPortfolioPage = (): JSX.Element => {
           />
         </div>
         
-        {/* Username - LUÔN MÀU TRẮNG */}
-        <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white font-spartan">
+        {/* Username */}
+        <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white text-center" style={{ fontFamily: getFontFamilyStyle(fontFamily) }}>
           {portfolioTitle}
         </h1>
 
@@ -339,19 +410,24 @@ const PublicPortfolioPage = (): JSX.Element => {
           </div>
         )}
 
-        {/* Bio section - MÀU THEO THEME */}
+        {renderQuoteSection()}
+
+        {/* Bio section - SAME WIDTH AS LAYOUT 3 */}
         {bioContent && (
           <div className="bg-white rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-md border border-white/15 w-full max-w-md">
             <p 
-              className="leading-relaxed text-center text-sm font-spartan"
-              style={{ color: bioTextColor }}
+              className="leading-relaxed text-center text-sm"
+              style={{ 
+                color: bioTextColor,
+                fontFamily: getFontFamilyStyle(fontFamily)
+              }}
             >
               {bioContent}
             </p>
           </div>
         )}
 
-        {/* Links */}
+        {/* Links - SAME WIDTH AS LAYOUT 3 */}
         {socialLinks.length > 0 && (
           <div className="flex flex-col gap-3 w-full max-w-md">
             {socialLinks.map((link) => (
@@ -363,7 +439,7 @@ const PublicPortfolioPage = (): JSX.Element => {
                 className="w-full no-underline"
               >
                 <button 
-                  className="w-full py-4 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 font-spartan"
+                  className="w-full py-4 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300"
                   style={getButtonStyle(design)}
                 >
                   {getSocialIcon(link.name)}
@@ -376,10 +452,10 @@ const PublicPortfolioPage = (): JSX.Element => {
       </div>
     );
 
-    // Layout 2: Avatar bên trái với username
+    // Layout 2: Avatar bên trái với username - SAME WIDTH AS LAYOUT 3
     const renderLayout2 = () => (
-      <div className="flex flex-col gap-6 mt-6 font-spartan">
-        <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-6 mx-auto w-fit">
+      <div className={`flex flex-col gap-6 mt-6 w-full ${getFontFamilyClass(fontFamily)}`}>
+        <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-6 w-full max-w-md mx-auto">
           {/* Avatar */}
           <div className="w-24 h-24 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/20">
             <img
@@ -393,8 +469,8 @@ const PublicPortfolioPage = (): JSX.Element => {
             />
           </div>
           <div className="flex flex-col items-center md:items-start">
-            {/* Username - LUÔN MÀU TRẮNG */}
-            <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white font-spartan">
+            {/* Username */}
+            <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white text-center md:text-left" style={{ fontFamily: getFontFamilyStyle(fontFamily) }}>
               {portfolioTitle}
             </h1>
             {/* Social Icons */}
@@ -409,20 +485,25 @@ const PublicPortfolioPage = (): JSX.Element => {
             )}
           </div>
         </div>
+
+        {renderQuoteSection()}
         
-        {/* Bio section - MÀU THEO THEME */}
+        {/* Bio section - SAME WIDTH AS LAYOUT 3 */}
         {bioContent && (
           <div className="bg-white rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-sm border border-white/15 w-full max-w-md mx-auto">
             <p 
-              className="leading-relaxed text-center text-sm font-spartan"
-              style={{ color: bioTextColor }}
+              className="leading-relaxed text-center text-sm"
+              style={{ 
+                color: bioTextColor,
+                fontFamily: getFontFamilyStyle(fontFamily)
+              }}
             >
               {bioContent}
             </p>
           </div>
         )}
 
-        {/* Links */}
+        {/* Links - SAME WIDTH AS LAYOUT 3 */}
         {socialLinks.length > 0 && (
           <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
             {socialLinks.map((link) => (
@@ -434,7 +515,7 @@ const PublicPortfolioPage = (): JSX.Element => {
                 className="w-full no-underline"
               >
                 <button 
-                  className="w-full py-3 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 font-spartan"
+                  className="w-full py-3 font-medium rounded-xl hover:bg-white/10 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300"
                   style={getButtonStyle(design)}
                 >
                   {getSocialIcon(link.name)}
@@ -447,11 +528,11 @@ const PublicPortfolioPage = (): JSX.Element => {
       </div>
     );
 
-    // Layout 3: Username trên, avatar wide ở giữa
+    // Layout 3: Username trên, avatar wide ở giữa - GIỮ NGUYÊN NHƯ BAN ĐẦU
     const renderLayout3 = () => (
-      <div className="flex flex-col items-center gap-4 mt-6 w-full font-spartan">
-        {/* Username - LUÔN MÀU TRẮNG */}
-        <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white font-spartan">
+      <div className={`flex flex-col items-center gap-4 mt-6 w-full ${getFontFamilyClass(fontFamily)}`}>
+        {/* Username */}
+        <h1 className="text-2xl font-semibold mb-2 drop-shadow-lg text-white font-spartan text-center">
           {portfolioTitle}
         </h1>
         
@@ -483,7 +564,9 @@ const PublicPortfolioPage = (): JSX.Element => {
           />
         </div>
 
-        {/* Bio section - MÀU THEO THEME */}
+        {renderQuoteSection()}
+
+        {/* Bio section */}
         {bioContent && (
           <div className="bg-white rounded-2xl p-5 mb-6 shadow-lg backdrop-blur-sm border border-white/15 w-full max-w-md">
             <p 
@@ -520,86 +603,90 @@ const PublicPortfolioPage = (): JSX.Element => {
       </div>
     );
 
-    // Layout 4: Background avatar style - SỬA LẠI ĐỂ AVATAR LÀ ĐIỂM NHẤN
-const renderLayout4 = () => (
-  <div className="relative h-full flex flex-col items-center justify-start min-h-[500px]">
-    {/* Background avatar - LỚN và NỔI BẬT */}
-    <div className="absolute inset-0 flex items-center justify-center opacity-50 mb-52">
-      <div className="w-64 h-64 rounded-full overflow-hidden bg-white/20 border-4 border-white/30 shadow-2xl">
-        <img
-          className="w-full h-full object-cover"
-          alt="Avatar background"
-          src={avatarUrl}
-          onError={(e) => {
-            console.error('❌ Avatar load error, using fallback');
-            (e.target as HTMLImageElement).src = "/images/profile-pictures/pfp-black.jpg";
-          }}
-        />
-      </div>
-    </div>
+    // Layout 4: Background avatar style - SAME WIDTH AS LAYOUT 3
+    const renderLayout4 = () => (
+      <div className={`relative min-h-screen w-full flex flex-col items-center ${getFontFamilyClass(fontFamily)}`}>
+        
+        {/* Background Avatar - CENTERED */}
+        <div className="absolute top-1/3 transform -translate-y-1/3 w-72 h-72 rounded-full overflow-hidden bg-white/15 border-4 border-white/25 shadow-2xl opacity-90 pointer-events-none">
+          <img
+            className="w-full h-full object-cover"
+            alt="Avatar background"
+            src={avatarUrl}
+            onError={(e) => {
+              console.error('❌ Avatar load error, using fallback');
+              (e.target as HTMLImageElement).src = "/images/profile-pictures/pfp-black.jpg";
+            }}
+          />
+        </div>
 
-    {/* Foreground content - NẰM Ở TRÊN CÙNG */}
-    <div className="relative z-10 w-full flex flex-col items-center mt-8">
-      {/* Username - NỔI BẬT Ở TRÊN CÙNG */}
-      <h1 className="text-3xl font-bold mb-4 drop-shadow-2xl text-white font-spartan text-center">
-        {portfolioTitle}
-      </h1>
-      
-      {/* Social Icons - NẰM NGAY DƯỚI USERNAME */}
-      {socialLinks.length > 0 && (
-        <div className="flex gap-4 justify-center mb-8">
-          {socialLinks.slice(0, 6).map((link) => (
-            <div 
-              key={link.id}
-              className="hover:opacity-80 transition-transform hover:scale-110 w-8 h-8 flex items-center justify-center bg-white/20 rounded-full backdrop-blur-sm border border-white/30"
-              title={link.displayName || link.name}
-            >
-              {getSocialIcon(link.name)}
+        {/* Header - ABOVE AVATAR */}
+        <div className="relative z-10 w-full flex flex-col items-center justify-center pt-16 px-4 mb-8 max-w-md mx-auto">
+          <h1 className="text-3xl font-bold mb-4 drop-shadow-2xl text-white text-center" style={{ fontFamily: getFontFamilyStyle(fontFamily) }}>
+            {portfolioTitle}
+          </h1>
+          
+          {socialLinks.length > 0 && (
+            <div className="flex gap-4 justify-center">
+              {socialLinks.slice(0, 6).map((link) => (
+                <div 
+                  key={link.id}
+                  className="hover:opacity-80 transition-transform hover:scale-110 w-8 h-8 flex items-center justify-center bg-white/20 rounded-full backdrop-blur-sm border border-white/30"
+                  title={link.displayName || link.name}
+                >
+                  {getSocialIcon(link.name)}
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
-      )}
-    </div>
 
-    {/* Bio and links at bottom - NẰM Ở DƯỚI CÙNG */}
-    <div className="relative z-10 w-full mt-64 space-y-6 pb-8 ">
-      {/* Bio Section - CHỈ HIỆN KHI CÓ NỘI DUNG */}
-      {bioContent && (
-        <div className="bg-white rounded-2xl p-6 shadow-lg backdrop-blur-sm border border-white/20 w-full max-w-md mx-auto">
-          <p 
-              className="leading-relaxed text-center text-sm font-spartan"
-              style={{ color: bioTextColor }}
-            >
-              {bioContent}
-            </p>
-        </div>
-      )}
+        {renderQuoteSection()}
 
-      {/* Links - NẰM DƯỚI BIO */}
-      {socialLinks.length > 0 && (
-        <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
-          {socialLinks.map((link) => (
-            <a 
-              key={link.id} 
-              href={link.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="w-full no-underline"
-            >
-              <button 
-                className="w-full py-4 font-medium rounded-xl hover:bg-white/20 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 border border-white/30"
-                style={getButtonStyle(design)}
-              >
-                {getSocialIcon(link.name)}
-                <span className="text-white">{link.displayName || link.name}</span>
-              </button>
-            </a>
-          ))}
+        {/* Content - BELOW AVATAR với cùng chiều rộng */}
+        <div className="relative z-10 w-full flex flex-col items-center mt-80 px-4 pb-8">
+          <div className="w-full max-w-md space-y-6">
+            {/* Bio Section */}
+            {bioContent && (
+              <div className="bg-white rounded-2xl p-6 shadow-lg backdrop-blur-sm border border-white/20 w-full">
+                <p 
+                  className="leading-relaxed text-center text-sm"
+                  style={{ 
+                    color: bioTextColor,
+                    fontFamily: getFontFamilyStyle(fontFamily)
+                  }}
+                >
+                  {bioContent}
+                </p>
+              </div>
+            )}
+
+            {/* Links - SAME WIDTH AS LAYOUT 3 */}
+            {socialLinks.length > 0 && (
+              <div className="w-full space-y-3">
+                {socialLinks.map((link) => (
+                  <a 
+                    key={link.id} 
+                    href={link.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-full no-underline block"
+                  >
+                    <button 
+                      className="w-full py-4 font-medium rounded-xl hover:bg-white/20 transition-all backdrop-blur-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-3 duration-300 border border-white/30"
+                      style={getButtonStyle(design)}
+                    >
+                      {getSocialIcon(link.name)}
+                      <span className="text-white">{link.displayName || link.name}</span>
+                    </button>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      )}
-    </div>
-  </div>
-);
+      </div>
+    );
 
     switch (selectedLayout) {
       case 1: return renderLayout1();
@@ -646,14 +733,25 @@ const renderLayout4 = () => (
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center text-center text-white relative overflow-hidden font-spartan">
-      {/* Background với design settings - ĐẢM BẢO ÁP DỤNG ĐÚNG */}
+      {/* Background với design settings */}
       <div 
         className="absolute inset-0"
         style={backgroundStyle}
       />
-
+      
+      {/* Overlay làm mờ và tối - CHỈ ÁP DỤNG KHI backgroundType là 'image' */}
+      {portfolio?.design_settings?.backgroundType === 'image' && portfolio?.design_settings?.backgroundImage && (
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%)',
+            backdropFilter: 'blur(1.5px)'
+          }}
+        />
+      )}
+      
       {/* Noise Texture nhẹ - chỉ hiển thị nếu không phải background image */}
-      {!portfolio?.design_settings?.backgroundImage && (
+      {portfolio?.design_settings?.backgroundType !== 'image' && (
         <div 
           className="absolute inset-0 opacity-[0.02]"
           style={{
@@ -663,7 +761,7 @@ const renderLayout4 = () => (
       )}
 
       {/* Vignette nhẹ nhàng - chỉ hiển thị nếu không phải background image */}
-      {!portfolio?.design_settings?.backgroundImage && (
+      {portfolio?.design_settings?.backgroundType !== 'image' && (
         <div 
           className="absolute inset-0"
           style={{

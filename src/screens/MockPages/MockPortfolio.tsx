@@ -1,5 +1,5 @@
 import React from "react";
-import { FaLinkedin, FaBehance, FaInstagram, FaFacebookSquare, FaTiktok } from "react-icons/fa";
+import { FaFacebookSquare, FaTiktok } from "react-icons/fa";
 
 interface MockPortfolioProps {
   themeClasses?: Record<string, string>;
@@ -10,10 +10,8 @@ interface MockPortfolioProps {
 }
 
 const MockPortfolioPage: React.FC<MockPortfolioProps> = ({
-  themeClasses = {},
   bio,
   user,
-  socialLinks = [],
 }) => {
   // Dark theme cố định
   const darkTheme = {

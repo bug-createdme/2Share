@@ -18,6 +18,8 @@ import { useRef } from 'react';
 import ShareDialog from "../../components/ShareDialog";
 import { showToast } from "../../lib/toast";
 import PhonePreview from "../../components/PhonePreview";
+import { AIChatBox } from "../../components/AIChatBox/AIChatBox";
+import { AIChatButton } from "../../components/AIChatBox/AIChatButton";
 
 export const MyLinksPage = (): JSX.Element => {
   const [user, setUser] = useState<any | null>(null);
@@ -62,24 +64,41 @@ export const MyLinksPage = (): JSX.Element => {
     selectedTheme: "coral",
     selectedLayout: 1 // Layout 1 tương ứng với profileLayout 0
   });
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
 
   // Theme classes cho PhonePreview - KHỚP VỚI PORTFOLIODESIGN
   const themeClasses: Record<string, string> = {
-    "coral": "from-[#E7A5A5] to-[#E7A5A5]",
-    "green": "from-green-300 to-green-400", 
-    "dark": "from-gray-700 to-gray-800",
-    "gradient": "from-purple-400 via-blue-400 to-green-400",
-    "orange": "from-blue-400 to-orange-400",
-  };
-
+    'classic-rose': "from-[#E8B4B4] to-[#E8B4B4]",
+    'fresh-mint': "from-[#A7E9AF] to-[#A7E9AF]",
+    'dark-slate': "from-[#4A5568] to-[#2D3748]",
+    'purple-green': "from-[#C084FC] via-[#60A5FA] to-[#4ADE80]",
+    'sunset': "from-[#60A5FA] to-[#FB923C]",
+  };  
   const textColors: Record<string, string> = {
-    "coral": "#ffffff",
-    "green": "#ffffff",
-    "dark": "#ffffff",
-    "gradient": "#ffffff", 
-    "orange": "#ffffff",
+    'classic-rose': 'text-[#E8B4B4]',
+    'fresh-mint': 'text-[#A7E9AF]',
+    'dark-slate': 'text-[#4A5568]',
+    'purple-green': 'text-[#C084FC]',
+    'sunset': 'text-[#FB923C]',
+    'custom': 'text-[#6B7280]',
   };
+    // Thêm các hàm này trong component
+    const handleToggleChat = () => {
+      setIsChatOpen(!isChatOpen);
+      if (isChatMinimized) {
+        setIsChatMinimized(false);
+      }
+    };
 
+    const handleCloseChat = () => {
+      setIsChatOpen(false);
+      setIsChatMinimized(false);
+    };
+
+    const handleToggleMinimize = () => {
+      setIsChatMinimized(!isChatMinimized);
+    };
   // Function to load portfolio data và design settings
   const loadPortfolioData = async (portfolioSlug: string) => {
     try {
@@ -179,6 +198,25 @@ export const MyLinksPage = (): JSX.Element => {
       showToast.error('Lỗi tải portfolio');
     }
   };
+
+  useEffect(() => {
+    const savedChatState = localStorage.getItem('ai_chat_box_state');
+    if (savedChatState) {
+      try {
+        const { isOpen, isMinimized } = JSON.parse(savedChatState);
+        setIsChatOpen(isOpen);
+        setIsChatMinimized(isMinimized);
+      } catch (error) {
+        console.error('Error loading chat state:', error);
+      }
+    }
+  }, []);
+
+  // Lưu trạng thái chat box vào localStorage khi thay đổi
+  useEffect(() => {
+    const chatState = { isOpen: isChatOpen, isMinimized: isChatMinimized };
+    localStorage.setItem('ai_chat_box_state', JSON.stringify(chatState));
+  }, [isChatOpen, isChatMinimized]);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -309,34 +347,36 @@ export const MyLinksPage = (): JSX.Element => {
   }, [portfoliosList]);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const planResponse = await getCurrentPlan();
-        const plan = Array.isArray(planResponse) ? planResponse[0] : planResponse;
-        const status = plan?.status || plan?.result?.status;
-        const planInfo = (plan?.planInfo?.[0]) || (plan?.result?.planInfo?.[0]) || plan;
+  (async () => {
+    try {
+      const planResponse = await getCurrentPlan();
+      const plan = Array.isArray(planResponse) ? planResponse[0] : planResponse;
+      const status = plan?.status || plan?.result?.status;
+      const planInfo = (plan?.planInfo?.[0]) || (plan?.result?.planInfo?.[0]) || plan;
 
-        const isActive = status?.toLowerCase() === 'active' || status?.toLowerCase() === 'trial';
-        setPlanActive(isActive);
+      const isActive = status?.toLowerCase() === 'active' || status?.toLowerCase() === 'trial';
+      setPlanActive(isActive);
 
-        if (typeof planInfo?.maxSocialLinks === 'number') {
-          setMaxSocialLinks(planInfo.maxSocialLinks);
-        }
-        
-        if (typeof planInfo?.maxBusinessCard === 'number') {
-          setMaxBusinessCard(planInfo.maxBusinessCard);
-        }
-
-        if (!isActive) {
-          showToast.warning('Bạn chưa có gói nào đang hoạt động. Vui lòng đăng ký gói để cập nhật portfolio.');
-        }
-      } catch (e: any) {
-        console.error('❌ Error fetching current plan:', e);
-        setPlanActive(false);
-        showToast.error('Không thể kiểm tra gói của bạn. Vui lòng thử lại sau.');
+      if (typeof planInfo?.maxSocialLinks === 'number') {
+        setMaxSocialLinks(planInfo.maxSocialLinks);
       }
-    })();
-  }, []);
+      
+      if (typeof planInfo?.maxBusinessCard === 'number') {
+        setMaxBusinessCard(planInfo.maxBusinessCard);
+      }
+
+      // CHỈ HIỆN THÔNG BÁO KHI CÓ DỮ LIỆU VÀ KHÔNG ACTIVE
+      if (planInfo && !isActive) {
+        showToast.warning('Bạn chưa có gói nào đang hoạt động. Vui lòng đăng ký gói để cập nhật portfolio.');
+      }
+    } catch (e: any) {
+      console.error('❌ Error fetching current plan:', e);
+      setPlanActive(false);
+      // ẨN THÔNG BÁO LỖI KHI MỚI ĐĂNG KÝ
+      // showToast.error('Không thể kiểm tra gói của bạn. Vui lòng thử lại sau.');
+    }
+  })();
+}, []);
 
   // Listen for design updates từ PortfolioDesignPage - SỬA LAYOUT
   useEffect(() => {
@@ -581,7 +621,6 @@ export const MyLinksPage = (): JSX.Element => {
   if (!user) return;
   setSavingTitleBio(true);
   try {
-    const result = await updateMyProfile({ bio: tmpBio });
     setBio(tmpBio);
     setPortfolioTitle(tmpPortfolioTitle);
 
@@ -863,10 +902,8 @@ export const MyLinksPage = (): JSX.Element => {
                 </div>
               </div>
 
-              <div className="flex gap-3 w-full max-w-[400px] mb-8">
-
               {/* Add Social Button & Preview Button */}
-              <div className="flex gap-3 w-full max-w-[300px] mb-6 sm:mb-8 px-4 sm:px-0">
+              <div className="flex xl:gap-0 gap-3 w-full max-w-[300px] mb-6 sm:mb-8 px-4 sm:px-0">
                 <Button
                   className="flex-1 h-auto bg-[#f3b4c3] hover:bg-[#f3b4c3] rounded-[25px] sm:rounded-[35px] py-3 sm:py-4 flex items-center justify-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl"
                   onClick={() => navigate("/my-links/add-social")}
@@ -876,6 +913,7 @@ export const MyLinksPage = (): JSX.Element => {
                     Thêm
                   </span>
                 </Button>
+                
                 {/* Preview Button - Chỉ hiện trên mobile/tablet */}
                 <Button
                   className="xl:hidden h-auto bg-purple-500 hover:bg-purple-600 rounded-[25px] sm:rounded-[35px] py-3 sm:py-4 px-4 sm:px-6 flex items-center justify-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl"
@@ -889,7 +927,6 @@ export const MyLinksPage = (): JSX.Element => {
                     Xem
                   </span>
                 </Button>
-              </div>
               </div>
               
               <Routes>
@@ -1115,6 +1152,24 @@ export const MyLinksPage = (): JSX.Element => {
           </div>
         </div>
       )}
+      {/* AI Chat Button */}
+    <AIChatButton onClick={handleToggleChat} />
+    
+    {/* AI Chat Box */}
+    <AIChatBox
+      isOpen={isChatOpen}
+      onClose={handleCloseChat}
+      onToggle={handleToggleChat}
+      isMinimized={isChatMinimized}
+      onToggleMinimize={handleToggleMinimize}
+      currentDesign={{
+        theme: designSettings.selectedTheme,
+        layout: designSettings.selectedLayout,
+        fontFamily: designSettings.fontFamily,
+        buttonFill: designSettings.buttonFill,
+        buttonCorner: designSettings.buttonCorner
+      }}
+    />
     </div>
   );
 };

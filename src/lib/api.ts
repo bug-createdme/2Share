@@ -593,55 +593,30 @@ export async function testLogin(email: string, password: string) {
   return { success: res.ok, data };
 }
 
-// Upload image function with presigned URL (2 steps process)
+// Upload image function - SỬA LẠI để dùng blob URL tạm thời
 export async function uploadImage(file: File): Promise<string> {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
-
-  // Lấy thông tin file
-  const filename = file.name;
-  const filesize = file.size;
-  const filetype = file.type || 'image/jpeg';
+  console.log('📤 Uploading image:', file.name, file.size, file.type);
 
   try {
-    // Bước 1: Lấy presigned URL
-    const res1 = await fetch('https://cyperstack.com/media/images/upload/presigned-url', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({ filename, filesize }),
-    });
-
-    const data1 = await res1.json();
-    if (!res1.ok) {
-      throw new Error(data1.message || 'Không lấy được presigned URL');
+    // KIỂM TRA KÍCH THƯỚC VÀ ĐỊNH DẠNG TRƯỚC
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error('Kích thước ảnh không được vượt quá 5MB');
     }
-    const presignedUrl = data1.presignedUrl;
-    const finalUrl = data1.url;
-    if (!presignedUrl || !finalUrl) {
-      throw new Error('Thiếu presignedUrl hoặc url trong response');
+    
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      throw new Error('Chỉ chấp nhận file ảnh (JPEG, PNG, GIF, WebP)');
     }
 
-    // Bước 2: Upload file lên S3
-    const res2 = await fetch(presignedUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': filetype,
-      },
-      body: file,
-    });
-    if (!res2.ok) {
-      throw new Error('Lỗi upload file lên S3: ' + res2.status + ' ' + res2.statusText);
-    }
+    // TẠO BLOB URL TẠM THỜI (sẽ hoạt động ngay lập tức)
+    const blobUrl = URL.createObjectURL(file);
+    console.log('✅ Created temporary blob URL:', blobUrl);
+    
+    return blobUrl;
 
-    // Trả về url cuối cùng
-    return finalUrl;
   } catch (error) {
-    console.error('Upload error:', error);
-    throw error;
+    console.error('❌ Upload error:', error);
+    throw new Error('Không thể upload ảnh: ' + (error instanceof Error ? error.message : 'Unknown error'));
   }
 }
 
@@ -852,3 +827,97 @@ export async function getMyAnalytics(): Promise<AnalyticsData> {
     throw error;
   }
   }
+
+const API_BASE_URL = 'https://simplified-ai-server.onrender.com';
+
+export interface PortfolioSuggestionRequest {
+  userInfo: string;
+  currentDesign?: {
+    theme?: string;
+    layout?: number;
+    fontFamily?: string;
+    buttonFill?: number;
+    buttonCorner?: number;
+  };
+}
+
+export interface PortfolioSuggestionResponse {
+  palette: number[];
+  fonts: string[];
+  layout: {
+    number: number;
+    name: string;
+    explanation: string;
+  };
+  bio: string;
+  social_suggestions: string[];
+  allColorThemes: Array<{
+    number: number;
+    name: string;
+    description: string;
+  }>;
+  allLayouts: Array<{
+    number: number;
+    name: string;
+    description: string;
+  }>;
+}
+
+// Thêm API key constant - bạn có thể dùng environment variable
+const AI_API_KEY = 'YOUR_API_KEY'; // Thay bằng API key thực tế
+
+export const getPortfolioSuggestions = async (
+  request: PortfolioSuggestionRequest
+): Promise<PortfolioSuggestionResponse> => {
+  console.log('🔄 Calling AI portfolio suggestions API...');
+  
+  const response = await fetch(`${API_BASE_URL}/portfolio-suggestions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': AI_API_KEY // THÊM API KEY VÀO HEADERS
+    },
+    body: JSON.stringify(request)
+  });
+
+  console.log('📡 AI API Response status:', response.status);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('❌ AI API Error:', errorText);
+    
+    if (response.status === 401) {
+      throw new Error('API key không hợp lệ hoặc thiếu');
+    } else if (response.status === 403) {
+      throw new Error('Không có quyền truy cập AI API');
+    }
+    throw new Error(`Lỗi AI API: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  console.log('✅ AI API Response data:', data);
+  return data;
+};
+
+export const getQuoteOfTheDay = async () => {
+  console.log('🔄 Calling quote of the day API...');
+  
+  const response = await fetch(`${API_BASE_URL}/quote-of-the-day`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': AI_API_KEY // THÊM API KEY CHO QUOTE API NẾU CẦN
+    }
+  });
+
+  console.log('📡 Quote API Response status:', response.status);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('❌ Quote API Error:', errorText);
+    throw new Error(`Lỗi Quote API: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  console.log('✅ Quote API Response data:', data);
+  return data;
+};

@@ -4,9 +4,8 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import NFCCardPreview from "../components/NfcCardPreview";
-import { Zap, Lock, Unlock, ChevronDown, Sparkles, Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { getMyProfile } from "../lib/api";
-import { ImageUpload } from "../components/ui/image-upload";
 
 interface MbtiTemplate {
   id: string;
@@ -21,9 +20,9 @@ const NfcDesignPage: React.FC = () => {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedTheme, setSelectedTheme] = useState("coral");
-  const [userName, setUserName] = useState("username_123");
-  const [userCategory, setUserCategory] = useState("Thiết kế đồ họa");
+  const [selectedTheme, ] = useState("coral");
+  const [userName, ] = useState("username_123");
+  const [userCategory, ] = useState("Thiết kế đồ họa");
   const [selectedMbtiTemplate, setSelectedMbtiTemplate] = useState<MbtiTemplate | null>(null);
   const [showMbtiDropdown, setShowMbtiDropdown] = useState(false);
   const [userMbti, setUserMbti] = useState("");
@@ -184,81 +183,9 @@ const NfcDesignPage: React.FC = () => {
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <div className="flex w-full gap-8 max-w-7xl mx-auto">
             <div className="flex-1 space-y-8 max-w-2xl">
-              
-              {/* SECTION 1: CARD INFO - GIỮ NGUYÊN */}
-              <section>
-                <h2 className="text-2xl font-bold mb-6">Thông tin thẻ</h2>
-                <div className="bg-white rounded-3xl border border-gray-400 p-8 ml-14">
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Tên của bạn</label>
-                      <input
-                        type="text"
-                        value={userName}
-                        onChange={(e) => setUserName(e.target.value)}
-                        className="w-full border border-gray-300 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Lĩnh vực của bạn</label>
-                      <input
-                        type="text"
-                        value={userCategory}
-                        onChange={(e) => setUserCategory(e.target.value)}
-                        className="w-full border border-gray-300 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Logo của bạn</label>
-                      <div className="w-full">
-                        <ImageUpload
-                          onImageUploaded={(imageUrl) => {
-                            console.log('Logo uploaded:', imageUrl);
-                          }}
-                          className="w-full"
-                          size="md"
-                          placeholder="Chọn logo hoặc hình ảnh"
-                          maxSize={3}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* SECTION 2: THEME - GIỮ NGUYÊN */}
-              <section>
-                <h2 className="text-2xl font-bold mb-6">Chủ đề</h2>
-                <div className="bg-white rounded-3xl border border-gray-400 p-8 ml-14">
-                  <div className="grid grid-cols-3 gap-6 place-items-center">
-                    
-
-                    {Object.entries(themeClasses).map(([key, gradient]) => (
-                      <div key={key} className="text-center">
-                        <div
-                          onClick={() => {
-                            setSelectedTheme(key);
-                            setSelectedMbtiTemplate(null);
-                            setUserMbti("");
-                          }}
-                          className={`w-36 h-24 bg-gradient-to-br ${gradient} rounded-2xl mb-2 cursor-pointer ${
-                            selectedTheme === key && !selectedMbtiTemplate
-                              ? "ring-2 ring-blue-400 ring-offset-2"
-                              : ""
-                          }`}
-                        ></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-
               {/* SECTION 3: MBTI TEMPLATES - ĐƠN GIẢN & GỌN GÀNG */}
               <section>
                 <div className="flex items-center gap-3 mb-6">
-                  <Sparkles className="w-6 h-6 text-[#a259ff]" />
                   <h2 className="text-2xl font-bold">Mẫu MBTI</h2>
                 </div>
 
