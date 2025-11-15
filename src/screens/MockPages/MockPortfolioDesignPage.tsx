@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import MockHeader from "../../components/MockHeader"; // Sử dụng MockHeader thay vì Header
 import { Zap } from "lucide-react";
-import { FaFillDrip, FaRegCircle, FaLinkedin, FaBehance, FaInstagram, FaFacebookSquare, FaTiktok } from "react-icons/fa";
+import { FaFillDrip, FaRegCircle, FaFacebookSquare, FaTiktok } from "react-icons/fa";
 import MockSidebar from "../../components/MockSidebar";
 import {
   TbBorderCornerSquare,
@@ -23,7 +23,7 @@ const MockImageUpload: React.FC<{
   size = "md",
   variant = "rounded",
   placeholder = "Upload image",
-  maxSize = 5 
+  // removed unused maxSize default
 }) => {
   const handleClick = () => {
     const mockImageUrl = "https://via.placeholder.com/300x200";
@@ -101,13 +101,7 @@ const MockPortfolioDesignPage: React.FC = () => {
     orange: "from-blue-400 to-orange-400",
   };
 
-  const textColors: Record<string, string> = {
-    coral: 'text-[#E7A5A5]',
-    green: 'text-green-400',
-    dark: 'text-gray-500',
-    gradient: 'text-purple-400',
-    orange: 'text-orange-400',
-  };
+  // removed unused textColors map
 
   const avatarColors: Record<string, string> = {
     coral: "bg-[#E7A5A5]",

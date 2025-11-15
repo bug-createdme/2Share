@@ -53,10 +53,7 @@ const MockHeader: React.FC<MockHeaderProps> = ({
     setShowShareDropdown(false);
   };
 
-  const handleOpenInNewTab = () => {
-    window.open(portfolioLink, '_blank');
-    setShowShareDropdown(false);
-  };
+  // Removed unused handleOpenInNewTab to satisfy build (was not referenced)
 
   // Rút gọn link hiển thị
   const displayLink = `2share.icu/${username}`;

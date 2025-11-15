@@ -1,6 +1,6 @@
 // src/components/Header.tsx
 import React from "react";
-import { Settings, Upload, Check } from "lucide-react";
+import { Upload, Check } from "lucide-react";
 
 interface HeaderProps {
   title?: string;

@@ -27,7 +27,7 @@ interface DesignSettings {
 // Định nghĩa interface đầy đủ cho PhonePreviewProps
 interface PhonePreviewProps {
   themeClasses: Record<string, string>;
-  textColors: Record<string, string>;
+  textColors?: Record<string, string>; // retained for backward compatibility with callers
   selectedTheme: string;
   selectedLayout: number;
   user?: any;
@@ -36,35 +36,11 @@ interface PhonePreviewProps {
   designSettings?: DesignSettings;
 }
 
-// Helper function để lấy font family class
-const getFontFamilyClass = (font: string) => {
-  switch (font) {
-    case 'spartan': return 'font-spartan';
-    case 'Carlito': return 'font-carlito';
-    case 'Inter': return 'font-inter';
-    case 'Montserrat': return 'font-montserrat';
-    case 'Be Vietnam Pro': return 'font-be-vietnam';
-    case 'Spline Sans': return 'font-spline-sans';
-    default: return 'font-spartan';
-  }
-};
-
-// Helper function để lấy font family style
-const getFontFamilyStyle = (font: string) => {
-  switch (font) {
-    case 'spartan': return 'spartan, sans-serif';
-    case 'Carlito': return 'Carlito, sans-serif';
-    case 'Inter': return 'Inter, sans-serif';
-    case 'Montserrat': return 'Montserrat, sans-serif';
-    case 'Be Vietnam Pro': return 'Be Vietnam Pro, sans-serif';
-    case 'Spline Sans': return 'Spline Sans, sans-serif';
-    default: return 'spartan, sans-serif';
-  }
-};
+// Removed unused font family helpers (class & style) which were not utilized.
 
 const PhonePreview: React.FC<PhonePreviewProps> = ({
   themeClasses,
-  textColors,
+  textColors: _textColors,
   selectedTheme,
   selectedLayout,
   user,
@@ -84,9 +60,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
   // Lấy các giá trị từ designSettings hoặc dùng giá trị mặc định
   const buttonFill = designSettings?.buttonFill ?? 0;
   const buttonCorner = designSettings?.buttonCorner ?? 1;
-  const buttonColor = designSettings?.buttonColor || "#ffffff";
-  const buttonTextColor = designSettings?.buttonTextColor || "#ffffff";
-  const textColorValue = designSettings?.textColor || "#ffffff";
+  // Removed unused local color variables (buttonColor, buttonTextColor, textColorValue)
   const fontFamily = designSettings?.fontFamily || "spartan";
   const backgroundType = designSettings?.backgroundType || "theme";
   const backgroundImage = designSettings?.backgroundImage;
@@ -239,7 +213,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
 
   // Layout 1: Avatar ở trên, centered (giống mock)
   const renderLayout1 = () => (
-    <div className="flex flex-col items-center gap-4 mt-6 ${getFontFamilyClass(fontFamily)}">
+    <div className="flex flex-col items-center gap-4 mt-6">
       {/* Avatar */}
       <div className="w-16 h-16 rounded-2xl bg-white/50 flex items-center justify-center backdrop-blur-sm border border-white/30">
         <img
@@ -250,7 +224,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
       </div>
       
       {/* Username - LUÔN MÀU TRẮNG */}
-      <h3 className="text-white text-sm font-bold tracking-wide ${getFontFamilyClass(fontFamily)}">
+      <h3 className="text-white text-sm font-bold tracking-wide">
         @{displayUsername}
       </h3>
 
@@ -278,7 +252,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
           {enabledLinks.map((link) => (
             <button
               key={link.id}
-              className="w-full py-1.5 text-[12px] font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-2 ${getFontFamilyClass(fontFamily)}" 
+              className="w-full py-1.5 text-[12px] font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-2"
               style={getButtonStyle()}
             >
               {getSocialIcon(link.name)}
@@ -292,7 +266,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
 
   // Layout 2: Avatar bên trái với username (giống mock)
   const renderLayout2 = () => (
-    <div className="flex flex-col gap-4 mt-6 ${getFontFamilyClass(fontFamily)}">
+    <div className="flex flex-col gap-4 mt-6">
       <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-6 mx-auto w-fit">
         {/* Avatar */}
         <div className="w-12 h-12 rounded-2xl bg-white/50 flex items-center justify-center backdrop-blur-sm border border-white/30">
@@ -304,7 +278,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
         </div>
         <div className="flex flex-col items-start">
           {/* Username - LUÔN MÀU TRẮNG */}
-          <h3 className="text-white text-sm font-bold tracking-wide ${getFontFamilyClass(fontFamily)}">
+          <h3 className="text-white text-sm font-bold tracking-wide">
             @{displayUsername}
           </h3>
           {/* Social Icons */}
@@ -329,7 +303,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
           {enabledLinks.map((link) => (
             <button
               key={link.id}
-              className="w-full py-1 text-[11px] font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-2 ${getFontFamilyClass(fontFamily)}"
+              className="w-full py-1 text-[11px] font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-2"
               style={getButtonStyle()}
             >
               {getSocialIcon(link.name)}
@@ -343,9 +317,9 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
 
   // Layout 3: Username trên, avatar wide ở giữa (giống mock)
   const renderLayout3 = () => (
-    <div className="flex flex-col items-center gap-3 mt-6 w-full ${getFontFamilyClass(fontFamily)}">
+    <div className="flex flex-col items-center gap-3 mt-6 w-full">
       {/* Username - LUÔN MÀU TRẮNG */}
-      <h3 className="text-white text-sm font-bold tracking-wide ${getFontFamilyClass(fontFamily)}">
+      <h3 className="text-white text-sm font-bold tracking-wide">
         @{displayUsername}
       </h3>
       
@@ -382,7 +356,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
           {enabledLinks.map((link) => (
             <button
               key={link.id}
-              className="w-full py-1 text-[11px] font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-2 ${getFontFamilyClass(fontFamily)}"
+              className="w-full py-1 text-[11px] font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-2"
               style={getButtonStyle()}
             >
               {getSocialIcon(link.name)}
@@ -396,7 +370,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
 
   // Layout 4: Background avatar style (giống mock)
   const renderLayout4 = () => (
-    <div className="relative h-full flex flex-col items-center justify-between py-6 ${getFontFamilyClass(fontFamily)}">
+    <div className="relative h-full flex flex-col items-center justify-between py-6">
       {/* Background avatar - large avatar in center */}
       <div className="absolute inset-0 flex items-center justify-center opacity-85">
         <div className="w-32 h-32 rounded-full overflow-hidden bg-white/30 border-2 border-white/20">
@@ -411,7 +385,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
       {/* Foreground content */}
       <div className="relative z-10 w-full flex flex-col items-center mt-4">
         {/* Username - LUÔN MÀU TRẮNG */}
-        <h3 className="text-white text-sm font-bold tracking-wide mb-2 ${getFontFamilyClass(fontFamily)}">
+        <h3 className="text-white text-sm font-bold tracking-wide mb-2">
           @{displayUsername}
         </h3>
         

@@ -1,6 +1,5 @@
 import React, { useState, useRef } from "react";
-import { PlusIcon, Camera, Edit2, Save, X, Link2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { PlusIcon, Camera, Edit2, Save, X } from "lucide-react";
 
 import { Button } from "../../components/ui/button";
 import { SocialLinksSection, SocialLink } from "../../screens/MyLinksPage/sections/SocialLinksSection/SocialLinksSection";
@@ -85,7 +84,6 @@ export const MockMyLinksPage = (): JSX.Element => {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [bio, setBio] = useState("Hãy nhập bio của bạn ở đây!");
   const [showAddSocialModal, setShowAddSocialModal] = useState(false);
-  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // State cho inline editing
@@ -96,7 +94,7 @@ export const MockMyLinksPage = (): JSX.Element => {
 
   // Mock selected theme và layout cho preview - sử dụng coral theme từ portfolio
   const [selectedTheme] = useState("coral");
-  const [selectedLayout] = useState(1);
+  // Removed unused navigate & selectedLayout (not referenced)
 
   // Social icons cho phần preview - sử dụng React Icons giống portfolio
   const socialIcons = [
