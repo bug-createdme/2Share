@@ -18,6 +18,8 @@ import { useRef } from 'react';
 import ShareDialog from "../../components/ShareDialog";
 import { showToast } from "../../lib/toast";
 import PhonePreview from "../../components/PhonePreview";
+import { AIChatBox } from "../../components/AIChatBox/AIChatBox";
+import { AIChatButton } from "../../components/AIChatBox/AIChatButton";
 
 export const MyLinksPage = (): JSX.Element => {
   const [user, setUser] = useState<any | null>(null);
@@ -62,24 +64,51 @@ export const MyLinksPage = (): JSX.Element => {
     selectedTheme: "coral",
     selectedLayout: 1 // Layout 1 tương ứng với profileLayout 0
   });
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
 
   // Theme classes cho PhonePreview - KHỚP VỚI PORTFOLIODESIGN
   const themeClasses: Record<string, string> = {
-    "coral": "from-[#E7A5A5] to-[#E7A5A5]",
-    "green": "from-green-300 to-green-400", 
-    "dark": "from-gray-700 to-gray-800",
-    "gradient": "from-purple-400 via-blue-400 to-green-400",
-    "orange": "from-blue-400 to-orange-400",
+    'classic-rose': "from-[#E8B4B4] to-[#E8B4B4]",
+    'fresh-mint': "from-[#A7E9AF] to-[#A7E9AF]",
+    'dark-slate': "from-[#4A5568] to-[#2D3748]",
+    'purple-green': "from-[#C084FC] via-[#60A5FA] to-[#4ADE80]",
+    'sunset': "from-[#60A5FA] to-[#FB923C]",
   };
-
+  
+  const avatarColors: Record<string, string> = {
+    'classic-rose': "bg-[#E8B4B4]",
+    'fresh-mint': "bg-[#A7E9AF]",
+    'dark-slate': "bg-[#4A5568]",
+    'purple-green': "bg-[#C084FC]",
+    'sunset': "bg-[#FB923C]",
+    'custom': "bg-[#6B7280]",
+  };
+  
   const textColors: Record<string, string> = {
-    "coral": "#ffffff",
-    "green": "#ffffff",
-    "dark": "#ffffff",
-    "gradient": "#ffffff", 
-    "orange": "#ffffff",
+    'classic-rose': 'text-[#E8B4B4]',
+    'fresh-mint': 'text-[#A7E9AF]',
+    'dark-slate': 'text-[#4A5568]',
+    'purple-green': 'text-[#C084FC]',
+    'sunset': 'text-[#FB923C]',
+    'custom': 'text-[#6B7280]',
   };
+    // Thêm các hàm này trong component
+    const handleToggleChat = () => {
+      setIsChatOpen(!isChatOpen);
+      if (isChatMinimized) {
+        setIsChatMinimized(false);
+      }
+    };
 
+    const handleCloseChat = () => {
+      setIsChatOpen(false);
+      setIsChatMinimized(false);
+    };
+
+    const handleToggleMinimize = () => {
+      setIsChatMinimized(!isChatMinimized);
+    };
   // Function to load portfolio data và design settings
   const loadPortfolioData = async (portfolioSlug: string) => {
     try {
@@ -179,6 +208,25 @@ export const MyLinksPage = (): JSX.Element => {
       showToast.error('Lỗi tải portfolio');
     }
   };
+
+  useEffect(() => {
+    const savedChatState = localStorage.getItem('ai_chat_box_state');
+    if (savedChatState) {
+      try {
+        const { isOpen, isMinimized } = JSON.parse(savedChatState);
+        setIsChatOpen(isOpen);
+        setIsChatMinimized(isMinimized);
+      } catch (error) {
+        console.error('Error loading chat state:', error);
+      }
+    }
+  }, []);
+
+  // Lưu trạng thái chat box vào localStorage khi thay đổi
+  useEffect(() => {
+    const chatState = { isOpen: isChatOpen, isMinimized: isChatMinimized };
+    localStorage.setItem('ai_chat_box_state', JSON.stringify(chatState));
+  }, [isChatOpen, isChatMinimized]);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -1115,6 +1163,24 @@ export const MyLinksPage = (): JSX.Element => {
           </div>
         </div>
       )}
+      {/* AI Chat Button */}
+    <AIChatButton onClick={handleToggleChat} />
+    
+    {/* AI Chat Box */}
+    <AIChatBox
+      isOpen={isChatOpen}
+      onClose={handleCloseChat}
+      onToggle={handleToggleChat}
+      isMinimized={isChatMinimized}
+      onToggleMinimize={handleToggleMinimize}
+      currentDesign={{
+        theme: designSettings.selectedTheme,
+        layout: designSettings.selectedLayout,
+        fontFamily: designSettings.fontFamily,
+        buttonFill: designSettings.buttonFill,
+        buttonCorner: designSettings.buttonCorner
+      }}
+    />
     </div>
   );
 };

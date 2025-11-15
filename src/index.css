@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Spline+Sans:wght@300..700&family=Unbounded:wght@200..900&display=swap');
 @import "react-day-picker/dist/style.css";
+@import url('https://fonts.googleapis.com/css2?family=Mali:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
 
 /* Font Family Classes */
 .font-carlito {
@@ -234,4 +235,78 @@ body {
 
 .animate-float {
   animation: float linear infinite;
+}
+
+
+/* Mali font classes */
+.mali-extralight {
+  font-family: "Mali", cursive;
+  font-weight: 200;
+  font-style: normal;
+}
+
+.mali-light {
+  font-family: "Mali", cursive;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.mali-regular {
+  font-family: "Mali", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.mali-medium {
+  font-family: "Mali", cursive;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.mali-semibold {
+  font-family: "Mali", cursive;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.mali-bold {
+  font-family: "Mali", cursive;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.mali-extralight-italic {
+  font-family: "Mali", cursive;
+  font-weight: 200;
+  font-style: italic;
+}
+
+.mali-light-italic {
+  font-family: "Mali", cursive;
+  font-weight: 300;
+  font-style: italic;
+}
+
+.mali-regular-italic {
+  font-family: "Mali", cursive;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.mali-medium-italic {
+  font-family: "Mali", cursive;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.mali-semibold-italic {
+  font-family: "Mali", cursive;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.mali-bold-italic {
+  font-family: "Mali", cursive;
+  font-weight: 700;
+  font-style: italic;
 }

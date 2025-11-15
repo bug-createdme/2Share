@@ -12,6 +12,8 @@ import {
 import { getMyProfile, getMyPortfolio, updatePortfolio, DesignSettings, getPortfolioBySlug } from "../lib/api";
 import { ImageUpload } from "../components/ui/image-upload";
 import { showToast } from "../lib/toast";
+import { AIChatBox } from "../components/AIChatBox/AIChatBox";
+import { AIChatButton } from "../components/AIChatBox/AIChatButton";
 
 const DESIGN_SETTINGS_KEY = 'portfolio_design_settings';
 
@@ -40,13 +42,12 @@ const PortfolioDesignPage: React.FC = () => {
   const [backgroundSolidColor, setBackgroundSolidColor] = useState("#ffffff");
   const [backgroundGradient, setBackgroundGradient] = useState("from-gray-600 to-gray-400");
   
-  // THÊM STATE CHO IMAGE LIBRARY
-  const [showImageLibrary, setShowImageLibrary] = useState(false);
-  
   const [bio, setBio] = useState("");
   const [socialLinks, setSocialLinks] = useState<any[]>([]);
   const [portfolioTitle, setPortfolioTitle] = useState("My Portfolio");
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
 
   // Color mappings
   const avatarColors: Record<string, string> = {
@@ -73,6 +74,23 @@ const PortfolioDesignPage: React.FC = () => {
     'dark-slate': "from-[#4A5568] to-[#2D3748]",
     'purple-green': "from-[#C084FC] via-[#60A5FA] to-[#4ADE80]",
     'sunset': "from-[#60A5FA] to-[#FB923C]",
+  };
+
+  // Thêm các hàm xử lý chat
+  const handleToggleChat = () => {
+    setIsChatOpen(!isChatOpen);
+    if (isChatMinimized) {
+      setIsChatMinimized(false);
+    }
+  };
+
+  const handleCloseChat = () => {
+    setIsChatOpen(false);
+    setIsChatMinimized(false);
+  };
+
+  const handleToggleMinimize = () => {
+    setIsChatMinimized(!isChatMinimized);
   };
 
   // Helper function để lấy class font family
@@ -350,6 +368,25 @@ const PortfolioDesignPage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const savedChatState = localStorage.getItem('ai_chat_box_state');
+    if (savedChatState) {
+      try {
+        const { isOpen, isMinimized } = JSON.parse(savedChatState);
+        setIsChatOpen(isOpen);
+        setIsChatMinimized(isMinimized);
+      } catch (error) {
+        console.error('Error loading chat state:', error);
+      }
+    }
+  }, []);
+
+  // Lưu trạng thái chat box vào localStorage khi thay đổi
+  useEffect(() => {
+    const chatState = { isOpen: isChatOpen, isMinimized: isChatMinimized };
+    localStorage.setItem('ai_chat_box_state', JSON.stringify(chatState));
+  }, [isChatOpen, isChatMinimized]);
+
   // Load portfolio slug từ MyLinks khi component mount
   useEffect(() => {
     const savedPortfolioSlug = localStorage.getItem('currentPortfolioSlug');
@@ -489,25 +526,69 @@ const PortfolioDesignPage: React.FC = () => {
     setButtonCorner(corner);
   };
 
-  const handleBackgroundImageUpload = async (imageUrl: string) => {
-    setBackgroundImage(imageUrl);
-    setBackgroundType('image');
-    await saveDesignSettings({ 
-      backgroundImage: imageUrl, 
-      backgroundType: 'image' 
-    });
-  };
+  // HÀM XỬ LÝ UPLOAD ẢNH NỀN - HOÀN CHỈNH NHƯ AVATAR
+  const handleBackgroundImageUpload = async (file: File) => {
+    if (!file) return;
+    
+    try {
+      setUploadingBackground(true);
+      
+      console.log('🚀 Starting background image upload...', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      });
 
-  // THÊM HÀM XỬ LÝ CHỌN HÌNH NỀN TỪ THƯ VIỆN
-  const handleLibraryBackgroundSelect = async (imageUrl: string) => {
-    setBackgroundImage(imageUrl);
-    setBackgroundType('image');
-    setSelectedTheme('custom');
-    await saveDesignSettings({ 
-      backgroundImage: imageUrl, 
-      backgroundType: 'image',
-      theme: 'custom'
-    });
+      // Kiểm tra kích thước file (tối đa 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showToast.error('Kích thước ảnh không được vượt quá 5MB');
+        return;
+      }
+      
+      // Kiểm tra định dạng
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        showToast.error('Chỉ chấp nhận file ảnh (JPEG, PNG, GIF, WebP)');
+        return;
+      }
+
+      // SỬ DỤNG HÀM UPLOADIMAGE ĐÃ SỬA
+      const { uploadImage } = await import("../lib/api");
+      const imageUrl = await uploadImage(file);
+      
+      console.log('✅ Background image uploaded successfully:', imageUrl);
+      
+      // KIỂM TRA URL CÓ PHẢI BLOB KHÔNG
+      if (imageUrl.startsWith('blob:')) {
+        console.warn('⚠️ Received blob URL, this is temporary');
+        showToast.warning('Ảnh tạm thời - không lưu vĩnh viễn');
+      } else {
+        console.log('🎯 Received permanent URL, saving...');
+        showToast.success('Đã tải ảnh nền lên thành công!');
+      }
+      
+      // CẬP NHẬT STATE VÀ LƯU LÊN SERVER
+      setBackgroundImage(imageUrl);
+      setBackgroundType('image');
+      setSelectedTheme('custom');
+      
+      // LƯU NGAY LÊN SERVER
+      await saveDesignSettings({ 
+        backgroundImage: imageUrl, 
+        backgroundType: 'image',
+        theme: 'custom'
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Background upload failed:', error);
+      
+      // FALLBACK: Hiển thị lỗi chi tiết
+      const errorMessage = error.message || 'Lỗi không xác định';
+      showToast.error('Lỗi tải ảnh nền: ' + errorMessage);
+      
+    } finally {
+      setUploadingBackground(false);
+    }
   };
 
   if (loading) {
@@ -650,7 +731,7 @@ const PortfolioDesignPage: React.FC = () => {
               <h2 className="text-2xl font-bold mb-6">Chủ đề</h2>
               <div className="bg-white rounded-3xl border border-gray-400 p-8 max-w-xl mx-auto">
                 <div className="grid grid-cols-3 gap-6 place-items-center">
-                  {/* Custom Image Theme - SỬA LẠI ĐỂ UPLOAD ẢNH */}
+                  {/* Custom Image Theme - SỬA LẠI ĐỂ UPLOAD ẢNH HOÀN CHỈNH */}
                   <div className="text-center">
                     <input
                       type="file"
@@ -660,46 +741,7 @@ const PortfolioDesignPage: React.FC = () => {
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          try {
-                            setUploadingBackground(true);
-                            
-                            // SỬ DỤNG CÁCH UPLOAD ĐƠN GIẢN - GIỐNG MYLINKS
-                            const formData = new FormData();
-                            formData.append('image', file);
-                            
-                            // Thử upload trực tiếp đến endpoint của bạn
-                            const response = await fetch('https://2share.icu/api/upload', {
-                              method: 'POST',
-                              body: formData,
-                              headers: {
-                                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                              },
-                            });
-                            
-                            if (!response.ok) {
-                              throw new Error(`Upload failed: ${response.status}`);
-                            }
-                            
-                            const data = await response.json();
-                            
-                            if (data.success && data.imageUrl) {
-                              await handleLibraryBackgroundSelect(data.imageUrl);
-                              showToast.success('Đã tải ảnh lên thành công!');
-                            } else {
-                              throw new Error(data.message || 'Upload failed');
-                            }
-                            
-                          } catch (error: any) {
-                            console.error('Error uploading background image:', error);
-                            
-                            // FALLBACK: Nếu upload thất bại, tạo URL tạm thời từ file local
-                            const localImageUrl = URL.createObjectURL(file);
-                            await handleLibraryBackgroundSelect(localImageUrl);
-                            showToast.warning('Đã sử dụng ảnh tạm thời (chỉ hiển thị trên thiết bị này)');
-                            
-                          } finally {
-                            setUploadingBackground(false);
-                          }
+                          await handleBackgroundImageUpload(file);
                         }
                       }}
                     />
@@ -741,6 +783,11 @@ const PortfolioDesignPage: React.FC = () => {
                           setBackgroundType('theme');
                           setBackgroundImage('');
                           setSelectedTheme('classic-rose');
+                          saveDesignSettings({
+                            backgroundType: 'theme',
+                            backgroundImage: '',
+                            theme: 'classic-rose'
+                          });
                           showToast.success('Đã xóa hình nền');
                         }}
                         className="mt-1 text-xs text-red-500 hover:text-red-700 block mx-auto"
@@ -955,6 +1002,22 @@ const PortfolioDesignPage: React.FC = () => {
           </linearGradient>
         </defs>
       </svg>
+      <AIChatButton onClick={handleToggleChat} />
+    
+      <AIChatBox
+        isOpen={isChatOpen}
+        onClose={handleCloseChat}
+        onToggle={handleToggleChat}
+        isMinimized={isChatMinimized}
+        onToggleMinimize={handleToggleMinimize}
+        currentDesign={{
+          theme: selectedTheme,
+          layout: selectedProfile,
+          fontFamily: fontFamily,
+          buttonFill: buttonFill,
+          buttonCorner: buttonCorner
+        }}
+      />
     </div>
   );
 };
