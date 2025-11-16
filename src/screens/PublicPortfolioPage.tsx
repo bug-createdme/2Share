@@ -486,7 +486,10 @@ const renderQuoteSection = () => {
           </div>
         </div>
 
-        {renderQuoteSection()}
+        {/* FIXED: Quote section now properly centered */}
+        <div className="flex justify-center w-full">
+          {renderQuoteSection()}
+        </div>
         
         {/* Bio section - SAME WIDTH AS LAYOUT 3 */}
         {bioContent && (
@@ -608,7 +611,7 @@ const renderQuoteSection = () => {
       <div className={`relative min-h-screen w-full flex flex-col items-center ${getFontFamilyClass(fontFamily)}`}>
         
         {/* Background Avatar - CENTERED */}
-        <div className="absolute top-1/3 transform -translate-y-1/3 w-72 h-72 rounded-full overflow-hidden bg-white/15 border-4 border-white/25 shadow-2xl opacity-90 pointer-events-none">
+        <div className="absolute top-1/4 transform -translate-y-1/3 w-72 h-72 rounded-full overflow-hidden bg-white/15 border-4 border-white/25 shadow-2xl opacity-90 pointer-events-none">
           <img
             className="w-full h-full object-cover"
             alt="Avatar background"
@@ -641,10 +644,13 @@ const renderQuoteSection = () => {
           )}
         </div>
 
-        {renderQuoteSection()}
+        {/* FIXED: Quote section moved BELOW avatar */}
+        <div className="relative z-10 w-full flex justify-center mt-80">
+          {renderQuoteSection()}
+        </div>
 
         {/* Content - BELOW AVATAR với cùng chiều rộng */}
-        <div className="relative z-10 w-full flex flex-col items-center mt-80 px-4 pb-8">
+        <div className="relative z-10 w-full flex flex-col items-center px-4 pb-8">
           <div className="w-full max-w-md space-y-6">
             {/* Bio Section */}
             {bioContent && (

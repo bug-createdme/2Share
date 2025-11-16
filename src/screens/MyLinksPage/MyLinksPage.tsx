@@ -45,11 +45,8 @@ export const MyLinksPage = (): JSX.Element => {
   const [portfoliosList, setPortfoliosList] = useState<any[]>([]);
   const [showPortfoliosModal, setShowPortfoliosModal] = useState(false);
   const [portfolioTitle, setPortfolioTitle] = useState("My Portfolio");
-    // State cho mobile sidebar - PHẢI khai báo cùng các state khác
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
-  // State cho mobile preview sidebar phải
   const [showMobilePreview, setShowMobilePreview] = useState(false);
-  // State cho design settings - SỬA LAYOUT BAN ĐẦU
   const [designSettings, setDesignSettings] = useState({
     buttonFill: 0,
     buttonCorner: 1,
@@ -62,12 +59,11 @@ export const MyLinksPage = (): JSX.Element => {
     backgroundSolidColor: "#ffffff",
     backgroundGradient: "from-gray-600 to-gray-400",
     selectedTheme: "coral",
-    selectedLayout: 1 // Layout 1 tương ứng với profileLayout 0
+    selectedLayout: 1
   });
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isChatMinimized, setIsChatMinimized] = useState(false);
 
-  // Theme classes cho PhonePreview - KHỚP VỚI PORTFOLIODESIGN
   const themeClasses: Record<string, string> = {
     'classic-rose': "from-[#E8B4B4] to-[#E8B4B4]",
     'fresh-mint': "from-[#A7E9AF] to-[#A7E9AF]",
@@ -83,23 +79,54 @@ export const MyLinksPage = (): JSX.Element => {
     'sunset': 'text-[#FB923C]',
     'custom': 'text-[#6B7280]',
   };
-    // Thêm các hàm này trong component
-    const handleToggleChat = () => {
-      setIsChatOpen(!isChatOpen);
-      if (isChatMinimized) {
-        setIsChatMinimized(false);
-      }
-    };
 
-    const handleCloseChat = () => {
-      setIsChatOpen(false);
+  const handleToggleChat = () => {
+    setIsChatOpen(!isChatOpen);
+    if (isChatMinimized) {
       setIsChatMinimized(false);
-    };
+    }
+  };
 
-    const handleToggleMinimize = () => {
-      setIsChatMinimized(!isChatMinimized);
-    };
-  // Function to load portfolio data và design settings
+  const handleCloseChat = () => {
+    setIsChatOpen(false);
+    setIsChatMinimized(false);
+  };
+
+  const handleToggleMinimize = () => {
+    setIsChatMinimized(!isChatMinimized);
+  };
+
+  // Hàm lưu avatar vào cả localStorage và sessionStorage
+  const saveAvatarToStorage = (avatarUrl: string) => {
+    if (avatarUrl) {
+      localStorage.setItem('user_avatar_url', avatarUrl);
+      sessionStorage.setItem('avatar_backup', avatarUrl);
+      console.log('💾 Avatar saved to storage:', avatarUrl);
+    }
+  };
+
+  // Hàm khôi phục avatar từ storage
+  const restoreAvatarFromStorage = () => {
+    // Ưu tiên localStorage trước (tồn tại lâu hơn)
+    const localAvatar = localStorage.getItem('user_avatar_url');
+    const sessionAvatar = sessionStorage.getItem('avatar_backup');
+    
+    const avatarUrl = localAvatar || sessionAvatar;
+    
+    if (avatarUrl && user && (!user.avatar_url || user.avatar_url !== avatarUrl)) {
+      console.log('🔄 Restoring avatar from storage:', avatarUrl);
+      setUser((prev: any) => prev ? {...prev, avatar_url: avatarUrl} : null);
+      
+      // Đồng bộ với server nếu cần
+      if (!user.avatar_url) {
+        updateMyProfile({ avatar_url: avatarUrl }).catch(console.error);
+      }
+      
+      return avatarUrl;
+    }
+    return null;
+  };
+
   const loadPortfolioData = async (portfolioSlug: string) => {
     try {
       console.log('📥 Loading portfolio:', portfolioSlug);
@@ -134,14 +161,11 @@ export const MyLinksPage = (): JSX.Element => {
         }
       }
 
-      // QUAN TRỌNG: Load design settings từ portfolio - SỬA LAYOUT
       if (portfolio.design_settings) {
         const design = portfolio.design_settings;
         console.log('🎨 Loading design settings for MyLinks:', design);
         
         let themeKey = design.selectedTheme || design.theme || "coral";
-        
-        // QUAN TRỌNG: Sửa layout mapping
         const profileLayout = design.profileLayout || 0;
         const selectedLayout = design.selectedLayout || profileLayout + 1;
         
@@ -157,7 +181,7 @@ export const MyLinksPage = (): JSX.Element => {
           backgroundSolidColor: design.backgroundSolidColor || "#ffffff",
           backgroundGradient: design.backgroundGradient || "from-gray-600 to-gray-400",
           selectedTheme: themeKey,
-          selectedLayout: selectedLayout // QUAN TRỌNG: +1 để khớp
+          selectedLayout: selectedLayout
         });
         
         console.log('✅ Design settings loaded:', {
@@ -212,11 +236,33 @@ export const MyLinksPage = (): JSX.Element => {
     }
   }, []);
 
-  // Lưu trạng thái chat box vào localStorage khi thay đổi
   useEffect(() => {
     const chatState = { isOpen: isChatOpen, isMinimized: isChatMinimized };
     localStorage.setItem('ai_chat_box_state', JSON.stringify(chatState));
   }, [isChatOpen, isChatMinimized]);
+
+  // Lưu avatar khi có thay đổi
+  useEffect(() => {
+    if (user?.avatar_url) {
+      saveAvatarToStorage(user.avatar_url);
+    }
+  }, [user?.avatar_url]);
+
+  // Khôi phục avatar khi component mount
+  useEffect(() => {
+    if (user) {
+      const restored = restoreAvatarFromStorage();
+      if (restored) {
+        console.log('✅ Avatar restored successfully');
+      }
+    }
+  }, [user]);
+
+  useEffect(() => {
+    console.log('👤 Current user avatar:', user?.avatar_url);
+    console.log('🔑 Auth token exists:', !!localStorage.getItem('authToken'));
+    console.log('💾 All localStorage keys:', Object.keys(localStorage));
+  }, [user?.avatar_url]);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -224,6 +270,16 @@ export const MyLinksPage = (): JSX.Element => {
         const profile = await getMyProfile();
         setUser(profile);
         if (typeof profile.bio === 'string') setBio(profile.bio);
+
+        // Khôi phục avatar ngay sau khi có profile
+        if (profile) {
+          const restoredAvatar = restoreAvatarFromStorage();
+          if (restoredAvatar && !profile.avatar_url) {
+            // Nếu server không có avatar nhưng local có, cập nhật lên server
+            profile.avatar_url = restoredAvatar;
+            updateMyProfile({ avatar_url: restoredAvatar }).catch(console.error);
+          }
+        }
 
         try {
           const portfolio = await getMyPortfolio();
@@ -246,14 +302,13 @@ export const MyLinksPage = (): JSX.Element => {
             }
           }
 
-          // Load design settings từ portfolio - SỬA LAYOUT
           if (portfolio.design_settings) {
             const design = portfolio.design_settings;
             let themeKey = design.selectedTheme || design.theme || "coral";
             const profileLayout = design.profileLayout || 0;
             const selectedLayout = design.selectedLayout || profileLayout + 1;
 
-            setDesignSettings(prev => ({
+            setDesignSettings((prev: any) => ({
               ...prev,
               buttonFill: design.buttonFill ?? 0,
               buttonCorner: design.buttonCorner ?? 1,
@@ -365,20 +420,16 @@ export const MyLinksPage = (): JSX.Element => {
         setMaxBusinessCard(planInfo.maxBusinessCard);
       }
 
-      // CHỈ HIỆN THÔNG BÁO KHI CÓ DỮ LIỆU VÀ KHÔNG ACTIVE
       if (planInfo && !isActive) {
         showToast.warning('Bạn chưa có gói nào đang hoạt động. Vui lòng đăng ký gói để cập nhật portfolio.');
       }
     } catch (e: any) {
       console.error('❌ Error fetching current plan:', e);
       setPlanActive(false);
-      // ẨN THÔNG BÁO LỖI KHI MỚI ĐĂNG KÝ
-      // showToast.error('Không thể kiểm tra gói của bạn. Vui lòng thử lại sau.');
     }
   })();
 }, []);
 
-  // Listen for design updates từ PortfolioDesignPage - SỬA LAYOUT
   useEffect(() => {
     const handleDesignUpdate = async () => {
       console.log('🔄 MyLinksPage: Design update received from PortfolioDesign');
@@ -391,7 +442,7 @@ export const MyLinksPage = (): JSX.Element => {
             const profileLayout = design.profileLayout || 0;
             const selectedLayout = design.selectedLayout || profileLayout + 1;
 
-            setDesignSettings(prev => ({
+            setDesignSettings((prev: any) => ({
               ...prev,
               buttonFill: design.buttonFill ?? 0,
               buttonCorner: design.buttonCorner ?? 1,
@@ -417,7 +468,6 @@ export const MyLinksPage = (): JSX.Element => {
     return () => window.removeEventListener('design-updated', handleDesignUpdate);
   }, [portfolioSlug]);
 
-  // Listen for portfolio updates tổng thể - SỬA LAYOUT
   useEffect(() => {
     const handlePortfolioUpdate = async () => {
       console.log('🔄 MyLinksPage: Portfolio update received');
@@ -440,7 +490,7 @@ export const MyLinksPage = (): JSX.Element => {
               const profileLayout = design.profileLayout || 0;
               const selectedLayout = design.selectedLayout || profileLayout + 1;
 
-              setDesignSettings(prev => ({
+              setDesignSettings((prev: any) => ({
                 ...prev,
                 buttonFill: design.buttonFill ?? 0,
                 buttonCorner: design.buttonCorner ?? 1,
@@ -467,7 +517,6 @@ export const MyLinksPage = (): JSX.Element => {
     return () => window.removeEventListener('portfolio-updated', handlePortfolioUpdate);
   }, [portfolioSlug]);
 
-  // Auto-save social links to backend when they change
   useEffect(() => {
     if (!user?._id || socialLinks.length === 0) return;
 
@@ -590,11 +639,10 @@ export const MyLinksPage = (): JSX.Element => {
     return () => clearTimeout(timer);
   }, [socialLinks, user?._id, portfolioExists, portfolioSlug, planActive, maxSocialLinks, user?.username, user?.avatar_url, bio]);
 
-  // Handle click tracking for social links
   useEffect(() => {
     function handleIncreaseClick(e: any) {
       const { id } = e.detail;
-      setSocialLinks(prevLinks =>
+      setSocialLinks((prevLinks: SocialLink[]) =>
         prevLinks.map(link =>
           link.id === id
             ? { ...link, clicks: link.clicks + 1 }
@@ -607,7 +655,6 @@ export const MyLinksPage = (): JSX.Element => {
     return () => window.removeEventListener('increase-click', handleIncreaseClick);
   }, []);
 
-  // Handle open portfolios modal from sidebar
   useEffect(() => {
     function handleOpenPortfoliosModal() {
       setShowPortfoliosModal(true);
@@ -705,6 +752,30 @@ export const MyLinksPage = (): JSX.Element => {
     setShowShareDialog(false);
   };
 
+  const handleAvatarUpload = async (file: File) => {
+    try {
+      const { uploadImage } = await import('../../lib/api');
+      const imageUrl = await uploadImage(file);
+      
+      // Cập nhật user state
+      setUser((prev: any) => ({ ...prev, avatar_url: imageUrl }));
+      
+      // Lưu vào storage
+      saveAvatarToStorage(imageUrl);
+      
+      // Cập nhật lên server
+      await updateMyProfile({ avatar_url: imageUrl });
+      
+      // Đồng bộ với portfolio
+      window.dispatchEvent(new CustomEvent('portfolio-updated'));
+      
+      showToast.success('Avatar updated successfully');
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+      showToast.error('Error updating avatar');
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Đang tải thông tin...</div>;
   }
@@ -714,7 +785,6 @@ export const MyLinksPage = (): JSX.Element => {
 
   return (
     <div className="font-spartan">
-      {/* Mobile Menu Button - Chỉ hiện trên mobile, đặt dưới header */}
       <button
         className="lg:hidden fixed top-3 left-3 z-20 bg-white rounded-lg p-2 shadow-md border border-gray-200 hover:bg-gray-50 transition-colors"
         onClick={() => setShowMobileSidebar(true)}
@@ -725,7 +795,6 @@ export const MyLinksPage = (): JSX.Element => {
         </svg>
       </button>
 
-      {/* Mobile Sidebar Overlay */}
       {showMobileSidebar && (
         <div 
           className="lg:hidden fixed inset-0 bg-black/50 z-40"
@@ -733,7 +802,6 @@ export const MyLinksPage = (): JSX.Element => {
         />
       )}
 
-      {/* Sidebar trái - Responsive */}
       <div className={`
         fixed top-0 left-0 h-full min-h-screen bg-white border-r border-[#d9d9d9] flex-shrink-0 transition-transform duration-300
         ${showMobileSidebar ? 'translate-x-0 z-50' : '-translate-x-full lg:translate-x-0'}
@@ -741,7 +809,6 @@ export const MyLinksPage = (): JSX.Element => {
         w-[280px]
       `}>
         <Sidebar user={user} />
-        {/* Close button for mobile */}
         <button
           className="lg:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-10"
           onClick={() => setShowMobileSidebar(false)}
@@ -750,13 +817,10 @@ export const MyLinksPage = (): JSX.Element => {
         </button>
       </div>
 
-  {/* Header - Fixed responsive (reserve space for right preview on xl) */}
   <Header onShare={handleOpenShareDialog} shareBtnRef={shareBtnRef} rightOffsetOnXL />
 
-      {/* Main content - Responsive margins */}
       <div className="lg:ml-[200px] xl:ml-[265px] lg:mr-0 xl:mr-[395px] bg-[#f7f7f7] min-h-screen flex flex-col items-center">
         <main className="flex-1 w-full flex flex-col items-center pt-14 sm:pt-16 lg:pt-20">
-      {/* Share Dialog */}
       {showShareDialog && (
         <ShareDialog
           open={showShareDialog}
@@ -767,7 +831,6 @@ export const MyLinksPage = (): JSX.Element => {
           avatarUrl={user?.avatar_url}
         />
       )}
-          {/* Content Section */}
           <div className="w-full flex flex-col items-center flex-1">
             {planActive === false && (
               <div className="w-full max-w-[700px] px-4 sm:px-6 lg:px-9 pt-6">
@@ -818,6 +881,16 @@ export const MyLinksPage = (): JSX.Element => {
                       <AvatarImage
                         src={user.avatar_url || undefined}
                         alt="Profile picture"
+                        onError={(e) => {
+                          // Fallback khi ảnh load lỗi
+                          const target = e.target as HTMLImageElement;
+                          const storedAvatar = localStorage.getItem('user_avatar_url') || sessionStorage.getItem('avatar_backup');
+                          if (storedAvatar && target.src !== storedAvatar) {
+                            target.src = storedAvatar;
+                          } else {
+                            target.style.display = 'none';
+                          }
+                        }}
                       />
                       <AvatarFallback>{user.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
                     </Avatar>
@@ -830,15 +903,7 @@ export const MyLinksPage = (): JSX.Element => {
                         input.onchange = async (e) => {
                           const file = (e.target as HTMLInputElement).files?.[0];
                           if (file) {
-                            try {
-                              const { uploadImage } = await import('../../lib/api');
-                              const imageUrl = await uploadImage(file);
-                              await updateMyProfile({ avatar_url: imageUrl });
-                              setUser({ ...user, avatar_url: imageUrl });
-                              window.dispatchEvent(new CustomEvent('portfolio-updated'));
-                            } catch (error) {
-                              console.error('Error updating avatar:', error);
-                            }
+                            await handleAvatarUpload(file);
                           }
                         };
                         input.click();
@@ -902,7 +967,6 @@ export const MyLinksPage = (): JSX.Element => {
                 </div>
               </div>
 
-              {/* Add Social Button & Preview Button */}
               <div className="flex xl:gap-0 gap-3 w-full max-w-[300px] mb-6 sm:mb-8 px-4 sm:px-0">
                 <Button
                   className="flex-1 h-auto bg-[#f3b4c3] hover:bg-[#f3b4c3] rounded-[25px] sm:rounded-[35px] py-3 sm:py-4 flex items-center justify-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl"
@@ -914,7 +978,6 @@ export const MyLinksPage = (): JSX.Element => {
                   </span>
                 </Button>
                 
-                {/* Preview Button - Chỉ hiện trên mobile/tablet */}
                 <Button
                   className="xl:hidden h-auto bg-purple-500 hover:bg-purple-600 rounded-[25px] sm:rounded-[35px] py-3 sm:py-4 px-4 sm:px-6 flex items-center justify-center gap-2 shadow-lg transition-all duration-200 hover:shadow-xl"
                   onClick={() => setShowMobilePreview(true)}
@@ -971,7 +1034,6 @@ export const MyLinksPage = (): JSX.Element => {
         </main>
       </div>
 
-      {/* Sidebar phải - Phone Preview - Desktop: fixed bên phải, Mobile: hidden */}
       <div className="hidden xl:flex fixed top-0 right-0 h-full min-h-screen w-[395px] bg-white border-l border-[#d9d9d9] flex-shrink-0 flex-col z-12">
         <div className="w-full h-full flex flex-col">
           <div className="w-70 p-4 border-b border-gray-200 ">
@@ -1020,25 +1082,20 @@ export const MyLinksPage = (): JSX.Element => {
         </div>
       </div>
 
-      {/* Mobile/Tablet Preview Modal */}
       {showMobilePreview && (
         <>
-          {/* Overlay */}
           <div 
             className="xl:hidden fixed inset-0 bg-black/50 z-40"
             onClick={() => setShowMobilePreview(false)}
           />
-          {/* Preview Content */}
           <div className="xl:hidden fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md h-[80vh] overflow-y-auto relative">
-              {/* Close button */}
               <button
                 onClick={() => setShowMobilePreview(false)}
                 className="sticky top-0 right-0 ml-auto mr-4 mt-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors z-10"
               >
                 <span className="text-gray-600 text-xl leading-none">×</span>
               </button>
-              {/* Preview content */}
               <div className="px-4 pb-6">
                 <ProfilePictureSection user={user} bio={bio} socialLinks={socialLinks.filter(link => link.isEnabled)} portfolioTitle={portfolioTitle} />
               </div>
@@ -1047,7 +1104,6 @@ export const MyLinksPage = (): JSX.Element => {
         </>
       )}
 
-      {/* Modal chỉnh sửa title/bio */}
       {showTitleBioModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
@@ -1088,7 +1144,6 @@ export const MyLinksPage = (): JSX.Element => {
         </div>
       )}
 
-      {/* Portfolios Modal */}
       {showPortfoliosModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[500px] p-4 sm:p-6 relative max-h-[80vh] overflow-y-auto">
@@ -1152,10 +1207,8 @@ export const MyLinksPage = (): JSX.Element => {
           </div>
         </div>
       )}
-      {/* AI Chat Button */}
-    <AIChatButton onClick={handleToggleChat} />
+      <AIChatButton onClick={handleToggleChat} />
     
-    {/* AI Chat Box */}
     <AIChatBox
       isOpen={isChatOpen}
       onClose={handleCloseChat}
