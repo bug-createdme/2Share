@@ -558,7 +558,6 @@ const PortfolioDesignPage: React.FC = () => {
       // KIỂM TRA URL CÓ PHẢI BLOB KHÔNG
       if (imageUrl.startsWith('blob:')) {
         console.warn('⚠️ Received blob URL, this is temporary');
-        showToast.warning('Ảnh tạm thời - không lưu vĩnh viễn');
       } else {
         console.log('🎯 Received permanent URL, saving...');
         showToast.success('Đã tải ảnh nền lên thành công!');
