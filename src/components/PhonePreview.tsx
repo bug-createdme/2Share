@@ -36,11 +36,12 @@ interface PhonePreviewProps {
   designSettings?: DesignSettings;
 }
 
-// Removed unused font family helpers (class & style) which were not utilized.
+// Helper function để lấy font family class
+
+// Helper function để lấy font family style
 
 const PhonePreview: React.FC<PhonePreviewProps> = ({
   themeClasses,
-  textColors: _textColors,
   selectedTheme,
   selectedLayout,
   user,
@@ -60,7 +61,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
   // Lấy các giá trị từ designSettings hoặc dùng giá trị mặc định
   const buttonFill = designSettings?.buttonFill ?? 0;
   const buttonCorner = designSettings?.buttonCorner ?? 1;
-  // Removed unused local color variables; allow dynamic fontFamily for future use
+
   const fontFamily = designSettings?.fontFamily || "spartan";
   const backgroundType = designSettings?.backgroundType || "theme";
   const backgroundImage = designSettings?.backgroundImage;
@@ -372,7 +373,7 @@ const PhonePreview: React.FC<PhonePreviewProps> = ({
   const renderLayout4 = () => (
     <div className="relative h-full flex flex-col items-center justify-between py-6">
       {/* Background avatar - large avatar in center */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-85">
+      <div className="absolute top-1/4 flex items-center justify-center opacity-85">
         <div className="w-32 h-32 rounded-full overflow-hidden bg-white/30 border-2 border-white/20">
           <img
             className="w-full h-full object-cover"

@@ -8,10 +8,10 @@ import {
   Figma,
   CreditCard,
   BarChart3,
-  HelpCircle,
   User,
   LogOut,
-  Crown // THÊM ICON MỚI
+  Crown,
+  MessageSquare // THÊM ICON FEEDBACK
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -37,9 +37,13 @@ export default function Sidebar({ user }: SidebarProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleFeedbackClick = () => {
+    window.open("https://go.pristo.io/p/new/TCLbwgugOEWJ17oGua9iuw/Apq9TN4BskfqwwjeJEA6jw", "_blank");
+  };
+
   return (
-    <aside className="fixed top-0 left-0 h-screen w-64 bg-white overflow-y-auto">
-      <div className="p-4 space-y-3">
+    <aside className="fixed top-0 left-0 h-screen w-64 bg-white overflow-y-auto flex flex-col">
+      <div className="p-4 space-y-3 flex-1">
         {/* User Profile */}
         <div className="relative" ref={profileRef}>
           <button
@@ -188,14 +192,22 @@ export default function Sidebar({ user }: SidebarProps) {
               : "bg-white text-gray-600 hover:bg-gray-50"
           }`}
         >
-          <Crown className="w-4 h-4" />
-          <span>Gói đăng ký</span>
+          <Crown className="w-4 h-4 text-purple-600" />
+          <span className="text-purple-600">Gói đăng ký</span>
         </Link>
       </div>
 
-      <div className="absolute bottom-6 left-6">
-        <HelpCircle className="w-6 h-6 text-gray-600" />
+      {/* PHẦN FEEDBACK Ở CUỐI SIDEBAR */}
+      <div className="p-4 border-t border-gray-200">
+        <button
+          onClick={handleFeedbackClick}
+          className="flex items-center gap-3 w-full p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors"
+        >
+          <MessageSquare className="w-4 h-4 text-[#d68090]" />
+          <span className="text-[#d68090]">Feedback</span>
+        </button>
       </div>
+
     </aside>
   );
 }
