@@ -104,6 +104,9 @@ const AdminPage: React.FC = () => {
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [portfolioStats, setPortfolioStats] = useState<PortfolioStats | null>(null);
   const [revenueStats, setRevenueStats] = useState<RevenueStats | null>(null);
+  const [revenuePeriod, setRevenuePeriod] = useState<'week' | 'month' | 'year'>('week');
+  const [revenueStartDate, setRevenueStartDate] = useState<string>('');
+  const [revenueEndDate, setRevenueEndDate] = useState<string>('');
   const [activeSection, setActiveSection] = useState('overview');
   // Users CRUD state
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -119,7 +122,7 @@ const AdminPage: React.FC = () => {
       await Promise.all([
         fetchUserStats(),
         fetchPortfolioStats(),
-        fetchRevenueStats(),
+        fetchRevenueStats({ period: revenuePeriod, startDate: revenueStartDate || undefined, endDate: revenueEndDate || undefined }),
       ]);
       showToast.success('Dữ liệu đã được tải thành công!');
     } catch (error) {
@@ -172,10 +175,15 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  const fetchRevenueStats = async () => {
+  const fetchRevenueStats = async (options?: { period?: 'week' | 'month' | 'year'; startDate?: string; endDate?: string }) => {
+    const selectedPeriod = options?.period ?? revenuePeriod;
+    const params = new URLSearchParams({ period: selectedPeriod });
+    if (options?.startDate) params.set('startDate', options.startDate);
+    if (options?.endDate) params.set('endDate', options.endDate);
+
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('https://2share.icu/admins/get-revenue-stats?period=week', {
+      const response = await fetch(`https://2share.icu/admins/get-revenue-stats?${params.toString()}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -200,6 +208,26 @@ const AdminPage: React.FC = () => {
       loadUsers();
     }
   }, [user]);
+
+  const handleRevenuePeriodChange = (ev: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = ev.target.value as 'week' | 'month' | 'year';
+    setRevenuePeriod(value);
+    fetchRevenueStats({ period: value, startDate: revenueStartDate || undefined, endDate: revenueEndDate || undefined });
+  };
+
+  const handleApplyRevenueRange = () => {
+    if (revenueStartDate && revenueEndDate && new Date(revenueStartDate) > new Date(revenueEndDate)) {
+      showToast.warning('Ngày bắt đầu phải trước ngày kết thúc');
+      return;
+    }
+    fetchRevenueStats({ period: revenuePeriod, startDate: revenueStartDate || undefined, endDate: revenueEndDate || undefined });
+  };
+
+  const handleClearRevenueRange = () => {
+    setRevenueStartDate('');
+    setRevenueEndDate('');
+    fetchRevenueStats({ period: revenuePeriod });
+  };
 
   const loadUsers = async () => {
     try {
@@ -302,19 +330,41 @@ const AdminPage: React.FC = () => {
     })).slice(-7); // Last 7 days
   }, [portfolioStats]);
 
-  const revenueChartData = React.useMemo(() => {
+  const filteredDailyRevenue = React.useMemo(() => {
     if (!revenueStats?.result?.dailyRevenue) return [];
-    
-    return revenueStats.result.dailyRevenue.map((item: any) => {
-      // API trả về field 'total' chứa giá trị doanh thu
+    const start = revenueStartDate ? new Date(revenueStartDate) : null;
+    const end = revenueEndDate ? new Date(revenueEndDate) : null;
+    return revenueStats.result.dailyRevenue.filter((item: any) => {
+      const rawDate = item._id || item.date;
+      if (!rawDate) return false;
+      const current = new Date(rawDate);
+      if (Number.isNaN(current.getTime())) return false;
+      if (start && current < start) return false;
+      if (end && current > end) return false;
+      return true;
+    });
+  }, [revenueStats, revenueStartDate, revenueEndDate]);
+
+  const revenueChartData = React.useMemo(() => {
+    if (!filteredDailyRevenue.length) return [];
+    const hasCustomRange = Boolean(revenueStartDate || revenueEndDate);
+    const mapped = filteredDailyRevenue.map((item: any) => {
       const revenue = item.total || item.totalRevenue || item.revenue || item.amount || 0;
-      
       return {
         date: item._id?.substring(5) || item.date?.substring(5) || 'N/A',
         revenue: revenue
       };
-    }).slice(-7);
-  }, [revenueStats]);
+    });
+
+    return hasCustomRange ? mapped : mapped.slice(-7);
+  }, [filteredDailyRevenue, revenueStartDate, revenueEndDate]);
+
+  const filteredTotalRevenue = React.useMemo(() => {
+    return filteredDailyRevenue.reduce((sum: number, item: any) => {
+      const revenue = item.total || item.totalRevenue || item.revenue || item.amount || 0;
+      return sum + (Number(revenue) || 0);
+    }, 0);
+  }, [filteredDailyRevenue]);
 
   const transactionPieData = React.useMemo(() => {
     const success = revenueStats?.result?.txSuccess ?? 0;
@@ -323,6 +373,12 @@ const AdminPage: React.FC = () => {
       { name: 'Thành công', value: success, color: '#10b981' },
       { name: 'Thất bại', value: failed, color: '#ef4444' }
     ];
+  }, [revenueStats]);
+
+  const payosRevenueTotal = React.useMemo(() => {
+    const gateway = revenueStats?.result?.revenueByGateway?.find((g: any) => (g?._id || '').toUpperCase() === 'PAYOS');
+    const total = gateway?.total ?? 0;
+    return Number(total) || 0;
   }, [revenueStats]);
 
   const containerVariants = {
@@ -879,18 +935,49 @@ const AdminPage: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <Card className="shadow-lg border-0">
-        <CardHeader>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="flex items-center gap-2 text-xl">
             <DollarSign className="h-6 w-6 text-emerald-500" />
             Thống kê doanh thu
           </CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Chu kỳ</span>
+              <select
+                value={revenuePeriod}
+                onChange={handleRevenuePeriodChange}
+                className="h-10 rounded-md border border-gray-200 bg-white px-3 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              >
+                <option value="week">Tuần</option>
+                <option value="month">Tháng</option>
+                <option value="year">Năm</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={revenueStartDate}
+                onChange={(e) => setRevenueStartDate(e.target.value)}
+                className="h-10 rounded-md border border-gray-200 bg-white px-3 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+              <span className="text-sm text-gray-400">-</span>
+              <input
+                type="date"
+                value={revenueEndDate}
+                onChange={(e) => setRevenueEndDate(e.target.value)}
+                className="h-10 rounded-md border border-gray-200 bg-white px-3 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+            </div>
+            <Button size="sm" variant="outline" onClick={handleApplyRevenueRange}>Lọc</Button>
+            <Button size="sm" variant="ghost" onClick={handleClearRevenueRange} disabled={!revenueStartDate && !revenueEndDate}>Xóa</Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="text-center p-4 bg-emerald-50 rounded-lg">
               <DollarSign className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-emerald-600">${revenueStats?.result?.ARPU ?? '0'}</p>
-              <p className="text-sm text-gray-600">ARPU trung bình</p>
+              <p className="text-2xl font-bold text-emerald-600">{filteredTotalRevenue.toLocaleString('vi-VN')}đ</p>
+              <p className="text-sm text-gray-600">Tổng doanh thu</p>
             </div>
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <Activity className="h-8 w-8 text-blue-500 mx-auto mb-2" />
